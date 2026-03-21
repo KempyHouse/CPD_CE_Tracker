@@ -18,6 +18,33 @@ const PRESETS={
 };
 // State overrides
 const STATE_OVERRIDES={ca:{required:75,cycle:'biennial'},tx:{required:16,cycle:'annual'},ny:{required:24,cycle:'biennial'},fl:{required:30,cycle:'biennial'},on:{required:40,cycle:'annual'}};
+// State/Province options per country group
+const STATE_OPTIONS={
+  us_avma:[{v:'',l:'— No state override (national 30 hrs) —'},{v:'ca',l:'California (75 hrs / 2yr)'},{v:'tx',l:'Texas (16 hrs / yr)'},{v:'ny',l:'New York (24 hrs / 2yr)'},{v:'fl',l:'Florida (30 hrs / 2yr)'}],
+  us_nbdhe:[{v:'',l:'— No state override —'},{v:'ca',l:'California (75 hrs / 2yr)'},{v:'tx',l:'Texas (16 hrs / yr)'},{v:'ny',l:'New York (24 hrs / 2yr)'},{v:'fl',l:'Florida (30 hrs / 2yr)'}],
+  au_ahpra_vet:[{v:'',l:'— National standard (AHPRA) —'},{v:'nsw',l:'New South Wales'},{v:'vic',l:'Victoria'}],
+  au_ahpra_dental:[{v:'',l:'— National standard (AHPRA) —'},{v:'nsw',l:'New South Wales'},{v:'vic',l:'Victoria'}],
+  ca_cvma:[{v:'',l:'— No province override —'},{v:'on',l:'Ontario (40 hrs / yr)'}],
+};
+// Country groups that have no sub-national variation
+const NO_STATE=['uk_rcvs','uk_rvn','ie_vci','ie_dci','nz_vcnz','nz_dcnz','za_savc','in_vci_india'];
+function updateStateDropdown(){
+  const dd=el('selState');if(!dd)return;
+  const opts=STATE_OPTIONS[S.country];
+  const disabled=NO_STATE.includes(S.country)||!opts;
+  dd.disabled=disabled;
+  dd.style.opacity=disabled?'0.4':'1';
+  dd.style.cursor=disabled?'not-allowed':'auto';
+  if(disabled){
+    dd.innerHTML='<option value="">— Not applicable for this jurisdiction —</option>';
+    S.state='';
+  } else {
+    dd.innerHTML=opts.map(o=>`<option value="${o.v}">${o.l}</option>`).join('');
+    // Only keep current state if still valid
+    const valid=opts.some(o=>o.v===S.state);
+    if(!valid){S.state='';dd.value=''}
+  }
+}
 // Role → topics + split label (overrides preset topics)
 const ROLE_DEF={
   vet_surgeon:{topics:['Clinical skills','Practice management','Ethics & welfare'],splitLabel:'Structured / Non-structured',hideSplit:false},
@@ -249,8 +276,8 @@ function onTog(id,prop,cb){el(id).addEventListener('change',function(){S[prop]=t
 // Init after DOM ready
 function initWidget(){
   lucide.createIcons();
-  // Country
-  el('selCountry').addEventListener('change',function(){S.country=this.value;applyPreset(this.value);render()});
+  // Country → repopulate state dropdown, then apply preset
+  el('selCountry').addEventListener('change',function(){S.country=this.value;S.state='';applyPreset(this.value);updateStateDropdown();render()});
   // State
   el('selState').addEventListener('change',function(){S.state=this.value;render()});
   // Reg year
@@ -286,7 +313,7 @@ function initWidget(){
       document.querySelectorAll('.s-tab').forEach(t=>t.classList.remove('active'));
       tab.classList.add('active');S.sector=tab.dataset.sector;
       const preset=S.sector==='dental'?'au_ahpra_dental':'uk_rcvs';
-      el('selCountry').value=preset;applyPreset(preset);render()
+      S.state='';el('selCountry').value=preset;applyPreset(preset);updateStateDropdown();render()
     })
   });
   // Unit pills
@@ -296,6 +323,6 @@ function initWidget(){
   // Block dead links
   document.querySelectorAll('a[href="#"]').forEach(a=>a.addEventListener('click',e=>e.preventDefault()));
   // Init
-  applyPreset('uk_rcvs');render()
+  applyPreset('uk_rcvs');updateStateDropdown();render()
 }
 document.addEventListener('DOMContentLoaded',initWidget);
