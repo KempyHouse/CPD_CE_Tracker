@@ -74,20 +74,77 @@ function updateStateDropdown(){
     if(!valid){S.state='';dd.value=''}
   }
 }
-// Role → topics + split label (overrides preset topics)
-const ROLE_DEF={
-  vet_surgeon:{topics:['Clinical skills','Practice management','Ethics & welfare'],splitLabel:'Structured / Non-structured',hideSplit:false},
-  rvn:{topics:['Clinical skills','Animal welfare','Professional skills'],splitLabel:'Structured / Non-structured',hideSplit:false},
-  vet_tech:{topics:['Technical skills','Patient care','Safety'],splitLabel:'Category 1 / Category 2',hideSplit:false},
-  vet_tech_specialist:{topics:['Technical skills','Specialist discipline'],splitLabel:'Structured / Non-structured',hideSplit:false},
-  vet_paraprofessional:{topics:['Animal handling','Basic clinical care'],splitLabel:null,hideSplit:true},
-  dentist:{topics:['Clinical topics','Medical emergencies','Radiography'],splitLabel:'Verifiable / Non-verifiable',hideSplit:false},
-  dental_hygienist:{topics:['Infection control','Medical emergencies','Patient care'],splitLabel:'Verifiable / Non-verifiable',hideSplit:false},
-  dental_therapist:{topics:['Clinical topics','Patient safety','Safeguarding'],splitLabel:'Verifiable / Non-verifiable',hideSplit:false},
-  dental_nurse:{topics:['Clinical topics','Infection control','Safeguarding'],splitLabel:'Verifiable / Non-verifiable',hideSplit:false},
-  dental_technician:{topics:['Technical skills','Materials safety'],splitLabel:'Verifiable / Non-verifiable',hideSplit:false},
-  oral_health_therapist:{topics:['Clinical topics','Medical emergencies','Patient communication'],splitLabel:'Verifiable / Non-verifiable',hideSplit:false},
+// All roles per sector
+const ALL_VET_ROLES=[
+  {v:'vet_surgeon',      l:'Veterinary Surgeon / Veterinarian'},
+  {v:'rvn',             l:'Registered Veterinary Nurse (RVN)'},
+  {v:'vet_tech',        l:'Veterinary Technician'},
+  {v:'vet_technologist',l:'Veterinary Technologist'},
+  {v:'vet_nurse',       l:'Veterinary Nurse'},
+  {v:'vet_paraprofessional',l:'Veterinary Paraprofessional'},
+  {v:'vet_student',     l:'Veterinary Student'},
+];
+const ALL_DENTAL_ROLES=[
+  {v:'dentist',                  l:'Dentist'},
+  {v:'dental_hygienist',         l:'Dental Hygienist'},
+  {v:'dental_therapist',         l:'Dental Therapist'},
+  {v:'dental_nurse',             l:'Dental Nurse'},
+  {v:'dental_technician',        l:'Dental Technician'},
+  {v:'oral_health_therapist',    l:'Oral Health Therapist'},
+  {v:'orthodontic_therapist',    l:'Orthodontic Therapist'},
+  {v:'clinical_dental_technician',l:'Clinical Dental Technician'},
+  {v:'dental_prosthetist',       l:'Dental Prosthetist'},
+];
+const SECTOR_DEFAULT_ROLE={vet:'vet_surgeon',dental:'dentist'};
+// Disable rules: cond(country) returns true if role should be disabled
+const ROLE_DISABLED_RULES={
+  rvn:               {cond:c=>!['uk_rcvs','uk_rvn'].includes(c),          tip:'RVN is a UK RCVS designation'},
+  vet_technologist:  {cond:c=>!['us_avma','ca_cvma'].includes(c),          tip:'Bachelor-level tech credential in USA/Canada only'},
+  vet_nurse:         {cond:c=>!['au_ahpra_vet','ie_vci','nz_vcnz','za_savc'].includes(c), tip:'Vet nurse registration not available in this jurisdiction'},
+  vet_paraprofessional:{cond:c=>c!=='au_ahpra_vet',                        tip:'AVA category in Australia only'},
+  orthodontic_therapist:{cond:c=>true,                                     tip:'Registered by GDC — UK dental not currently in demo'},
+  clinical_dental_technician:{cond:c=>true,                                tip:'Registered by GDC — UK dental not currently in demo'},
+  dental_therapist:  {cond:c=>c==='us_nbdhe',                              tip:'Dental Therapist limited to specific US states only'},
+  oral_health_therapist:{cond:c=>!['au_ahpra_dental','nz_dcnz'].includes(c),tip:'Combined scope role in AU/NZ only'},
+  dental_prosthetist:{cond:c=>c!=='au_ahpra_dental',                       tip:'AHPRA-registered role in Australia only'},
+  dental_nurse:      {cond:c=>!['ie_dci'].includes(c),                     tip:'Registered dental nurse role — UK GDC not currently in demo'},
 };
+// Role → topics + split label
+const ROLE_DEF={
+  vet_surgeon:         {topics:['Clinical skills','Practice management','Ethics & welfare'],splitLabel:'Structured / Non-structured',hideSplit:false},
+  rvn:                 {topics:['Clinical skills','Animal welfare','Professional skills'],splitLabel:'Structured / Non-structured',hideSplit:false},
+  vet_tech:            {topics:['Technical skills','Patient care','Safety'],splitLabel:'Category 1 / Category 2',hideSplit:false},
+  vet_technologist:    {topics:['Technical skills','Pharmacology','Anaesthesia'],splitLabel:'Category 1 / Category 2',hideSplit:false},
+  vet_nurse:           {topics:['Clinical nursing','Animal welfare','Professional skills'],splitLabel:'Structured / Non-structured',hideSplit:false},
+  vet_paraprofessional:{topics:['Animal handling','Basic clinical care'],splitLabel:null,hideSplit:true},
+  vet_student:         {topics:['Clinical skills','Professional development'],splitLabel:null,hideSplit:true},
+  dentist:             {topics:['Clinical topics','Medical emergencies','Radiography'],splitLabel:'Verifiable / Non-verifiable',hideSplit:false},
+  dental_hygienist:    {topics:['Infection control','Medical emergencies','Patient care'],splitLabel:'Verifiable / Non-verifiable',hideSplit:false},
+  dental_therapist:    {topics:['Clinical topics','Patient safety','Safeguarding'],splitLabel:'Verifiable / Non-verifiable',hideSplit:false},
+  dental_nurse:        {topics:['Clinical topics','Infection control','Safeguarding'],splitLabel:'Verifiable / Non-verifiable',hideSplit:false},
+  dental_technician:   {topics:['Technical skills','Materials safety'],splitLabel:'Verifiable / Non-verifiable',hideSplit:false},
+  oral_health_therapist:{topics:['Clinical topics','Medical emergencies','Patient communication'],splitLabel:'Verifiable / Non-verifiable',hideSplit:false},
+  orthodontic_therapist:{topics:['Clinical orthodontics','Patient safety','Radiography'],splitLabel:'Verifiable / Non-verifiable',hideSplit:false},
+  clinical_dental_technician:{topics:['Technical skills','Materials science','Patient care'],splitLabel:'Verifiable / Non-verifiable',hideSplit:false},
+  dental_prosthetist:  {topics:['Technical skills','Patient assessment','Materials'],splitLabel:'Verifiable / Non-verifiable',hideSplit:false},
+};
+function updateRoleDropdown(){
+  const dd=el('selRole');if(!dd)return;
+  const roles=S.sector==='dental'?ALL_DENTAL_ROLES:ALL_VET_ROLES;
+  dd.innerHTML=roles.map(r=>{
+    const rule=ROLE_DISABLED_RULES[r.v];
+    const dis=rule&&rule.cond(S.country);
+    return`<option value="${r.v}"${dis?' disabled':''} title="${dis?rule.tip:''}">${r.l}${dis?' — '+rule.tip:''}</option>`;
+  }).join('');
+  // If current role is now disabled or missing, reset to sector default
+  const cur=dd.querySelector(`option[value="${S.role}"]:not([disabled])`);
+  if(!cur){
+    S.role=SECTOR_DEFAULT_ROLE[S.sector]||'vet_surgeon';
+    dd.value=S.role;
+    const rd=ROLE_DEF[S.role];
+    if(rd){S.topics=[...rd.topics];if(rd.splitLabel)S.splitLabel=rd.splitLabel}
+  }
+}
 // Per-topic rules
 const TOPIC_RULES={
   'Medical emergencies':{minPerCycle:10,minPerYear:2,mustBeLive:true,mustBeInPerson:true},
@@ -373,7 +430,7 @@ function onTog(id,prop,cb){el(id).addEventListener('change',function(){S[prop]=t
 function initWidget(){
   lucide.createIcons();
   // Country → repopulate state dropdown, then apply preset
-  el('selCountry').addEventListener('change',function(){S.country=this.value;S.state='';applyPreset(this.value);updateStateDropdown();render()});
+  el('selCountry').addEventListener('change',function(){S.country=this.value;S.state='';applyPreset(this.value);updateStateDropdown();updateRoleDropdown();render()});
   // State
   el('selState').addEventListener('change',function(){S.state=this.value;render()});
   // Reg year
@@ -409,7 +466,7 @@ function initWidget(){
       document.querySelectorAll('.s-tab').forEach(t=>t.classList.remove('active'));
       tab.classList.add('active');S.sector=tab.dataset.sector;
       S.country=SECTOR_DEFAULTS[S.sector]||'uk_rcvs';
-      S.state='';updateCountryDropdown();applyPreset(S.country);updateStateDropdown();render()
+      S.state='';updateCountryDropdown();applyPreset(S.country);updateStateDropdown();updateRoleDropdown();render()
     })
   });
   // Unit pills
@@ -419,6 +476,6 @@ function initWidget(){
   // Block dead links
   document.querySelectorAll('a[href="#"]').forEach(a=>a.addEventListener('click',e=>e.preventDefault()));
   // Init
-  updateCountryDropdown();applyPreset('uk_rcvs');updateStateDropdown();render()
+  updateCountryDropdown();applyPreset('uk_rcvs');updateStateDropdown();updateRoleDropdown();render()
 }
 document.addEventListener('DOMContentLoaded',initWidget);
