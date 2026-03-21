@@ -5,10 +5,10 @@ const PRESETS={
   uk_rcvs:{authority:'RCVS',required:35,structured:20,unitType:'hours',cycle:'annual',splitLabel:'Structured / Non-structured',topics:['Clinical skills','Practice management','Ethics & welfare'],carryOver:false,pauseAllowed:true,pauseMax:6,newGradRequired:20,proRata:false,nonClinCap:null,deferral:false,nonPractisingExempt:true,spreadRule:null},
   uk_rvn:{authority:'RCVS',required:35,structured:20,unitType:'hours',cycle:'annual',splitLabel:'Structured / Non-structured',topics:['Clinical skills','Animal welfare','Professional skills'],carryOver:false,pauseAllowed:true,pauseMax:6,newGradRequired:20,proRata:false,nonClinCap:null,deferral:false,nonPractisingExempt:true,spreadRule:null},
   us_avma:{authority:'State Board',required:30,structured:0,unitType:'hours',cycle:'annual',splitLabel:'Category 1 / Category 2',topics:['Controlled substances','Patient safety'],carryOver:true,carryOverPct:0.5,pauseAllowed:false,newGradRequired:null,proRata:false,nonClinCap:null,deferral:false,nonPractisingExempt:false,spreadRule:null},
-  us_nbdhe:{authority:'NBDHE',required:25,structured:0,unitType:'hours',cycle:'biennial',splitLabel:'Clinical / Non-clinical',topics:['Infection control','Medical emergencies'],carryOver:false,pauseAllowed:false,newGradRequired:null,proRata:false,nonClinCap:null,deferral:false,nonPractisingExempt:false,spreadRule:null},
+  us_nbdhe:{authority:'NBDHE',required:25,structured:0,unitType:'ceus',cycle:'biennial',splitLabel:'Clinical / Non-clinical',topics:['Infection control','Medical emergencies'],carryOver:false,pauseAllowed:false,newGradRequired:null,proRata:false,nonClinCap:null,deferral:false,nonPractisingExempt:false,spreadRule:null},
   au_ahpra_vet:{authority:'AHPRA',required:60,structured:15,unitType:'hours',cycle:'triennial',splitLabel:'Structured / Non-structured',topics:['Scientific knowledge','Practice management'],carryOver:false,pauseAllowed:false,newGradRequired:null,proRata:true,nonClinCap:null,deferral:false,nonPractisingExempt:false,spreadRule:null},
   au_ahpra_dental:{authority:'AHPRA',required:60,structured:20,unitType:'hours',cycle:'triennial',splitLabel:'Verifiable / Non-verifiable',topics:['Medical emergencies','Radiography'],carryOver:false,pauseAllowed:false,newGradRequired:null,proRata:true,nonClinCap:{max:12,label:'Non-scientific cap (20%)',pct:20},deferral:false,nonPractisingExempt:false,spreadRule:null},
-  ie_vci:{authority:'VCI',required:20,structured:10,unitType:'credits',cycle:'annual',splitLabel:'Category A / Category B',topics:['Clinical topics','Management'],carryOver:false,pauseAllowed:false,newGradRequired:null,proRata:true,nonClinCap:{max:5,label:'Management cap (25%)',pct:25},deferral:false,nonPractisingExempt:false,spreadRule:null},
+  ie_vci:{authority:'VCI',required:20,structured:10,unitType:'credits',cycle:'annual',splitLabel:'Category A / Category B',topics:['Clinical topics','Management'],carryOver:false,pauseAllowed:false,newGradRequired:null,proRata:true,nonClinCap:{max:5,label:'Management cap (25%)',pct:25},deferral:false,nonPractisingExempt:false,spreadRule:null,wetlabMultiplier:2},
   ie_dci:{authority:'DCI',required:20,structured:10,unitType:'hours',cycle:'annual',splitLabel:'Verifiable / Non-verifiable',topics:['Clinical topics','Patient safety'],carryOver:false,pauseAllowed:false,newGradRequired:null,proRata:false,nonClinCap:null,deferral:false,nonPractisingExempt:false,spreadRule:{minUnits:10,windowMonths:24,label:'10 hrs min / any 2yr window'}},
   nz_vcnz:{authority:'VCNZ',required:40,structured:0,unitType:'hours',cycle:'annual',splitLabel:'Directed / Self-directed',topics:['Clinical competence','Ethics'],carryOver:false,pauseAllowed:false,newGradRequired:null,proRata:false,nonClinCap:null,deferral:true,nonPractisingExempt:false,spreadRule:null},
   nz_dcnz:{authority:'DCNZ',required:25,structured:0,unitType:'hours',cycle:'annual',splitLabel:'Directed / Self-directed',topics:['Clinical topics','Peer interaction'],carryOver:false,pauseAllowed:false,newGradRequired:null,proRata:false,nonClinCap:null,deferral:true,nonPractisingExempt:false,spreadRule:null},
@@ -167,7 +167,9 @@ function applyPreset(key){
     nonClinCap:p.nonClinCap,deferral:p.deferral,
     nonPractisingExempt:p.nonPractisingExempt,spreadRule:p.spreadRule,
   });
-  // Apply role overlay
+  // authority properties also set
+  const wetlabKey=PRESETS[key]&&PRESETS[key].wetlabMultiplier?PRESETS[key].wetlabMultiplier:null;
+  S.wetlabMultiplier=wetlabKey;
   const rd=ROLE_DEF[S.role];if(rd){S.topics=[...rd.topics];if(rd.splitLabel)S.splitLabel=rd.splitLabel}
   syncControls()
 }
@@ -287,8 +289,26 @@ function render(){
   }
   // Compact
   const cpdW=el('cpdWidget');if(cpdW)cpdW.classList.toggle('compact',S.compact);
-  // Unit pills
-  document.querySelectorAll('.unit-pill').forEach(b=>b.classList.toggle('active',b.dataset.unit===(S.displayUnit==='hours'?'hours':'points')));
+  // Unit pills — auto-derived from authority unit type, no manual toggle
+  const UNIT_LABELS={hours:'Hours',ceus:'CEUs',credits:'Credits',points:'Points'};
+  const pills=document.querySelectorAll('.unit-pill');
+  pills.forEach(pill=>{
+    if(pill.dataset.unit==='hours'){
+      pill.textContent='Hours';pill.classList.add('active');pill.classList.remove('hidden');
+    } else {
+      // Second pill: show only if authority uses a non-hours unit
+      if(S.unitType!=='hours'){
+        pill.textContent=UNIT_LABELS[S.unitType]||S.unitType;
+        pill.dataset.unit=S.unitType;
+        pill.classList.remove('hidden');
+        pill.classList.toggle('active',S.displayUnit===S.unitType);
+        // Sync first pill active state
+        pills[0]&&pills[0].classList.toggle('active',S.displayUnit==='hours');
+      } else {
+        pill.classList.add('hidden');pill.classList.remove('active');
+      }
+    }
+  });
   // DEA toggle — disable if not US
   const deaRow=el('deaRow');if(deaRow)deaRow.classList.toggle('disabled',!isUS());
   // Pro-rata controls visibility
@@ -331,7 +351,7 @@ function renderRuleSummary(){
     row('Regulatory Authority',S.authority),
     row('Units Required / Cycle',reqDisplay,nonPract||student?'muted':''),
     row('Cycle Type',cycLabel),
-    row('Authority Unit Type',{hours:'Hours (hrs)',points:'Points (pts)',credits:'Credits (cr)',ceus:'CE Units (CEUs)'}[S.unitType]||S.unitType),
+    row('Authority Unit Type',{hours:'Hours (hrs) — standard for this authority',points:'Points (pts)',credits:`Credits (cr) — 1 credit = 1 hour${S.wetlabMultiplier?` | Wetlab / hands-on activities earn ${S.wetlabMultiplier}× credits per contact hour`:''}`,ceus:'CE Units (CEUs) — 1 CEU = 1 hour, standard US dental'}[S.unitType]||S.unitType),
     row('Structured / Verifiable Min',S.structuredMin>0?`${S.structuredMin} ${unitSuffix} minimum`:'None required',S.structuredMin>0?'':'muted'),
     row('Split Bar Label',S.splitLabel||'—',S.splitLabel?'':'muted'),
     row('Mandatory Topics',S.hasMandatoryTopics&&S.topics.length?S.topics.join(', '):'Not required for this authority / role',S.hasMandatoryTopics?'':'muted'),
