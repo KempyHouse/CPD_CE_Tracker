@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My Dashboard — CPD/CE Tracker</title>
+  <link rel="icon" href="images/vetstream-favicon.png" type="image/png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="shared.css" />
+</head>
+<body>
+
+  <!-- ════ TOP NAV ════ -->
+  <nav class="top-nav" role="navigation" aria-label="Main navigation">
+    <div class="top-nav__inner">
+      <a href="index.html" class="logo" aria-label="Vetstream home">
+        <img src="images/vetstream-logo.png" alt="Vetstream" height="36" />
+      </a>
+
+      <button class="btn-account" id="my-account-btn" style="margin-left:auto;">My Account</button>
+    </div>
+  </nav>
+
+  <!-- ════ TAB NAV ════ -->
+  <nav class="tab-nav" aria-label="Dashboard tabs">
+    <div class="tab-nav__inner">
+      <a class="tab-nav__item"        href="vs-admin.html"        >Admin Portal</a>
+      <a class="tab-nav__item"        href="team-management.html" >Team Management</a>
+      <a class="tab-nav__item active" href="index.html"           aria-current="page">My Dashboard</a>
+      <a class="tab-nav__item"        href="#"                    >Course Library</a>
+      <a class="tab-nav__item"        href="#"                    >My Learning</a>
+      <a class="tab-nav__item"        href="#"                    >My Achievements</a>
+      <a class="tab-nav__item"        href="#"                    >My Account</a>
+    </div>
+  </nav>
+
+  <!-- ════ PAGE ════ -->
+  <div class="page">
+
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+      <span class="bc-link">My Dashboard</span>
+      <span class="breadcrumb__sep">›</span>
+      <span>Overview</span>
+    </nav>
+
+    <!-- Sidebar -->
+    <aside class="sidebar" aria-label="Dashboard sidebar">
+      <div class="sidebar-card">
+        <p class="sidebar-card__heading">My Dashboard</p>
+        <ul class="sidebar-nav" id="sidebar-nav">
+          <li><span id="snav-learning">My Learning</span></li>
+          <li><span id="snav-certs">My Certificates</span></li>
+          <li><span id="snav-account">My Account</span></li>
+          <li><span id="snav-business">My Business</span></li>
+        </ul>
+      </div>
+
+      <div class="sidebar-card sidebar-card--subscribe">
+        <p>Complete your<br/>subscription!</p>
+        <button class="btn-subscribe" id="subscribe-btn">Subscribe here</button>
+      </div>
+    </aside>
+
+    <!-- Main -->
+    <main class="main" id="main-content">
+
+      <!-- Profile Banner -->
+      <section class="profile-banner" aria-label="User profile summary">
+        <div class="profile-avatar" role="img" aria-label="User avatar placeholder">
+          <div class="profile-avatar__bg">
+            <svg width="46" height="46" viewBox="0 0 24 24" fill="rgba(255,255,255,0.45)">
+              <path d="M12 12c2.65 0 4.7-2.05 4.7-4.7S14.65 2.6 12 2.6 7.3 4.65 7.3 7.3 9.35 12 12 12zm0 2.35c-3.13 0-9.4 1.57-9.4 4.7v2.35h18.8v-2.35c0-3.13-6.27-4.7-9.4-4.7z"/>
+            </svg>
+          </div>
+        </div>
+
+        <div class="profile-info">
+          <h1 class="profile-info__name" id="profile-name">Andrew Kemp</h1>
+        </div>
+
+        <div class="profile-completion" aria-label="Completion rate 0%">
+          <div class="completion-ring">
+            <svg viewBox="0 0 82 82">
+              <circle class="ring-bg" cx="41" cy="41" r="35"/>
+              <circle class="ring-fg" cx="41" cy="41" r="35" id="ring-fg"/>
+            </svg>
+            <div class="ring-inner">
+              <span class="ring-inner__pct" id="pct-label">0%</span>
+              <span class="ring-inner__label">Complete<br>Rate</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Widget area -->
+      <div class="widget-area" id="widget-area" aria-label="Widget development area">
+        <div class="widget-area__placeholder">
+          <svg class="widget-area__icon" viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="4"  y="4"  width="19" height="19" rx="3" stroke="#9aa8c4" stroke-width="2" stroke-dasharray="4 2"/>
+            <rect x="29" y="4"  width="19" height="19" rx="3" stroke="#9aa8c4" stroke-width="2" stroke-dasharray="4 2"/>
+            <rect x="4"  y="29" width="19" height="19" rx="3" stroke="#9aa8c4" stroke-width="2" stroke-dasharray="4 2"/>
+            <rect x="29" y="29" width="19" height="19" rx="3" stroke="#9aa8c4" stroke-width="2" stroke-dasharray="4 2"/>
+          </svg>
+          <p>Widget area</p>
+          <small>Drop your dashboard widgets in here</small>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <script>
+    /* Block dead-end links */
+    document.querySelectorAll('a[href="#"]').forEach(a => {
+      a.addEventListener('click', e => e.preventDefault());
+    });
+  </script>
+</body>
+</html>

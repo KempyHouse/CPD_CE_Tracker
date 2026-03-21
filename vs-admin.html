@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Portal — CPD/CE Tracker</title>
+  <link rel="icon" href="images/vetstream-favicon.png" type="image/png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="shared.css" />
+</head>
+<body>
+
+  <!-- ════ TOP NAV ════ -->
+  <nav class="top-nav" role="navigation" aria-label="Main navigation">
+    <div class="top-nav__inner">
+      <a href="index.html" class="logo" aria-label="Vetstream home">
+        <img src="images/vetstream-logo.png" alt="Vetstream" height="36" />
+      </a>
+
+      <button class="btn-account" style="margin-left:auto;">My Account</button>
+    </div>
+  </nav>
+
+  <!-- ════ TAB NAV ════ -->
+  <nav class="tab-nav" aria-label="Dashboard tabs">
+    <div class="tab-nav__inner">
+      <a class="tab-nav__item active" href="vs-admin.html"        aria-current="page">Admin Portal</a>
+      <a class="tab-nav__item"        href="team-management.html"              >Team Management</a>
+      <a class="tab-nav__item"        href="index.html"                        >My Dashboard</a>
+      <a class="tab-nav__item"        href="#"                                 >Course Library</a>
+      <a class="tab-nav__item"        href="#"                                 >My Learning</a>
+      <a class="tab-nav__item"        href="#"                                 >My Achievements</a>
+      <a class="tab-nav__item"        href="#"                                 >My Account</a>
+    </div>
+  </nav>
+
+  <!-- ════ PAGE ════ -->
+  <div class="page">
+
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+      <span class="bc-link">Admin Portal</span>
+      <span class="breadcrumb__sep">›</span>
+      <span>Overview</span>
+    </nav>
+
+    <!-- Sidebar -->
+    <aside class="sidebar" aria-label="Admin sidebar">
+      <div class="sidebar-card">
+        <p class="sidebar-card__heading">Admin Portal</p>
+        <ul class="sidebar-nav">
+          <li><span>Dashboard</span></li>
+          <li><span>Users</span></li>
+          <li><span>Organisations</span></li>
+          <li><span>Reports</span></li>
+          <li><span>Settings</span></li>
+        </ul>
+      </div>
+    </aside>
+
+    <!-- Main — blank content area -->
+    <main class="main" id="main-content">
+      <div class="widget-area" id="widget-area" aria-label="Content area">
+        <div class="widget-area__placeholder">
+          <svg class="widget-area__icon" viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="4"  y="4"  width="19" height="19" rx="3" stroke="#9aa8c4" stroke-width="2" stroke-dasharray="4 2"/>
+            <rect x="29" y="4"  width="19" height="19" rx="3" stroke="#9aa8c4" stroke-width="2" stroke-dasharray="4 2"/>
+            <rect x="4"  y="29" width="19" height="19" rx="3" stroke="#9aa8c4" stroke-width="2" stroke-dasharray="4 2"/>
+            <rect x="29" y="29" width="19" height="19" rx="3" stroke="#9aa8c4" stroke-width="2" stroke-dasharray="4 2"/>
+          </svg>
+          <p>Admin Portal</p>
+          <small>Content area — add widgets here</small>
+        </div>
+      </div>
+    </main>
+
+  </div>
+
+  <script>
+    document.querySelectorAll('a[href="#"]').forEach(a => {
+      a.addEventListener('click', e => e.preventDefault());
+    });
+  </script>
+</body>
+</html>
