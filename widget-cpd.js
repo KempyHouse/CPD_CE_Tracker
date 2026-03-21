@@ -26,6 +26,35 @@ const STATE_OPTIONS={
   au_ahpra_dental:[{v:'',l:'— National standard (AHPRA) —'},{v:'nsw',l:'New South Wales'},{v:'vic',l:'Victoria'}],
   ca_cvma:[{v:'',l:'— No province override —'},{v:'on',l:'Ontario (40 hrs / yr)'}],
 };
+// Countries available per sector
+const COUNTRY_BY_SECTOR={
+  vet:[
+    {v:'uk_rcvs',l:'🇬🇧 United Kingdom — RCVS'},
+    {v:'uk_rvn', l:'🇬🇧 UK — RCVS (RVN)'},
+    {v:'us_avma',l:'🇺🇸 USA — AVMA / State Board'},
+    {v:'au_ahpra_vet',l:'🇦🇺 Australia — AHPRA (Vet)'},
+    {v:'ie_vci', l:'🇮🇪 Ireland — VCI'},
+    {v:'nz_vcnz',l:'🇳🇿 New Zealand — VCNZ'},
+    {v:'za_savc',l:'🇿🇦 South Africa — SAVC'},
+    {v:'ca_cvma',l:'🇨🇦 Canada — CVMA'},
+    {v:'in_vci_india',l:'🇮🇳 India — VCI'},
+  ],
+  dental:[
+    {v:'us_nbdhe',      l:'🇺🇸 USA — NBDHE (Dental Hygienist)'},
+    {v:'au_ahpra_dental',l:'🇦🇺 Australia — AHPRA (Dental)'},
+    {v:'ie_dci',        l:'🇮🇪 Ireland — Dental Council'},
+    {v:'nz_dcnz',       l:'🇳🇿 New Zealand — DCNZ'},
+  ],
+};
+const SECTOR_DEFAULTS={vet:'uk_rcvs',dental:'au_ahpra_dental'};
+function updateCountryDropdown(){
+  const dd=el('selCountry');if(!dd)return;
+  const opts=COUNTRY_BY_SECTOR[S.sector]||COUNTRY_BY_SECTOR.vet;
+  dd.innerHTML=opts.map(o=>`<option value="${o.v}"${o.v===S.country?' selected':''}>${o.l}</option>`).join('');
+  // If current country not valid for this sector, reset to sector default
+  const valid=opts.some(o=>o.v===S.country);
+  if(!valid){S.country=SECTOR_DEFAULTS[S.sector]||opts[0].v;dd.value=S.country}
+}
 // Country groups that have no sub-national variation
 const NO_STATE=['uk_rcvs','uk_rvn','ie_vci','ie_dci','nz_vcnz','nz_dcnz','za_savc','in_vci_india'];
 function updateStateDropdown(){
@@ -359,8 +388,8 @@ function initWidget(){
     tab.addEventListener('click',()=>{
       document.querySelectorAll('.s-tab').forEach(t=>t.classList.remove('active'));
       tab.classList.add('active');S.sector=tab.dataset.sector;
-      const preset=S.sector==='dental'?'au_ahpra_dental':'uk_rcvs';
-      S.state='';el('selCountry').value=preset;applyPreset(preset);updateStateDropdown();render()
+      S.country=SECTOR_DEFAULTS[S.sector]||'uk_rcvs';
+      S.state='';updateCountryDropdown();applyPreset(S.country);updateStateDropdown();render()
     })
   });
   // Unit pills
@@ -370,6 +399,6 @@ function initWidget(){
   // Block dead links
   document.querySelectorAll('a[href="#"]').forEach(a=>a.addEventListener('click',e=>e.preventDefault()));
   // Init
-  applyPreset('uk_rcvs');updateStateDropdown();render()
+  updateCountryDropdown();applyPreset('uk_rcvs');updateStateDropdown();render()
 }
 document.addEventListener('DOMContentLoaded',initWidget);
