@@ -268,6 +268,53 @@ function render(){
   if(regMonthsRow)regMonthsRow.classList.toggle('hidden',!S.proRata);
   // Pause months row
   const pauseRow=el('pauseMonthsRow');if(pauseRow)pauseRow.classList.toggle('hidden',S.registrationStatus!=='paused');
+  renderRuleSummary()
+}
+// ── Active Rules transparency panel ────────────────────────────────────────
+function renderRuleSummary(){
+  const req=effectiveRequired();const cyc=effectiveCycle();
+  const status=S.registrationStatus;const ng=isNewGrad();
+  const so=STATE_OVERRIDES[S.state];
+  // Priority banner
+  let priorityMsg='';
+  if(status==='non_practising')priorityMsg='Priority 1 active: Non-practising — CPD requirement waived (0 units required)';
+  else if(status==='student')priorityMsg='Priority 2 active: Student registration — CPD ring disabled until full registration';
+  else if(status==='paused')priorityMsg=`Priority 3 active: Paused (${S.pauseMonths} months) — requirement reduced pro-rata to ${req} ${S.unitType}`;
+  else if(ng&&S.newGradRequired>0)priorityMsg=`Priority 4 active: New graduate — requirement reduced from ${S.baseRequired} to ${S.newGradRequired} ${S.unitType}`;
+  else if(S.proRata&&S.regMonthsAgo>0)priorityMsg=`Priority 5 active: Pro-rata mid-year registrant (${S.regMonthsAgo} months ago) — requirement reduced to ${req} ${S.unitType}`;
+  else if(so&&so.required)priorityMsg=`Priority 5 active: State override (${S.state.toUpperCase()}) — requirement set to ${so.required} hrs / ${so.cycle}`;
+  const banner=el('rulePriorityBanner');const bannerTxt=el('rulePriorityText');
+  if(banner){priorityMsg?banner.classList.remove('hidden'):banner.classList.add('hidden');if(bannerTxt)bannerTxt.textContent=priorityMsg}
+  // Row builder
+  const unitSuffix={hours:'hrs',points:'pts',credits:'cr',ceus:'CEUs'}[S.unitType]||S.unitType;
+  function row(lbl,val,cls){return`<div class="rule-item"><span class="rule-lbl">${lbl}</span><span class="rule-val${cls?' '+cls:''}">${val}</span></div>`}
+  const nonPract=status==='non_practising';const student=status==='student';
+  const stateChip=so&&so.required?` <span class="rule-override ro-state">STATE OVERRIDE</span>`:'';
+  const ngChip=ng&&S.newGradRequired>0?` <span class="rule-override ro-newgrad">NEW GRAD</span>`:'';
+  const pauseChip=status==='paused'?` <span class="rule-override ro-paused">PAUSED</span>`:'';
+  const proRataChip=S.proRata&&S.regMonthsAgo>0?` <span class="rule-override ro-prorata">PRO-RATA</span>`:'';
+  const reqDisplay=nonPract||student?`0 ${unitSuffix} (exempt)`:`${req} ${unitSuffix}${stateChip}${ngChip}${pauseChip}${proRataChip}`;
+  const cycLabel={annual:'Annual (12 months)',biennial:'Biennial (24 months)',triennial:'Triennial (36 months)','5year':'5-year rolling',rolling3:'Rolling 3-year window'}[cyc]||cyc;
+  const carryAmt=carryOverAvailable();
+  const grid=el('rulesGrid');
+  if(!grid)return;
+  grid.innerHTML=[
+    row('Regulatory Authority',S.authority),
+    row('Units Required / Cycle',reqDisplay,nonPract||student?'muted':''),
+    row('Cycle Type',cycLabel),
+    row('Authority Unit Type',{hours:'Hours (hrs)',points:'Points (pts)',credits:'Credits (cr)',ceus:'CE Units (CEUs)'}[S.unitType]||S.unitType),
+    row('Structured / Verifiable Min',S.structuredMin>0?`${S.structuredMin} ${unitSuffix} minimum`:'None required',S.structuredMin>0?'':'muted'),
+    row('Split Bar Label',S.splitLabel||'—',S.splitLabel?'':'muted'),
+    row('Mandatory Topics',S.hasMandatoryTopics&&S.topics.length?S.topics.join(', '):'Not required for this authority / role',S.hasMandatoryTopics?'':'muted'),
+    row('DEA / Prescribing CE',S.hasDEA&&isUS()?'Required — 3 hrs min / cycle':'Not applicable',S.hasDEA&&isUS()?'':'muted'),
+    row('Non-clinical Cap',S.nonClinCap?`${S.nonClinCap.max} ${unitSuffix} max (${S.nonClinCap.pct}%) — ${S.nonClinCap.label}`:'No cap for this authority',S.nonClinCap?'amber':'muted'),
+    row('Spread Rule',S.spreadRule?S.spreadRule.label:'No spread rule for this authority',S.spreadRule?'amber':'muted'),
+    row('Carry-over',S.carryOver?(carryAmt>0?`${carryAmt} ${unitSuffix} available from previous cycle`:'Permitted — no surplus from previous cycle'):'Not permitted by this authority',S.carryOver&&carryAmt>0?'purple':'muted'),
+    row('Pause / Deferral',S.pauseAllowed?`Up to ${S.pauseMax} months — proportional hour reduction`:(S.deferral?'Deferral on application only':'Not permitted'),S.pauseAllowed?'':'muted'),
+    row('Pro-rata (mid-year reg.)',S.proRata?'Applicable — formula: required × (months remaining ÷ cycle months)':'Not applicable for this authority',S.proRata?'amber':'muted'),
+    row('New Graduate Rule',ng&&S.newGradRequired>0?`Reduced to ${S.newGradRequired} ${unitSuffix} (first cycle only)`:'Not in new graduate window',ng&&S.newGradRequired>0?'amber':'muted'),
+    row('Registration Status',{active:'Active / Full — standard requirements apply',non_practising:'Non-practising — CPD exempt',student:'Student — CPD not yet required',paused:'Paused — pro-rata reduction applied',specialist:'Specialist — standard hours, specialist topics',advanced:'Advanced Practitioner — standard hours with AP badge'}[status]||status,nonPract||student?'amber':''),
+  ].join('')
 }
 // Event wiring helpers
 function onRng(id,vid,prop,cb){el(id).addEventListener('input',function(){S[prop]=parseFloat(this.value);el(vid).textContent=parseFloat(this.value).toFixed(this.step&&parseFloat(this.step)<1?1:0);if(cb)cb();render()})}
