@@ -1,0 +1,301 @@
+/* global lucide */
+'use strict';
+// ── Authority presets ───────────────────────────────────────────────────────
+const PRESETS={
+  uk_rcvs:{authority:'RCVS',required:35,structured:20,unitType:'hours',cycle:'annual',splitLabel:'Structured / Non-structured',topics:['Clinical skills','Practice management','Ethics & welfare'],carryOver:false,pauseAllowed:true,pauseMax:6,newGradRequired:20,proRata:false,nonClinCap:null,deferral:false,nonPractisingExempt:true,spreadRule:null},
+  uk_rvn:{authority:'RCVS',required:35,structured:20,unitType:'hours',cycle:'annual',splitLabel:'Structured / Non-structured',topics:['Clinical skills','Animal welfare','Professional skills'],carryOver:false,pauseAllowed:true,pauseMax:6,newGradRequired:20,proRata:false,nonClinCap:null,deferral:false,nonPractisingExempt:true,spreadRule:null},
+  us_avma:{authority:'State Board',required:30,structured:0,unitType:'hours',cycle:'annual',splitLabel:'Category 1 / Category 2',topics:['Controlled substances','Patient safety'],carryOver:true,carryOverPct:0.5,pauseAllowed:false,newGradRequired:null,proRata:false,nonClinCap:null,deferral:false,nonPractisingExempt:false,spreadRule:null},
+  us_nbdhe:{authority:'NBDHE',required:25,structured:0,unitType:'hours',cycle:'biennial',splitLabel:'Clinical / Non-clinical',topics:['Infection control','Medical emergencies'],carryOver:false,pauseAllowed:false,newGradRequired:null,proRata:false,nonClinCap:null,deferral:false,nonPractisingExempt:false,spreadRule:null},
+  au_ahpra_vet:{authority:'AHPRA',required:60,structured:15,unitType:'hours',cycle:'triennial',splitLabel:'Structured / Non-structured',topics:['Scientific knowledge','Practice management'],carryOver:false,pauseAllowed:false,newGradRequired:null,proRata:true,nonClinCap:null,deferral:false,nonPractisingExempt:false,spreadRule:null},
+  au_ahpra_dental:{authority:'AHPRA',required:60,structured:20,unitType:'hours',cycle:'triennial',splitLabel:'Verifiable / Non-verifiable',topics:['Medical emergencies','Radiography'],carryOver:false,pauseAllowed:false,newGradRequired:null,proRata:true,nonClinCap:{max:12,label:'Non-scientific cap (20%)',pct:20},deferral:false,nonPractisingExempt:false,spreadRule:null},
+  ie_vci:{authority:'VCI',required:20,structured:10,unitType:'credits',cycle:'annual',splitLabel:'Category A / Category B',topics:['Clinical topics','Management'],carryOver:false,pauseAllowed:false,newGradRequired:null,proRata:true,nonClinCap:{max:5,label:'Management cap (25%)',pct:25},deferral:false,nonPractisingExempt:false,spreadRule:null},
+  ie_dci:{authority:'DCI',required:20,structured:10,unitType:'hours',cycle:'annual',splitLabel:'Verifiable / Non-verifiable',topics:['Clinical topics','Patient safety'],carryOver:false,pauseAllowed:false,newGradRequired:null,proRata:false,nonClinCap:null,deferral:false,nonPractisingExempt:false,spreadRule:{minUnits:10,windowMonths:24,label:'10 hrs min / any 2yr window'}},
+  nz_vcnz:{authority:'VCNZ',required:40,structured:0,unitType:'hours',cycle:'annual',splitLabel:'Directed / Self-directed',topics:['Clinical competence','Ethics'],carryOver:false,pauseAllowed:false,newGradRequired:null,proRata:false,nonClinCap:null,deferral:true,nonPractisingExempt:false,spreadRule:null},
+  nz_dcnz:{authority:'DCNZ',required:25,structured:0,unitType:'hours',cycle:'annual',splitLabel:'Directed / Self-directed',topics:['Clinical topics','Peer interaction'],carryOver:false,pauseAllowed:false,newGradRequired:null,proRata:false,nonClinCap:null,deferral:true,nonPractisingExempt:false,spreadRule:null},
+  za_savc:{authority:'SAVC',required:40,structured:20,unitType:'hours',cycle:'annual',splitLabel:'Category A / Category B',topics:['Technical skills','Ethics'],carryOver:false,pauseAllowed:false,newGradRequired:null,proRata:false,nonClinCap:{max:20,label:'Category B cap (50%)',pct:50},deferral:true,nonPractisingExempt:false,spreadRule:null},
+  ca_cvma:{authority:'CVMA',required:40,structured:0,unitType:'hours',cycle:'annual',splitLabel:'Formal / Informal',topics:['Clinical competence','Practice standards'],carryOver:false,pauseAllowed:false,newGradRequired:null,proRata:false,nonClinCap:null,deferral:false,nonPractisingExempt:false,spreadRule:null},
+  in_vci_india:{authority:'VCI',required:30,structured:0,unitType:'hours',cycle:'annual',splitLabel:'Formal / Informal',topics:['Clinical practice','Animal welfare'],carryOver:false,pauseAllowed:false,newGradRequired:null,proRata:false,nonClinCap:null,deferral:false,nonPractisingExempt:false,spreadRule:null},
+};
+// State overrides
+const STATE_OVERRIDES={ca:{required:75,cycle:'biennial'},tx:{required:16,cycle:'annual'},ny:{required:24,cycle:'biennial'},fl:{required:30,cycle:'biennial'},on:{required:40,cycle:'annual'}};
+// Role → topics + split label (overrides preset topics)
+const ROLE_DEF={
+  vet_surgeon:{topics:['Clinical skills','Practice management','Ethics & welfare'],splitLabel:'Structured / Non-structured',hideSplit:false},
+  rvn:{topics:['Clinical skills','Animal welfare','Professional skills'],splitLabel:'Structured / Non-structured',hideSplit:false},
+  vet_tech:{topics:['Technical skills','Patient care','Safety'],splitLabel:'Category 1 / Category 2',hideSplit:false},
+  vet_tech_specialist:{topics:['Technical skills','Specialist discipline'],splitLabel:'Structured / Non-structured',hideSplit:false},
+  vet_paraprofessional:{topics:['Animal handling','Basic clinical care'],splitLabel:null,hideSplit:true},
+  dentist:{topics:['Clinical topics','Medical emergencies','Radiography'],splitLabel:'Verifiable / Non-verifiable',hideSplit:false},
+  dental_hygienist:{topics:['Infection control','Medical emergencies','Patient care'],splitLabel:'Verifiable / Non-verifiable',hideSplit:false},
+  dental_therapist:{topics:['Clinical topics','Patient safety','Safeguarding'],splitLabel:'Verifiable / Non-verifiable',hideSplit:false},
+  dental_nurse:{topics:['Clinical topics','Infection control','Safeguarding'],splitLabel:'Verifiable / Non-verifiable',hideSplit:false},
+  dental_technician:{topics:['Technical skills','Materials safety'],splitLabel:'Verifiable / Non-verifiable',hideSplit:false},
+  oral_health_therapist:{topics:['Clinical topics','Medical emergencies','Patient communication'],splitLabel:'Verifiable / Non-verifiable',hideSplit:false},
+};
+// Per-topic rules
+const TOPIC_RULES={
+  'Medical emergencies':{minPerCycle:10,minPerYear:2,mustBeLive:true,mustBeInPerson:true},
+  'Controlled substances (DEA)':{minPerCycle:3,mustBeLive:false},
+  'Controlled substances':{minPerCycle:3,mustBeLive:false},
+  'Ethics & professionalism':{minPerCycle:1,mustBeLive:true},
+  'Opioid prescribing':{minPerCycle:2,mustBeLive:false},
+};
+// State
+const S={
+  country:'uk_rcvs',state:'',registrationYear:'2020',registrationStatus:'active',
+  role:'vet_surgeon',cycle:'annual',baseRequired:35,structuredMin:20,unitType:'hours',
+  authority:'RCVS',splitLabel:'Structured / Non-structured',
+  topics:['Clinical skills','Practice management','Ethics & welfare'],
+  carryOver:false,carryOverPct:0,prevCompleted:0,
+  pauseAllowed:true,pauseMax:6,pauseMonths:3,
+  newGradRequired:20,proRata:false,regMonthsAgo:6,
+  nonClinCap:null,deferral:false,nonPractisingExempt:true,spreadRule:null,
+  completed:20,structuredDone:12,nonClinDone:0,displayUnit:'hours',
+  showTopics:true,showSplit:true,showCycle:true,compact:false,
+  hasMandatoryTopics:true,hasDEA:false,cycleStart:'2026-01-01',sector:'vet',
+};
+const CIRC=2*Math.PI*45;
+// Helpers
+function cycleMonthsFor(c){return{annual:12,biennial:24,triennial:36,'5year':60,rolling3:36}[c]||12}
+function cycleMonths(){return cycleMonthsFor(S.cycle)}
+function cycleEnd(){const d=new Date(S.cycleStart);d.setMonth(d.getMonth()+cycleMonths());d.setDate(d.getDate()-1);return d}
+function daysLeft(){return Math.max(0,Math.ceil((cycleEnd()-new Date())/86400000))}
+function isNewGrad(){const yr=parseInt(S.registrationYear);return(new Date().getFullYear()-yr)<=1}
+function isUS(){return['us_avma','us_nbdhe'].includes(S.country)||['ca','tx','ny','fl'].includes(S.state)}
+function uLbl(n,short){const v=n%1===0?n.toFixed(0):n.toFixed(1);const u=S.displayUnit==='hours'?'hrs':S.displayUnit==='points'?'pts':S.displayUnit==='ceus'?'CEUs':'cr';return short?v+' '+u:v+' '+u}
+function fmtDate(d){return d.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})}
+// Priority hierarchy → effective required
+function effectiveRequired(){
+  const status=S.registrationStatus;
+  if(status==='non_practising'||status==='student')return 0;
+  let req=S.baseRequired;
+  // State override (priority 5 — before new grad)
+  const so=STATE_OVERRIDES[S.state];
+  if(so&&so.required)req=so.required;
+  // New grad (priority 4)
+  if(isNewGrad()&&S.newGradRequired>0)req=S.newGradRequired;
+  // Pro-rata mid-year (priority 5b)
+  if(S.proRata&&S.regMonthsAgo>0){const total=cycleMonths();const rem=Math.max(0,total-S.regMonthsAgo);req=Math.round(req*rem/total)}
+  // Paused (priority 3)
+  if(status==='paused'&&S.pauseAllowed){const total=cycleMonths();const active=Math.max(0,total-S.pauseMonths);req=Math.round(req*active/total)}
+  return Math.max(0,req)
+}
+function effectiveCycle(){const so=STATE_OVERRIDES[S.state];return so&&so.cycle?so.cycle:S.cycle}
+function pct(req){return Math.min(100,Math.round((S.completed/req)*100))||0}
+function complianceStatus(p){
+  const status=S.registrationStatus;
+  if(status==='non_practising')return'blue';
+  if(status==='student')return'grey';
+  if(p>=100)return'green';
+  if(S.cycle==='rolling3')return'green';
+  const now=new Date();const start=new Date(S.cycleStart);const total=cycleEnd()-start;
+  const elapsed=now-start;const timePct=Math.min(100,Math.max(0,(elapsed/total)*100));
+  if(p>=timePct-10)return'green';if(p>=timePct-30)return'amber';return'red'
+}
+function carryOverAvailable(){
+  if(!S.carryOver)return 0;
+  const surplus=Math.max(0,S.prevCompleted-S.baseRequired);
+  const cap=S.carryOverPct>0?Math.floor(S.baseRequired*S.carryOverPct):surplus;
+  return Math.min(surplus,cap)
+}
+// Apply preset
+function applyPreset(key){
+  const p=PRESETS[key];if(!p)return;
+  Object.assign(S,{
+    authority:p.authority,baseRequired:p.required,structuredMin:p.structured,
+    unitType:p.unitType,displayUnit:p.unitType,cycle:p.cycle,
+    splitLabel:p.splitLabel,topics:[...p.topics],
+    carryOver:p.carryOver,carryOverPct:p.carryOverPct||0,
+    pauseAllowed:p.pauseAllowed,pauseMax:p.pauseMax||0,
+    newGradRequired:p.newGradRequired||0,proRata:p.proRata,
+    nonClinCap:p.nonClinCap,deferral:p.deferral,
+    nonPractisingExempt:p.nonPractisingExempt,spreadRule:p.spreadRule,
+  });
+  // Apply role overlay
+  const rd=ROLE_DEF[S.role];if(rd){S.topics=[...rd.topics];if(rd.splitLabel)S.splitLabel=rd.splitLabel}
+  syncControls()
+}
+function syncControls(){
+  setRng('numRequired','numRequiredVal',S.baseRequired);
+  setRng('numStructMin','numStructMinVal',S.structuredMin);
+  setRng('numCompleted','numCompletedVal',Math.min(S.completed,S.baseRequired));
+  setRng('numStructDone','numStructDoneVal',Math.min(S.structuredDone,S.baseRequired));
+  sel('selCycle').value=S.cycle;
+}
+function setRng(id,vid,v){const e=el(id);e.value=v;el(vid).textContent=v}
+function el(id){return document.getElementById(id)}
+function sel(id){return document.getElementById(id)}
+// Render
+function render(){
+  const req=effectiveRequired();const cyc=effectiveCycle();
+  const p=pct(req);const cs=complianceStatus(p);
+  const status=S.registrationStatus;const ng=isNewGrad();
+  const fillColour=p>=100?'#2e7d52':cs==='amber'?'#d97706':cs==='red'?'#b91c1c':'#5c3fa3';
+  // Profile ring sync
+  const ringCirc=2*Math.PI*35;const rfg=el('ring-fg');
+  if(rfg){rfg.style.strokeDasharray=ringCirc;rfg.style.strokeDashoffset=ringCirc-(p/100)*ringCirc}
+  const ppct=el('profile-pct');if(ppct)ppct.textContent=p+'%';
+  // Badges
+  const badges=el('w-badges');if(badges){
+    badges.innerHTML='';
+    if(ng&&S.newGradRequired>0)badges.innerHTML+='<span class="wpill-badge wpill-newgrad">🎓 New Graduate</span>';
+    if(status==='specialist')badges.innerHTML+='<span class="wpill-badge wpill-specialist">🔬 Specialist</span>';
+    if(status==='advanced')badges.innerHTML+='<span class="wpill-badge wpill-ap">✦ Advanced Practitioner</span>';
+  }
+  // Status banners
+  const bannerEl=el('w-status-banner');if(bannerEl){
+    if(status==='non_practising'){bannerEl.className='w-banner blue';bannerEl.classList.remove('hidden');bannerEl.textContent='ℹ Non-practising — CPD not required by this authority'}
+    else if(status==='student'){bannerEl.className='w-banner grey';bannerEl.classList.remove('hidden');bannerEl.textContent='ℹ Student registration — CPD requirements begin after full registration'}
+    else if(status==='paused'){bannerEl.className='w-banner amber';bannerEl.classList.remove('hidden');bannerEl.textContent=`⏸ Paused — reduced requirement: ${uLbl(req)} (${S.pauseMonths} months paused)`}
+    else if(ng&&S.newGradRequired>0){bannerEl.className='w-banner amber';bannerEl.classList.remove('hidden');bannerEl.textContent='🎓 Reduced requirements apply in your first registration cycle'}
+    else{bannerEl.classList.add('hidden')}
+  }
+  // Donut
+  const dFill=el('dFill');const dStr=el('dStructured');
+  const disabled=status==='non_practising'||status==='student';
+  const donutWrap=el('donutWrap');if(donutWrap)donutWrap.classList.toggle('donut-disabled',disabled);
+  const carryAmt=carryOverAvailable();const effectiveCompleted=Math.min(req,S.completed+carryAmt);
+  const displayPct=req>0?Math.min(100,Math.round((effectiveCompleted/req)*100)):0;
+  if(dFill){dFill.style.strokeDashoffset=CIRC-(displayPct/100)*CIRC;dFill.style.stroke=disabled?'#dce1ea':fillColour}
+  if(dStr){const sp=req>0?Math.min(100,(S.structuredDone/req)*100):0;dStr.style.strokeDashoffset=CIRC-(sp/100)*CIRC;dStr.style.stroke=disabled?'#dce1ea':fillColour}
+  const dPct=el('dPct');if(dPct)dPct.textContent=disabled?'–':displayPct+'%';
+  // Stats
+  const sComp=el('sCompleted');if(sComp)sComp.textContent=disabled?'—':uLbl(S.completed);
+  const sReq=el('sRequired');if(sReq)sReq.textContent=disabled?'—':uLbl(req);
+  const sRem=el('sRemaining');if(sRem){const rem=Math.max(0,req-S.completed);sRem.textContent=disabled?'—':(rem===0?'✓ Done':uLbl(rem));sRem.className='stat-val '+(rem===0?'success':cs==='red'?'danger':'amber')}
+  const sCyc=el('sCycle');if(sCyc){const cycLbl={annual:'Annual',biennial:'Biennial',triennial:'3-year','5year':'5-year',rolling3:'Rolling 3yr'}[cyc]||cyc;sCyc.textContent=cycLbl+' ('+S.authority+')'}
+  // Split bar
+  const wSplit=el('wSplit');if(wSplit){
+    const rd=ROLE_DEF[S.role];const hideSplit=rd&&rd.hideSplit;
+    wSplit.classList.toggle('hidden',!S.showSplit||S.compact||hideSplit);
+    if(S.showSplit&&!S.compact&&!hideSplit&&req>0){
+      const totalPct=Math.min(100,(S.completed/req)*100);
+      const sPct=Math.min(totalPct,(S.structuredDone/req)*100);
+      el('splitBarA').style.width=totalPct+'%';el('splitBarA').style.background=fillColour;
+      el('splitBarB').style.width=sPct+'%';el('splitBarB').style.background=fillColour;
+      el('splitLbl').textContent=S.splitLabel;
+      const structDeficit=S.structuredDone<S.structuredMin;
+      el('splitVal').textContent=uLbl(S.structuredDone)+' / '+uLbl(S.structuredMin)+' structured';
+      el('splitVal').className='split-hdr-val'+(structDeficit?' amber':'');
+      // Spread rule chip
+      const sc=el('spreadChip');if(sc){
+        if(S.spreadRule){sc.classList.remove('hidden');sc.className='split-chip '+(S.structuredDone>=S.spreadRule.minUnits?'ok':'warn');sc.textContent=(S.structuredDone>=S.spreadRule.minUnits?'✓ ':'⚠ ')+S.spreadRule.label}
+        else sc.classList.add('hidden')
+      }
+    }
+  }
+  // Non-clinical cap
+  const wNC=el('wNonClin');if(wNC){
+    if(S.nonClinCap&&!S.compact){wNC.classList.remove('hidden');const over=S.nonClinDone>S.nonClinCap.max;el('ncLbl').textContent=S.nonClinCap.label;el('ncVal').textContent=uLbl(S.nonClinDone)+' / '+uLbl(S.nonClinCap.max);el('ncVal').className='nonclin-val'+(over?' over':'');const ncPct=Math.min(100,(S.nonClinDone/req)*100);const ncCap=Math.min(100,(S.nonClinCap.max/req)*100);el('ncBar').style.width=Math.min(ncPct,ncCap)+'%';el('ncBar').style.background=over?'#b91c1c':fillColour;el('ncBarOver').style.width=over?Math.min(ncPct-ncCap,100-ncCap)+'%':'0%'}
+    else wNC.classList.add('hidden')
+  }
+  // Carry-over chip
+  const wCarry=el('wCarry');if(wCarry){
+    if(carryAmt>0&&!S.compact){wCarry.classList.remove('hidden');el('carryAmt').textContent=uLbl(carryAmt)}
+    else wCarry.classList.add('hidden')
+  }
+  // Topics
+  const wTopics=el('wTopics');if(wTopics){
+    const show=S.showTopics&&S.hasMandatoryTopics&&!S.compact;wTopics.classList.toggle('hidden',!show);
+    if(show){
+      let topicList=[...S.topics];
+      if(S.hasDEA&&isUS())topicList.push('Controlled substances (DEA)');
+      const perTopic=req/topicList.length;let done=0;
+      el('topicsList').innerHTML=topicList.map((t,i)=>{
+        const tr=TOPIC_RULES[t]||{};const thresh=i*perTopic;
+        const status2=S.completed>=thresh+perTopic?'done':S.completed>thresh?'partial':'todo';
+        if(status2==='done')done++;
+        const completed2=status2==='done'?perTopic:status2==='partial'?S.completed-thresh:0;
+        const icon=status2==='done'?'✓':status2==='partial'?'◐':'○';
+        const liveBadge=tr.mustBeLive?'<span class="topic-flag">LIVE</span>':'';
+        const minBadge=tr.minPerCycle?` min ${tr.minPerCycle} hrs`:'';
+        return`<div class="topic-row"><span class="topic-dot ${status2}">${icon}</span><span class="topic-name">${t}${liveBadge}<span style="font-size:9.5px;color:#9aaabb">${minBadge}</span></span><span class="topic-hrs">${status2==='todo'?'0 '+S.displayUnit.slice(0,3):uLbl(+completed2.toFixed(1))}</span></div>`
+      }).join('');
+      el('topicsCount').textContent=done+' of '+topicList.length+' met'
+    }
+  }
+  // Compliance
+  const wC=el('wCompliance');if(wC){
+    wC.className='w-compliance c-'+cs;
+    const txt={green:p>=100?'Complete — all requirements met':'On track — good progress',amber:'At risk — falling behind schedule',red:'Action needed — critical gap',blue:'Non-practising — CPD not required',grey:'Student — requirements activate on full registration'};
+    const badge={green:p>=100?'Complete ✓':'On Track',amber:'At Risk',red:'Action Needed',blue:'Not Required',grey:'Student'};
+    el('cText').textContent=txt[cs];el('cBadge').textContent=badge[cs]
+  }
+  // Cycle strip
+  const wCyc=el('wCycle');if(wCyc){
+    const show=S.showCycle&&!S.compact;wCyc.classList.toggle('hidden',!show);
+    if(show){
+      if(cyc==='rolling3'){el('cycStart').textContent='Rolling window';el('cycEnd').textContent='Always current';el('cycDays').textContent='—';el('cycDays').style.color=''}
+      else{const sd=new Date(S.cycleStart);el('cycStart').textContent=fmtDate(sd);el('cycEnd').textContent=fmtDate(cycleEnd());const dl=daysLeft();el('cycDays').textContent=dl+' days';el('cycDays').style.color=dl<60?'#b91c1c':dl<120?'#b45309':''}
+    }
+  }
+  // Compact
+  const cpdW=el('cpdWidget');if(cpdW)cpdW.classList.toggle('compact',S.compact);
+  // Unit pills
+  document.querySelectorAll('.unit-pill').forEach(b=>b.classList.toggle('active',b.dataset.unit===(S.displayUnit==='hours'?'hours':'points')));
+  // DEA toggle — disable if not US
+  const deaRow=el('deaRow');if(deaRow)deaRow.classList.toggle('disabled',!isUS());
+  // Pro-rata controls visibility
+  const proRataRow=el('proRataRow');const regMonthsRow=el('regMonthsRow');
+  if(proRataRow)proRataRow.classList.toggle('hidden',!S.proRata);
+  if(regMonthsRow)regMonthsRow.classList.toggle('hidden',!S.proRata);
+  // Pause months row
+  const pauseRow=el('pauseMonthsRow');if(pauseRow)pauseRow.classList.toggle('hidden',S.registrationStatus!=='paused');
+}
+// Event wiring helpers
+function onRng(id,vid,prop,cb){el(id).addEventListener('input',function(){S[prop]=parseFloat(this.value);el(vid).textContent=parseFloat(this.value).toFixed(this.step&&parseFloat(this.step)<1?1:0);if(cb)cb();render()})}
+function onSel(id,prop,cb){el(id).addEventListener('change',function(){S[prop]=this.value;if(cb)cb();render()})}
+function onTog(id,prop,cb){el(id).addEventListener('change',function(){S[prop]=this.checked;if(cb)cb();render()})}
+// Init after DOM ready
+function initWidget(){
+  lucide.createIcons();
+  // Country
+  el('selCountry').addEventListener('change',function(){S.country=this.value;applyPreset(this.value);render()});
+  // State
+  el('selState').addEventListener('change',function(){S.state=this.value;render()});
+  // Reg year
+  onSel('selRegYear','registrationYear');
+  // Reg status
+  onSel('selRegStatus','registrationStatus');
+  // Role
+  el('selRole').addEventListener('change',function(){S.role=this.value;const rd=ROLE_DEF[S.role];if(rd){S.topics=[...rd.topics];if(rd.splitLabel)S.splitLabel=rd.splitLabel};render()});
+  // Cycle
+  onSel('selCycle','cycle');
+  // Sliders
+  onRng('numRequired','numRequiredVal','baseRequired',()=>{S.structuredMin=Math.min(S.structuredMin,S.baseRequired)});
+  onRng('numStructMin','numStructMinVal','structuredMin');
+  onRng('numCompleted','numCompletedVal','completed');
+  onRng('numStructDone','numStructDoneVal','structuredDone');
+  onRng('numNonClin','numNonClinVal','nonClinDone');
+  onRng('numPrevCompleted','numPrevCompletedVal','prevCompleted');
+  onRng('numPauseMonths','numPauseMonthsVal','pauseMonths');
+  onRng('numRegMonths','numRegMonthsVal','regMonthsAgo');
+  // Toggles
+  onTog('togTopics','hasMandatoryTopics');
+  onTog('togSplit','showSplit');
+  onTog('togDEA','hasDEA');
+  onTog('togShowTopics','showTopics');
+  onTog('togShowCycle','showCycle');
+  onTog('togCompact','compact');
+  onTog('togProRata','proRata');
+  // Cycle start
+  el('selCycleStart').addEventListener('change',function(){S.cycleStart=this.value;render()});
+  // Sector tabs
+  document.querySelectorAll('.s-tab').forEach(tab=>{
+    tab.addEventListener('click',()=>{
+      document.querySelectorAll('.s-tab').forEach(t=>t.classList.remove('active'));
+      tab.classList.add('active');S.sector=tab.dataset.sector;
+      const preset=S.sector==='dental'?'au_ahpra_dental':'uk_rcvs';
+      el('selCountry').value=preset;applyPreset(preset);render()
+    })
+  });
+  // Unit pills
+  document.querySelectorAll('.unit-pill').forEach(pill=>{
+    pill.addEventListener('click',()=>{S.displayUnit=pill.dataset.unit==='hours'?'hours':'points';render()})
+  });
+  // Block dead links
+  document.querySelectorAll('a[href="#"]').forEach(a=>a.addEventListener('click',e=>e.preventDefault()));
+  // Init
+  applyPreset('uk_rcvs');render()
+}
+document.addEventListener('DOMContentLoaded',initWidget);
