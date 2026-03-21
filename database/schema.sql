@@ -98,6 +98,10 @@ CREATE TABLE registration_authorities (
     uses_credits            BOOLEAN         NOT NULL DEFAULT FALSE,
     unit_label              VARCHAR(20)     NOT NULL DEFAULT 'hours',  -- 'hours','points','CEUs','credits'
     units_per_hour          DECIMAL(5,2)    NOT NULL DEFAULT 1.00,     -- conversion factor
+    split_label             VARCHAR(100)    NULL,       -- e.g. 'Structured / Non-structured', 'Verifiable / Non-verifiable'
+    mandatory_topics_enabled BOOLEAN        NOT NULL DEFAULT FALSE,
+    cpd_term                VARCHAR(10)     NOT NULL DEFAULT 'CPD',   -- 'CPD', 'CE', 'CPD/CE'
+    cpd_term_full           VARCHAR(100)    NOT NULL DEFAULT 'Continuing Professional Development',
     created_at              TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
     updated_at              TIMESTAMPTZ     NOT NULL DEFAULT NOW()
 );
@@ -121,6 +125,7 @@ CREATE TABLE professional_roles (
     role_abbreviation   VARCHAR(20)     NULL,               -- e.g. 'DVM', 'RVN', 'RDN', 'DH'
     sector              sector_enum     NOT NULL,
     tier                role_tier_enum  NOT NULL DEFAULT 'generalist',
+    is_statutorily_registered BOOLEAN   NOT NULL DEFAULT TRUE,  -- FALSE = voluntary CPD only (e.g. AU dental assistants)
     created_at          TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
     updated_at          TIMESTAMPTZ     NOT NULL DEFAULT NOW()
 );
@@ -236,6 +241,8 @@ CREATE TABLE cpd_requirement_rules (
     -- New graduate rules
     new_graduate_exemption      BOOLEAN             NOT NULL DEFAULT FALSE,
     new_graduate_months         INTEGER             NULL,
+    new_graduate_reduced_units  DECIMAL(8,2)        NULL,   -- e.g. 20 for RCVS year-1 (not just the flag)
+    mandatory_topics_enabled    BOOLEAN             NOT NULL DEFAULT FALSE,  -- role-level override
 
     -- Pro-rata / exemptions
     pro_rata_for_part_year      BOOLEAN             NOT NULL DEFAULT FALSE,
@@ -410,9 +417,10 @@ CREATE TABLE pdp_goals (
 
     goal_title          VARCHAR(500)        NOT NULL,
     goal_description    TEXT                NULL,
-    field_of_practice   VARCHAR(200)        NULL,
+    field_of_practice   VARCHAR(200)        NULL,   -- RCVS / DCNZ: named field e.g. 'small animal medicine'
     target_date         DATE                NULL,
     status              goal_status_enum    NOT NULL DEFAULT 'planned',
+    carried_forward_from_cycle_id UUID     NULL REFERENCES cpd_cycles(cycle_id) ON DELETE SET NULL,  -- links to original cycle if rolled forward
 
     created_at          TIMESTAMPTZ         NOT NULL DEFAULT NOW(),
     updated_at          TIMESTAMPTZ         NOT NULL DEFAULT NOW()

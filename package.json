@@ -1,5 +1,15 @@
 {
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
   "devDependencies": {
     "exceljs": "^4.4.0"
+  },
+  "dependencies": {
+    "better-sqlite3": "^12.8.0",
+    "cors": "^2.8.6",
+    "express": "^5.2.1",
+    "uuid": "^13.0.0"
   }
 }
