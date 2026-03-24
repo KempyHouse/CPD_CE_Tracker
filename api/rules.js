@@ -25,9 +25,10 @@ router.get('/', (req, res) => {
 
     const sql = `
       SELECT r.*,
-             a.authority_abbreviation, a.unit_label, a.cpd_term, a.cpd_term_full,
+             a.authority_key, a.authority_abbreviation, a.unit_label, a.cpd_term, a.cpd_term_full,
              a.split_label, a.mandatory_topics_enabled as auth_topics_enabled,
-             ro.role_name, ro.role_key, ro.tier, ro.is_statutorily_registered
+             ro.role_name, ro.role_key, ro.tier, ro.is_statutorily_registered, ro.sector,
+             ro.role_abbreviation
       FROM cpd_requirement_rules r
       JOIN registration_authorities a ON r.authority_id = a.authority_id
       JOIN professional_roles ro ON r.role_id = ro.role_id

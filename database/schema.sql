@@ -98,7 +98,8 @@ CREATE TABLE registration_authorities (
     uses_credits            BOOLEAN         NOT NULL DEFAULT FALSE,
     unit_label              VARCHAR(20)     NOT NULL DEFAULT 'hours',  -- 'hours','points','CEUs','credits'
     units_per_hour          DECIMAL(5,2)    NOT NULL DEFAULT 1.00,     -- conversion factor
-    split_label             VARCHAR(100)    NULL,       -- e.g. 'Structured / Non-structured', 'Verifiable / Non-verifiable'
+    split_label             VARCHAR(100)    NULL,
+    split_bar_concept       VARCHAR(20)     NOT NULL DEFAULT 'structured',  -- 'structured' or 'verifiable'
     mandatory_topics_enabled BOOLEAN        NOT NULL DEFAULT FALSE,
     cpd_term                VARCHAR(10)     NOT NULL DEFAULT 'CPD',   -- 'CPD', 'CE', 'CPD/CE'
     cpd_term_full           VARCHAR(100)    NOT NULL DEFAULT 'Continuing Professional Development',

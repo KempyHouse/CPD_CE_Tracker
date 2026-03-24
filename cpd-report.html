@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CPD Report — Vetstream</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --navy: #2d3c4e; --purple: #5c3fa3; --teal: #3c5a70; --green: #2e7d52;
+      --amber: #d97706; --red: #b91c1c; --border: #e0e2e7; --muted: #6b7280;
+      --font: 'Inter', system-ui, sans-serif;
+    }
+    body { font-family: var(--font); background: #f3f4f6; color: #222233; font-size: 13px; line-height: 1.5; }
+
+    /* ── Screen chrome ── */
+    .rpt-chrome { background: var(--navy); padding: 12px 24px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .rpt-chrome h1 { font-size: 14px; font-weight: 600; color: #fff; letter-spacing: -.2px; }
+    .rpt-chrome-right { display: flex; gap: 10px; }
+    .rpt-btn { padding: 7px 16px; border-radius: 6px; border: none; font-family: var(--font); font-size: 12.5px; font-weight: 600; cursor: pointer; transition: all .15s; }
+    .rpt-btn-print { background: var(--purple); color: #fff; }
+    .rpt-btn-print:hover { background: #6e50bc; }
+    .rpt-btn-back  { background: rgba(255,255,255,0.12); color: #fff; }
+    .rpt-btn-back:hover  { background: rgba(255,255,255,0.22); }
+    .rpt-badge { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); border-radius: 6px; padding: 5px 11px; font-size: 11px; color: rgba(255,255,255,.7); display: flex; align-items: center; gap: 6px; }
+    .rpt-badge-dot { width: 6px; height: 6px; border-radius: 50%; background: #4ade80; }
+
+    /* ── Report body ── */
+    .rpt-outer { max-width: 860px; margin: 28px auto; padding: 0 20px 60px; }
+    .rpt-page { background: #fff; border-radius: 8px; box-shadow: 0 2px 20px rgba(0,0,0,.08); overflow: hidden; }
+
+    .rpt-header { padding: 26px 32px 22px; border-bottom: 3px solid var(--navy); display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; background: linear-gradient(120deg, var(--navy) 0%, var(--teal) 100%); }
+    .rpt-header-left h2 { font-size: 20px; font-weight: 700; color: #fff; letter-spacing: -.4px; }
+    .rpt-header-left p  { font-size: 12px; color: rgba(255,255,255,.7); margin-top: 4px; }
+    .rpt-header-right { text-align: right; }
+    .rpt-authority-tag { background: rgba(255,255,255,.15); color: #fff; font-size: 11px; font-weight: 700; padding: 4px 12px; border-radius: 4px; display: inline-block; letter-spacing: .04em; }
+    .rpt-gen-date { font-size: 10px; color: rgba(255,255,255,.5); margin-top: 8px; }
+
+    .rpt-section { padding: 22px 32px; border-bottom: 1px solid var(--border); }
+    .rpt-section:last-child { border-bottom: none; }
+    .rpt-section-title { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin-bottom: 14px; }
+
+    /* Practitioner info grid */
+    .rpt-info-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; }
+
+    .rpt-info-label { font-size: 10px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 3px; }
+    .rpt-info-val   { font-size: 13px; font-weight: 500; color: var(--navy); }
+
+    /* Summary boxes */
+    .rpt-summary { display: flex; gap: 12px; }
+    .rpt-sum-box { flex: 1; background: #f8f9fb; border: 1px solid var(--border); border-radius: 7px; padding: 12px 14px; }
+    .rpt-sum-box.highlight { border-color: var(--purple); background: #f0ebff; }
+    .rpt-sum-box.ok        { border-color: var(--green);  background: #f0faf3; }
+    .rpt-sum-box.warn      { border-color: var(--amber);  background: #fffbeb; }
+    .rpt-sum-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin-bottom: 6px; }
+    .rpt-sum-val   { font-size: 22px; font-weight: 700; color: var(--navy); line-height: 1; letter-spacing: -.4px; }
+    .rpt-sum-sub   { font-size: 10.5px; color: var(--muted); margin-top: 5px; }
+
+    /* Progress bar in summary */
+    .rpt-prog { margin-top: 14px; }
+    .rpt-prog-track { height: 6px; background: #e5e7eb; border-radius: 99px; overflow: hidden; margin-bottom: 5px; }
+    .rpt-prog-fill  { height: 100%; border-radius: 99px; transition: width .6s; }
+    .rpt-prog-fill.green { background: var(--green); }
+    .rpt-prog-fill.amber { background: var(--amber); }
+    .rpt-prog-fill.red   { background: var(--red); }
+    .rpt-prog-meta { display: flex; justify-content: space-between; font-size: 10.5px; color: var(--muted); }
+
+    /* Split bar line */
+    .rpt-split { margin-top: 14px; }
+    .rpt-split-label { display: flex; justify-content: space-between; font-size: 10.5px; font-weight: 600; color: var(--navy); margin-bottom: 5px; }
+    .rpt-split-track { height: 5px; background: #e5e7eb; border-radius: 99px; overflow: hidden; display: flex; }
+    .rpt-split-a { background: var(--green); border-radius: 99px 0 0 99px; }
+    .rpt-split-b { background: #a7f3d0; }
+    .rpt-split-req { border-top: 2px dashed var(--amber); margin-top: -2px; }
+
+    /* Activity table */
+    .rpt-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    .rpt-table th { padding: 7px 10px; text-align: left; font-size: 9.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); border-bottom: 2px solid var(--border); background: #f8f9fb; }
+    .rpt-table td { padding: 9px 10px; border-bottom: 1px solid #f0f1f4; color: var(--navy); vertical-align: top; }
+    .rpt-table tr:last-child td { border-bottom: none; }
+    .rpt-table tr:hover td { background: #fafbff; }
+    .rpt-chip { display: inline-block; font-size: 8.5px; font-weight: 700; padding: 1px 6px; border-radius: 99px; white-space: nowrap; }
+    .rpt-chip.s { background: #d1fae5; color: #065f46; }
+    .rpt-chip.v { background: #dbeafe; color: #1d4ed8; }
+    .rpt-chip.n { background: #f3f4f6; color: #6b7280; }
+    .rpt-empty { text-align: center; padding: 28px; color: var(--muted); font-size: 12px; background: #fafbff; }
+
+    /* Declaration */
+    .rpt-declaration { background: #fafbff; border: 1px solid var(--border); border-radius: 7px; padding: 16px; font-size: 12px; line-height: 1.7; color: #44556a; font-style: italic; }
+    .rpt-sig-line { display: flex; gap: 32px; margin-top: 18px; }
+    .rpt-sig-field { flex: 1; border-bottom: 1px solid #aab; padding-bottom: 3px; font-size: 11px; color: var(--muted); }
+
+    /* Submission guidance */
+    .rpt-submission { background: #fffbeb; border: 1px solid #fcd34d; border-radius: 7px; padding: 16px; }
+    .rpt-sub-title { font-size: 11.5px; font-weight: 700; color: #92400e; margin-bottom: 10px; display: flex; align-items: center; gap: 7px; }
+    .rpt-sub-steps ol { padding-left: 20px; margin: 10px 0; }
+    .rpt-sub-steps li { margin-bottom: 6px; font-size: 12px; color: #44556a; }
+    .rpt-sub-steps a { color: var(--purple); font-weight: 600; }
+    .rpt-sub-note  { font-size: 10.5px; color: var(--muted); margin-top: 10px; line-height: 1.5; }
+    .rpt-no-sub { font-size: 12px; color: var(--muted); font-style: italic; }
+
+    /* ── Print CSS ── */
+    @media print {
+      body { background: #fff; }
+      .rpt-chrome { display: none; }
+      .rpt-outer { margin: 0; padding: 0; max-width: 100%; }
+      .rpt-page { box-shadow: none; border-radius: 0; }
+      .rpt-header { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .rpt-sum-box { break-inside: avoid; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .rpt-table tr { break-inside: avoid; }
+      .rpt-table { font-size: 11px; }
+      .no-print { display: none; }
+    }
+  </style>
+  <link rel="stylesheet" href="icon-rail.css" />
+</head>
+<body>
+  <!-- Screen chrome (hidden on print) -->
+  <div class="rpt-chrome no-print">
+    <div style="display:flex;align-items:center;gap:14px">
+      <h1>📄 CPD Compliance Report</h1>
+      <div class="rpt-badge"><span class="rpt-badge-dot"></span>Live data from API</div>
+    </div>
+    <div class="rpt-chrome-right">
+      <button class="rpt-btn rpt-btn-back" onclick="history.back()">← Back</button>
+      <button class="rpt-btn rpt-btn-print" onclick="window.print()">🖨 Print / Save PDF</button>
+    </div>
+  </div>
+
+  <div class="rpt-outer">
+    <div class="rpt-page" id="rptPage">
+      <div style="text-align:center;padding:60px;color:#9aaabb" id="rptLoading">
+        Loading report…
+      </div>
+    </div>
+  </div>
+
+<script>
+const TYPE_LABEL = {
+  conference_session:'Conference', webinar:'Webinar', online_course:'Online course',
+  hands_on_lab:'Wetlab', journal_reading:'Self-study', peer_discussion:'Peer discussion',
+  teaching:'Teaching', other:'Other'
+};
+
+const SUBMISSION_STEPS = {
+  uk_rcvs: {
+    title: 'Submitting to RCVS',
+    url:   'https://www.rcvs.org.uk/1cpd',
+    steps: [
+      'Log in at <a href="https://www.rcvs.org.uk/1cpd" target="_blank">rcvs.org.uk/1cpd</a> using your RCVS account.',
+      'Click <strong>My CPD</strong> → <strong>Add Activity</strong> for each entry above.',
+      'Enter the title, date, provider, hours, and whether each activity was structured.',
+      'Add a brief reflection for each activity (RCVS requires a Plan, Do, Reflect record).',
+      'Your annual CPD count updates automatically — no formal submission is needed unless audited.',
+    ],
+    note: 'RCVS does not require a formal CPD submission form. Your 1CPD record is your submission. Print this report and keep it as a backup reference.',
+  },
+  uk_gdc: {
+    title: 'Submitting to GDC',
+    url:   'https://ecpd.gdc-uk.org',
+    steps: [
+      'Log in at <a href="https://ecpd.gdc-uk.org" target="_blank">ecpd.gdc-uk.org</a> with your GDC number and password.',
+      'Navigate to <strong>My CPD</strong> → <strong>Add CPD Activity</strong>.',
+      'For each Verifiable activity above, upload the certificate or attendance confirmation as evidence.',
+      'Record whether each activity was Verifiable or Non-verifiable — use the split bar above as your reference.',
+      'Complete your annual CPD return in the eGDC portal before your renewal date.',
+    ],
+    note: 'GDC requires documentary evidence for all Verifiable CPD. Attach certificates to each entry in eGDC. Non-verifiable activities are self-declared.',
+  },
+  us_avma: {
+    title: 'Submitting to your State Board (USA)',
+    url:   'https://www.aavsb.org/race',
+    steps: [
+      'US CE requirements are administered by individual state veterinary boards — not AVMA nationally.',
+      'Use this report as your CE transcript when renewing your state licence.',
+      'If your CE provider is <a href="https://www.aavsb.org/race" target="_blank">AAVSB RACE-approved</a>, they may report your completion directly to your state board.',
+      'Check your specific state board website for the exact submission process and deadline.',
+    ],
+    note: 'Keep CE certificates from each provider. Most state boards require you to produce these on audit.',
+  },
+  au_ahpra: {
+    title: 'Completing your AHPRA renewal',
+    url:   'https://www.ahpra.gov.au',
+    steps: [
+      'Log in at <a href="https://www.ahpra.gov.au/Registration/Renew-Registration.aspx" target="_blank">AHPRA Online Services</a>.',
+      'During annual registration renewal, you will be asked to declare your CPD hours.',
+      'AHPRA only requires a total hours declaration — not activity-by-activity entry.',
+      'Use the Summary section of this report to complete the hours declaration.',
+      'Retain this full activity log for 5 years in case of audit.',
+    ],
+    note: 'AHPRA does not have an online activity log. This report serves as your audit-ready evidence portfolio.',
+  },
+  nz_vcnz: {
+    title: 'Submitting to VCNZ',
+    url:   'https://www.vcnz.org.nz',
+    steps: [
+      'Complete your Annual Practising Certificate (APC) renewal via the VCNZ online portal.',
+      'Declare your total CPD hours during the renewal process.',
+      'Use the Summary section of this report to cross-reference your hours declaration.',
+      'Keep this report on file for 3 years — VCNZ conducts random audits.',
+    ],
+    note: 'VCNZ does not require activity-level reporting at renewal. A self-declaration of hours is sufficient.',
+  },
+  nz_dcnz: {
+    title: 'Submitting to DCNZ',
+    url:   'https://www.dcnz.org.nz',
+    steps: [
+      'Renew your Annual Practising Certificate via the DCNZ online portal.',
+      'Declare your CPD activity type and hours in the renewal form.',
+      'A summary PDF of this report can be emailed to <strong>info@dcnz.org.nz</strong> if required.',
+      'Retain certificates for verifiable activities for 3 years.',
+    ],
+    note: 'DCNZ accepts PDF activity logs by email. Use the Print / Save PDF button above to generate your submission document.',
+  },
+  ie_vci: {
+    title: 'Submitting to VCI',
+    url:   'https://www.vci.ie',
+    steps: [
+      'Log your CPD activities in the <a href="https://www.vci.ie" target="_blank">VCI member portal</a> before 31 December each year.',
+      'Enter each activity — the portal accepts self-declaration.',
+      'Use this report as your source data when entering activities in the VCI system.',
+    ],
+    note: 'VCI requires 20 hours logged in their own portal by 31 December annually.',
+  },
+  za_savc: {
+    title: 'Submitting to SAVC',
+    url:   'https://www.savc.org.za',
+    steps: [
+      'Complete the SAVC CPD Annual Return form (available on savc.org.za).',
+      'Fill in the form using the activity log above as your source record.',
+      'Attach this printed report as supporting documentation.',
+      'Post or email the completed form to the SAVC office by the annual deadline.',
+    ],
+    note: 'SAVC uses a printed return form. This report is formatted to complement their template. A wet signature may be required.',
+  },
+};
+
+function fmt(iso) {
+  if (!iso) return '—';
+  return new Date(iso).toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' });
+}
+function fmtU(n, short) { return parseFloat(n||0).toFixed(1)+' '+short; }
+
+async function buildReport() {
+  try {
+    const [pData, activities, ruleData] = await Promise.all([
+      fetch('/api/practitioners/me').then(r=>r.json()),
+      fetch('/api/activities').then(r=>r.json()),
+      fetch('/api/rules').then(r=>r.json()),
+    ]);
+
+    const reg  = pData.registration || {};
+    const ds   = pData.demo_settings || {};
+    const auth = reg.authority_abbreviation || 'Unknown Authority';
+    const authKey = reg.authority_key || '';
+    const term = reg.cpd_term || 'CPD';
+    const unitShort = (ruleData.ui_labels && ruleData.ui_labels.unit_short) || 'hrs';
+    const splitConcept = reg.split_bar_concept || 'structured';
+    const splitPos = (ruleData.ui_labels && ruleData.ui_labels.split_label_positive) || 'Structured';
+    const splitNeg = (ruleData.ui_labels && ruleData.ui_labels.split_label_negative) || 'Non-structured';
+
+    // Fetch current cycle
+    const cycle = await fetch('/api/cycles/current').then(r=>r.json()).catch(()=>({}));
+    const done    = parseFloat(cycle.units_completed||0);
+    const strDone = parseFloat(splitConcept==='verifiable' ? (cycle.verifiable_completed||0) : (cycle.structured_completed||0));
+    const req     = parseFloat(ds.baseRequired || ruleData.required_units || 35);
+    const strMin  = parseFloat(ds.structuredMin || ruleData.structured_min || 0);
+    const pct     = Math.min(100, Math.round((done/Math.max(req,1))*100));
+    const strPct  = Math.min(100, Math.round((strDone/Math.max(strMin||req,1))*100));
+    const colour  = pct>=70 ? 'green' : pct>=40 ? 'amber' : 'red';
+    const cycleStart = cycle.cycle_start_date || '2026-01-01';
+    const cycleEnd   = cycle.cycle_end_date   || '2026-12-31';
+    const genDate = new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});
+    const subGuide = SUBMISSION_STEPS[authKey] || null;
+
+    // Activity table rows
+    const actRows = activities.length ? activities.map(a => {
+      const isPos = splitConcept==='verifiable' ? a.is_verifiable : a.is_structured;
+      const chip  = splitConcept!=='none'
+        ? `<span class="rpt-chip ${isPos?('v'===splitConcept?'v':'s'):'n'}">${isPos?splitPos:splitNeg}</span>`
+        : '';
+      return `<tr>
+        <td>${fmt(a.activity_date)}</td>
+        <td><strong>${a.activity_title}</strong></td>
+        <td>${TYPE_LABEL[a.activity_type]||a.activity_type}</td>
+        <td>${a.provider_name||'—'}</td>
+        <td style="text-align:right;font-weight:600">${fmtU(a.units_awarded||a.units_claimed, unitShort)}</td>
+        <td>${chip}</td>
+      </tr>`;
+    }).join('') : `<tr><td colspan="6"><div class="rpt-empty">No activities logged yet for this cycle.</div></td></tr>`;
+
+    const splitRow = strMin > 0 ? `
+      <div class="rpt-section">
+        <div class="rpt-section-title">${splitPos} / ${splitNeg} Split</div>
+        <div style="max-width:500px">
+          <div class="rpt-split">
+            <div class="rpt-split-label">
+              <span>${splitPos}: ${fmtU(strDone, unitShort)} of ${fmtU(strMin, unitShort)} min</span>
+              <span>${strDone >= strMin ? '✓ Minimum met' : '⚠ Below minimum'}</span>
+            </div>
+            <div class="rpt-split-track">
+              <div class="rpt-split-a" style="width:${Math.min(100,(strDone/req)*100)}%"></div>
+              <div class="rpt-split-b" style="width:${Math.min(100,Math.max(0,((done-strDone)/req)*100))}%"></div>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-top:4px">
+              <span>${splitPos}: ${fmtU(strDone,unitShort)}</span>
+              <span>${splitNeg}: ${fmtU(done-strDone,unitShort)}</span>
+              <span>Total: ${fmtU(done,unitShort)}</span>
+            </div>
+          </div>
+        </div>
+      </div>` : '';
+
+    const subSection = subGuide ? `
+      <div class="rpt-section">
+        <div class="rpt-section-title">Submission Guidance</div>
+        <div class="rpt-submission">
+          <div class="rpt-sub-title">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.79 19.79 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+            How to submit your ${term} record to ${auth}
+          </div>
+          <div class="rpt-sub-steps"><ol>${subGuide.steps.map(s=>`<li>${s}</li>`).join('')}</ol></div>
+          <div class="rpt-sub-note">ℹ️ ${subGuide.note}</div>
+        </div>
+      </div>` : `
+      <div class="rpt-section">
+        <div class="rpt-section-title">Submission Guidance</div>
+        <p class="rpt-no-sub">Submission guidance is not yet configured for ${auth}. Refer to your authority's website for submission instructions.</p>
+      </div>`;
+
+    document.getElementById('rptPage').innerHTML = `
+      <div class="rpt-header">
+        <div class="rpt-header-left">
+          <h2>${term} Compliance Report — ${cycle.cycle_start_date ? fmt(cycleStart).replace(/\d{1,2}\s/,'') + '–' + fmt(cycleEnd) : '2026 Cycle'}</h2>
+          <p>Generated on ${genDate} · Vetstream CPD/CE Tracker</p>
+        </div>
+        <div class="rpt-header-right">
+          <div class="rpt-authority-tag">${auth}</div>
+          <div class="rpt-gen-date">Confidential — for submission purposes only</div>
+        </div>
+      </div>
+
+      <div class="rpt-section">
+        <div class="rpt-section-title">Practitioner Details</div>
+        <div class="rpt-info-grid">
+          <div class="rpt-info-item"><div class="rpt-info-label">Full Name</div><div class="rpt-info-val">${pData.first_name||''} ${pData.last_name||''}</div></div>
+          <div class="rpt-info-item"><div class="rpt-info-label">Role</div><div class="rpt-info-val">${reg.role_name||'—'}</div></div>
+          <div class="rpt-info-item"><div class="rpt-info-label">Authority</div><div class="rpt-info-val">${reg.authority_name||auth}</div></div>
+          <div class="rpt-info-item"><div class="rpt-info-label">${term} Cycle</div><div class="rpt-info-val">${fmt(cycleStart)} – ${fmt(cycleEnd)}</div></div>
+        </div>
+      </div>
+
+      <div class="rpt-section">
+        <div class="rpt-section-title">Compliance Summary</div>
+        <div class="rpt-summary">
+          <div class="rpt-sum-box ${colour==='green'?'ok':colour==='amber'?'warn':''}">
+            <div class="rpt-sum-label">Hours Completed</div>
+            <div class="rpt-sum-val">${fmtU(done, unitShort)}</div>
+            <div class="rpt-sum-sub">of ${fmtU(req, unitShort)} required</div>
+          </div>
+          <div class="rpt-sum-box ${colour==='green'?'ok':colour==='amber'?'warn':''}">
+            <div class="rpt-sum-label">Completion</div>
+            <div class="rpt-sum-val">${pct}%</div>
+            <div class="rpt-sum-sub">${pct>=100?'✓ Requirement met':fmtU(req-done,unitShort)+' remaining'}</div>
+          </div>
+          <div class="rpt-sum-box">
+            <div class="rpt-sum-label">Activities Logged</div>
+            <div class="rpt-sum-val">${activities.length}</div>
+            <div class="rpt-sum-sub">this cycle</div>
+          </div>
+          <div class="rpt-sum-box">
+            <div class="rpt-sum-label">Cycle Status</div>
+            <div class="rpt-sum-val" style="font-size:15px">${pct>=100?'✓ Complete':pct>=50?'⚠ In progress':'✗ Behind'}</div>
+            <div class="rpt-sum-sub">${fmt(cycleStart)} – ${fmt(cycleEnd)}</div>
+          </div>
+        </div>
+        <div class="rpt-prog">
+          <div class="rpt-prog-track"><div class="rpt-prog-fill ${colour}" style="width:${pct}%"></div></div>
+          <div class="rpt-prog-meta"><span>${fmtU(done,unitShort)} completed</span><span>${pct}% of ${fmtU(req,unitShort)} required</span></div>
+        </div>
+      </div>
+
+      ${splitRow}
+
+      <div class="rpt-section">
+        <div class="rpt-section-title">${term} Activity Log (${activities.length} ${activities.length===1?'entry':'entries'})</div>
+        <table class="rpt-table">
+          <thead><tr>
+            <th>Date</th><th>Activity Title</th><th>Type</th><th>Provider</th><th style="text-align:right">${unitShort}</th><th>${splitConcept!=='none'?splitPos+' / '+splitNeg:''}</th>
+          </tr></thead>
+          <tbody>${actRows}</tbody>
+        </table>
+      </div>
+
+      <div class="rpt-section">
+        <div class="rpt-section-title">Practitioner Declaration</div>
+        <div class="rpt-declaration">
+          I, <strong>${pData.first_name||''} ${pData.last_name||''}</strong>, declare that the CPD activities listed above are accurate and complete to the best of my knowledge. All activities were undertaken in the period stated and are relevant to my professional practice.
+        </div>
+        <div class="rpt-sig-line">
+          <div class="rpt-sig-field">Signature: &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div>
+          <div class="rpt-sig-field">Date: &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div>
+          <div class="rpt-sig-field">Registration No: &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div>
+        </div>
+      </div>
+
+      ${subSection}
+    `;
+  } catch(e) {
+    document.getElementById('rptPage').innerHTML = `<div style="padding:40px;text-align:center;color:#b91c1c"><p>⚠ Could not load report data.</p><p style="color:#9aaabb;margin-top:8px;font-size:12px">${e.message}</p></div>`;
+  }
+}
+buildReport();
+</script>
+<script src="dist/icon-rail.js"></script>
+</body>
+</html>

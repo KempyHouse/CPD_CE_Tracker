@@ -1,0 +1,454 @@
+/**
+ * icon-rail.css — Icon Rail + Sub-sidemenu (Vetstream colour scheme)
+ * Colours: vs-navy #2d3c4e | vs-teal #3c5a70 | vs-purple #5c3fa3 | vs-blue #1a6fcc
+ */
+
+/* ── Keyframes ─────────────────────────────────────────────── */
+@keyframes ir-link-in {
+  from { opacity: 0; transform: translateX(-10px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes ir-header-in {
+  from { opacity: 0; transform: translateY(-6px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0)   scale(1); }
+}
+@keyframes ir-fab-pulse {
+  0%, 100% { box-shadow: 0 4px 20px rgba(92,63,163,0.3); }
+  50%       { box-shadow: 0 6px 32px rgba(92,63,163,0.55); }
+}
+
+/* ── Rail shell ────────────────────────────────────────────── */
+.ir-rail {
+  position: fixed;
+  left: 0; top: 0; bottom: 0;
+  width: 68px;
+  background: linear-gradient(180deg, #1e2c3b 0%, #2d3c4e 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  z-index: 600;
+  overflow: visible;
+  transform: translateX(-100%);
+  transition: transform 0.32s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.35);
+}
+body.ir-mode .ir-rail { transform: translateX(0); }
+body.ir-mode .tab-nav { display: none !important; }
+
+/* ── Logo ──────────────────────────────────────────────────── */
+.ir-logo {
+  width: 100%;
+  padding: 16px 0 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  flex-shrink: 0;
+}
+.ir-logo-monogram {
+  width: 38px; height: 38px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #5c3fa3 0%, #4a6fa5 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: -0.5px;
+  font-family: 'Inter', system-ui, sans-serif;
+  box-shadow: 0 4px 14px rgba(92,63,163,0.5), inset 0 1px 0 rgba(255,255,255,0.15);
+}
+
+/* ── Nav ───────────────────────────────────────────────────── */
+.ir-nav {
+  flex: 1;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 12px 0;
+  overflow-y: auto;
+  overflow-x: visible;
+  scrollbar-width: none;
+}
+.ir-nav::-webkit-scrollbar { display: none; }
+
+.ir-item {
+  position: relative;
+  width: 52px;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 8px 4px;
+  cursor: pointer;
+  margin-bottom: 4px;
+  color: rgba(186,208,224,0.65);
+  user-select: none;
+  transition: background 0.18s, color 0.18s, transform 0.14s, box-shadow 0.18s;
+}
+.ir-item:hover {
+  background: rgba(255,255,255,0.08);
+  color: #e8f0f7;
+  transform: translateX(2px);
+}
+.ir-item.ir-item--active {
+  background: rgba(92,63,163,0.22);
+  color: #c4b0f0;
+  box-shadow: inset 3px 0 0 #5c3fa3;
+  border-radius: 0 12px 12px 0;
+}
+.ir-item.ir-item--active:hover { transform: none; }
+
+.ir-item-icon { line-height: 1; transition: transform 0.18s; }
+.ir-item-icon .material-symbols-outlined { font-size: 22px !important; }
+.ir-item:hover .ir-item-icon { transform: scale(1.1); }
+
+.ir-item-label {
+  font-size: 9px;
+  font-weight: 500;
+  text-align: center;
+  white-space: nowrap;
+  max-width: 58px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.3;
+  font-family: 'Inter', system-ui, sans-serif;
+  color: inherit;
+}
+
+/* CSS tooltip */
+.ir-item::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  left: calc(100% + 10px); top: 50%;
+  transform: translateY(-50%) translateX(-4px);
+  transform-origin: left center;
+  background: #2d3c4e;
+  color: #e8f0f7;
+  font-size: 11.5px;
+  font-weight: 600;
+  padding: 5px 11px;
+  border-radius: 7px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s, transform 0.15s;
+  z-index: 800;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.35);
+  font-family: 'Inter', system-ui, sans-serif;
+  border: 1px solid rgba(255,255,255,0.1);
+}
+.ir-item:not(.ir-item--active):hover::after {
+  opacity: 1;
+  transform: translateY(-50%) translateX(0);
+}
+
+/* Divider */
+.ir-divider {
+  width: 30px; height: 1px;
+  background: rgba(255,255,255,0.08);
+  margin: 8px 0;
+}
+
+/* ── Bottom avatar ─────────────────────────────────────────── */
+.ir-bottom {
+  width: 100%;
+  padding: 12px 0 18px;
+  border-top: 1px solid rgba(255,255,255,0.08);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.ir-avatar {
+  width: 34px; height: 34px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #3c5a70 0%, #2d3c4e 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+  cursor: pointer;
+  font-family: 'Inter', system-ui, sans-serif;
+  transition: box-shadow 0.2s, transform 0.15s;
+  box-shadow: 0 0 0 2px rgba(255,255,255,0.08);
+}
+.ir-avatar:hover {
+  box-shadow: 0 0 0 3px rgba(92,63,163,0.65);
+  transform: scale(1.06);
+}
+
+/* ── Sub-panel ─────────────────────────────────────────────── */
+.ir-panel {
+  position: fixed;
+  left: 68px; top: 0; bottom: 0;
+  width: 260px;
+  background: #ffffff;
+  border-right: 1px solid #e0e2e7;
+  z-index: 590;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  /* Closed */
+  opacity: 0;
+  transform: translateX(-16px);
+  visibility: hidden;
+  transition:
+    transform  0.2s  cubic-bezier(0.32, 0, 0.67, 0),
+    opacity    0.16s ease,
+    visibility 0s    linear 0.2s;
+  box-shadow: none;
+}
+.ir-panel.ir-panel--open {
+  opacity: 1;
+  transform: translateX(0);
+  visibility: visible;
+  /* Spring open */
+  transition:
+    transform  0.44s cubic-bezier(0.34, 1.4, 0.64, 1),
+    opacity    0.28s ease,
+    visibility 0s    linear 0s;
+  box-shadow: 6px 0 28px rgba(0, 0, 0, 0.1);
+}
+
+/* Panel header — Vetstream navy → teal gradient */
+.ir-panel-header {
+  padding: 22px 20px 18px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  background: linear-gradient(145deg, #1e2c3b 0%, #2d3c4e 45%, #3c5a70 100%);
+  flex-shrink: 0;
+  position: relative;
+  overflow: hidden;
+}
+/* Subtle radial accent using vs-purple */
+.ir-panel-header::before {
+  content: '';
+  position: absolute;
+  top: -20px; right: -20px;
+  width: 130px; height: 130px;
+  background: radial-gradient(circle, rgba(92,63,163,0.3) 0%, transparent 65%);
+  pointer-events: none;
+}
+.ir-panel-header::after {
+  content: '';
+  position: absolute;
+  bottom: -10px; left: 10px;
+  width: 90px; height: 90px;
+  background: radial-gradient(circle, rgba(26,111,204,0.18) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.ir-panel-section-icon .material-symbols-outlined {
+  font-size: 30px !important;
+  color: rgba(196,181,253,0.9);
+  display: block;
+  margin-bottom: 10px;
+}
+.ir-panel-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: -0.4px;
+  font-family: 'Inter', system-ui, sans-serif;
+}
+.ir-panel-sub {
+  font-size: 11px;
+  color: rgba(186,208,224,0.8);
+  margin-top: 4px;
+  font-family: 'Inter', system-ui, sans-serif;
+}
+.ir-panel-close {
+  position: absolute; top: 14px; right: 14px;
+  width: 26px; height: 26px;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 6px;
+  color: rgba(255,255,255,0.65);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  transition: background 0.15s, color 0.15s;
+  z-index: 1;
+}
+.ir-panel-close:hover { background: rgba(255,255,255,0.18); color: #fff; }
+.ir-panel-close .material-symbols-outlined { font-size: 16px !important; }
+
+/* Stagger animations */
+.ir-panel--open .ir-panel-header {
+  animation: ir-header-in 0.32s cubic-bezier(0.16,1,0.3,1) both;
+}
+.ir-panel--open .ir-panel-link {
+  animation: ir-link-in 0.36s cubic-bezier(0.16,1,0.3,1) both;
+}
+.ir-panel--open .ir-panel-link:nth-child(1) { animation-delay: 0.07s; }
+.ir-panel--open .ir-panel-link:nth-child(2) { animation-delay: 0.12s; }
+.ir-panel--open .ir-panel-link:nth-child(3) { animation-delay: 0.17s; }
+.ir-panel--open .ir-panel-link:nth-child(4) { animation-delay: 0.22s; }
+.ir-panel--open .ir-panel-link:nth-child(5) { animation-delay: 0.27s; }
+
+/* Panel nav */
+.ir-panel-nav {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 0 16px;
+  scrollbar-width: thin;
+  scrollbar-color: #d1d5db transparent;
+}
+.ir-panel-section-label {
+  font-size: 9px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .1em;
+  color: #9ca3af;
+  padding: 12px 18px 6px;
+  font-family: 'Inter', system-ui, sans-serif;
+}
+
+/* Nav links — vs-purple for active/hover */
+.ir-panel-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 18px;
+  text-decoration: none;
+  color: #2d3c4e;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  border-left: 3px solid transparent;
+  transition: background 0.13s, color 0.13s, border-color 0.13s;
+  font-family: 'Inter', system-ui, sans-serif;
+}
+.ir-panel-link:hover {
+  background: #f0ebff;
+  color: #5c3fa3;
+  border-left-color: #5c3fa3;
+}
+.ir-panel-link.ir-panel-link--active {
+  background: #ede9fe;
+  color: #5c3fa3;
+  border-left-color: #5c3fa3;
+  font-weight: 600;
+}
+.ir-panel-link[aria-disabled="true"] {
+  opacity: 0.4;
+  cursor: default;
+  pointer-events: none;
+}
+
+/* Link icon bubble — uses vs-purple tint */
+.ir-panel-link-icon {
+  width: 30px; height: 30px;
+  border-radius: 8px;
+  background: #eef2fb;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.13s;
+}
+.ir-panel-link-icon .material-symbols-outlined { font-size: 16px !important; color: #4a6fa5; }
+.ir-panel-link:hover .ir-panel-link-icon,
+.ir-panel-link.ir-panel-link--active .ir-panel-link-icon {
+  background: #ede9fe;
+}
+.ir-panel-link:hover .ir-panel-link-icon .material-symbols-outlined,
+.ir-panel-link.ir-panel-link--active .ir-panel-link-icon .material-symbols-outlined {
+  color: #5c3fa3;
+}
+
+.ir-panel-link-body { flex: 1; min-width: 0; }
+.ir-panel-link-title { font-size: 13px; line-height: 1.3; font-weight: inherit; }
+.ir-panel-link-sub {
+  font-size: 10.5px;
+  color: #6b7280;
+  margin-top: 2px;
+  line-height: 1.3;
+}
+.ir-panel-sep { height: 1px; background: #e0e2e7; margin: 6px 16px; }
+
+/* ── Push layout ───────────────────────────────────────────── */
+body.ir-mode .notif-banner {
+  margin-left: 68px;
+  transition: margin-left 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+body.ir-mode.ir-panel-open .notif-banner {
+  margin-left: 328px;
+}
+
+body.ir-mode .page {
+  padding-left: calc(68px + 24px) !important;
+  transition: padding-left 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+body.ir-mode.ir-panel-open .page {
+  padding-left: calc(328px + 24px) !important;
+}
+
+/* ── Overlay ───────────────────────────────────────────────── */
+.ir-overlay {
+  position: fixed; inset: 0;
+  z-index: 580;
+  display: none;
+  cursor: default;
+}
+.ir-overlay.ir-overlay--visible { display: block; pointer-events: none; }
+
+/* ── FAB toggle — vs-navy body, vs-purple icon ─────────────── */
+.nav-toggle-fab {
+  position: fixed;
+  bottom: 24px; right: 24px;
+  z-index: 1100;
+  display: flex;
+  align-items: center;
+  background: #2d3c4e;
+  border-radius: 50px;
+  box-shadow: 0 4px 20px rgba(45,60,78,0.35), inset 0 1px 0 rgba(255,255,255,0.06);
+  border: none;
+  cursor: pointer;
+  overflow: hidden;
+  transition: right 0.38s cubic-bezier(0.16,1,0.3,1), box-shadow 0.2s, transform 0.18s;
+  font-family: 'Inter', system-ui, sans-serif;
+  animation: ir-fab-pulse 3s ease-in-out infinite;
+}
+.nav-toggle-fab:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 32px rgba(45,60,78,0.45);
+  animation: none;
+}
+.nav-toggle-fab:active { transform: translateY(0); }
+
+.nav-toggle-fab__icon {
+  width: 44px; height: 44px;
+  background: #5c3fa3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border-radius: 50px;
+  transition: background 0.25s;
+}
+/* When in rail mode — switch icon to vs-teal */
+body.ir-mode .nav-toggle-fab__icon { background: #3c5a70; }
+.nav-toggle-fab__icon .material-symbols-outlined { font-size: 20px !important; color: #fff; }
+
+.nav-toggle-fab__label {
+  padding: 0 16px 0 10px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: rgba(255,255,255,0.85);
+  white-space: nowrap;
+}
+/* ── FAB responsive to demo drawer ─────────────────────────────────── */
+/* Shift FAB left when demo configurator drawer is open (320px wide) */
+body:has(.demo-drawer--open) .nav-toggle-fab {
+  right: 344px;
+}

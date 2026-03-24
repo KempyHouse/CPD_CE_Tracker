@@ -18,7 +18,8 @@ router.get('/current', (req, res) => {
              rul.carry_over_allowed, rul.pause_allowed, rul.pause_max_months,
              rul.new_graduate_exemption, rul.new_graduate_months, rul.new_graduate_reduced_units,
              rul.non_practising_exempt, rul.pro_rata_for_part_year,
-             rul.spread_rule_units, rul.spread_rule_months, rul.deferral_allowed
+             rul.spread_rule_units, rul.spread_rule_months, rul.deferral_allowed,
+             rul.reflection_required_for_compliance
       FROM cpd_cycles c
       JOIN registrations r ON c.registration_id = r.registration_id
       JOIN registration_authorities a ON r.authority_id = a.authority_id
@@ -32,6 +33,14 @@ router.get('/current', (req, res) => {
 
     // Attach topic rules
     cycle.topics = db.prepare('SELECT * FROM mandatory_topic_rules WHERE rule_id = ? ORDER BY topic_category').all(cycle.rule_id);
+
+    // Compute reflected_completed = sum of units for activities at stage='reflected'
+    const reflected = db.prepare(`
+      SELECT COALESCE(SUM(units_claimed), 0) as total
+      FROM cpd_activities
+      WHERE cycle_id = ? AND stage = 'reflected' AND status != 'rejected'
+    `).get(cycle.cycle_id);
+    cycle.reflected_completed = reflected ? reflected.total : 0;
 
     res.json(cycle);
   } finally { db.close(); }

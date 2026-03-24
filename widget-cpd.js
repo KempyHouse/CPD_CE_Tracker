@@ -1,173 +1,320 @@
-/* global lucide */
 'use strict';
-// ── Authority presets ───────────────────────────────────────────────────────
-const PRESETS={
-  uk_rcvs:{authority:'RCVS',required:35,structured:20,unitType:'hours',cycle:'annual',splitLabel:'Structured / Non-structured',topics:['Clinical skills','Practice management','Ethics & welfare'],carryOver:false,pauseAllowed:true,pauseMax:6,newGradRequired:20,proRata:false,nonClinCap:null,deferral:false,nonPractisingExempt:true,spreadRule:null},
-  uk_rvn:{authority:'RCVS',required:35,structured:20,unitType:'hours',cycle:'annual',splitLabel:'Structured / Non-structured',topics:['Clinical skills','Animal welfare','Professional skills'],carryOver:false,pauseAllowed:true,pauseMax:6,newGradRequired:20,proRata:false,nonClinCap:null,deferral:false,nonPractisingExempt:true,spreadRule:null},
-  us_avma:{authority:'State Board',required:30,structured:0,unitType:'hours',cycle:'annual',splitLabel:'Category 1 / Category 2',topics:['Controlled substances','Patient safety'],carryOver:true,carryOverPct:0.5,pauseAllowed:false,newGradRequired:null,proRata:false,nonClinCap:null,deferral:false,nonPractisingExempt:false,spreadRule:null},
-  us_nbdhe:{authority:'NBDHE',required:25,structured:0,unitType:'ceus',cycle:'biennial',splitLabel:'Clinical / Non-clinical',topics:['Infection control','Medical emergencies'],carryOver:false,pauseAllowed:false,newGradRequired:null,proRata:false,nonClinCap:null,deferral:false,nonPractisingExempt:false,spreadRule:null},
-  au_ahpra_vet:{authority:'AHPRA',required:60,structured:15,unitType:'hours',cycle:'triennial',splitLabel:'Structured / Non-structured',topics:['Scientific knowledge','Practice management'],carryOver:false,pauseAllowed:false,newGradRequired:null,proRata:true,nonClinCap:null,deferral:false,nonPractisingExempt:false,spreadRule:null},
-  au_ahpra_dental:{authority:'AHPRA',required:60,structured:20,unitType:'hours',cycle:'triennial',splitLabel:'Verifiable / Non-verifiable',topics:['Medical emergencies','Radiography'],carryOver:false,pauseAllowed:false,newGradRequired:null,proRata:true,nonClinCap:{max:12,label:'Non-scientific cap (20%)',pct:20},deferral:false,nonPractisingExempt:false,spreadRule:null},
-  ie_vci:{authority:'VCI',required:20,structured:10,unitType:'credits',cycle:'annual',splitLabel:'Category A / Category B',topics:['Clinical topics','Management'],carryOver:false,pauseAllowed:false,newGradRequired:null,proRata:true,nonClinCap:{max:5,label:'Management cap (25%)',pct:25},deferral:false,nonPractisingExempt:false,spreadRule:null,wetlabMultiplier:2},
-  ie_dci:{authority:'DCI',required:20,structured:10,unitType:'hours',cycle:'annual',splitLabel:'Verifiable / Non-verifiable',topics:['Clinical topics','Patient safety'],carryOver:false,pauseAllowed:false,newGradRequired:null,proRata:false,nonClinCap:null,deferral:false,nonPractisingExempt:false,spreadRule:{minUnits:10,windowMonths:24,label:'10 hrs min / any 2yr window'}},
-  nz_vcnz:{authority:'VCNZ',required:40,structured:0,unitType:'hours',cycle:'annual',splitLabel:'Directed / Self-directed',topics:['Clinical competence','Ethics'],carryOver:false,pauseAllowed:false,newGradRequired:null,proRata:false,nonClinCap:null,deferral:true,nonPractisingExempt:false,spreadRule:null},
-  nz_dcnz:{authority:'DCNZ',required:25,structured:0,unitType:'hours',cycle:'annual',splitLabel:'Directed / Self-directed',topics:['Clinical topics','Peer interaction'],carryOver:false,pauseAllowed:false,newGradRequired:null,proRata:false,nonClinCap:null,deferral:true,nonPractisingExempt:false,spreadRule:null},
-  za_savc:{authority:'SAVC',required:40,structured:20,unitType:'hours',cycle:'annual',splitLabel:'Category A / Category B',topics:['Technical skills','Ethics'],carryOver:false,pauseAllowed:false,newGradRequired:null,proRata:false,nonClinCap:{max:20,label:'Category B cap (50%)',pct:50},deferral:true,nonPractisingExempt:false,spreadRule:null},
-  ca_cvma:{authority:'CVMA',required:40,structured:0,unitType:'hours',cycle:'annual',splitLabel:'Formal / Informal',topics:['Clinical competence','Practice standards'],carryOver:false,pauseAllowed:false,newGradRequired:null,proRata:false,nonClinCap:null,deferral:false,nonPractisingExempt:false,spreadRule:null},
-  in_vci_india:{authority:'VCI',required:30,structured:0,unitType:'hours',cycle:'annual',splitLabel:'Formal / Informal',topics:['Clinical practice','Animal welfare'],carryOver:false,pauseAllowed:false,newGradRequired:null,proRata:false,nonClinCap:null,deferral:false,nonPractisingExempt:false,spreadRule:null},
+// ── API Cache — populated on page load from the backend ───────────────────
+const API_CACHE = {
+  authorities: [],        // from GET /api/authorities
+  roles: {},              // authority_key → role[]
+  rules: {},              // 'authority_key:role_key' → rule obj with topics
+  currentTopics: [],      // detailed topics for the active rule
+  practitioner: null,     // from GET /api/practitioners/me
+  cycle: null,            // from GET /api/cycles/current
 };
-// State overrides
+// State overrides — US/CA regional variations (to be seeded to DB as rule rows in next sprint)
 const STATE_OVERRIDES={ca:{required:75,cycle:'biennial'},tx:{required:16,cycle:'annual'},ny:{required:24,cycle:'biennial'},fl:{required:30,cycle:'biennial'},on:{required:40,cycle:'annual'}};
-// State/Province options per country group
 const STATE_OPTIONS={
-  us_avma:[{v:'',l:'— No state override (national 30 hrs) —'},{v:'ca',l:'California (75 hrs / 2yr)'},{v:'tx',l:'Texas (16 hrs / yr)'},{v:'ny',l:'New York (24 hrs / 2yr)'},{v:'fl',l:'Florida (30 hrs / 2yr)'}],
+  us_avma:[{v:'',l:'— No state override —'},{v:'ca',l:'California (75 hrs / 2yr)'},{v:'tx',l:'Texas (16 hrs / yr)'},{v:'ny',l:'New York (24 hrs / 2yr)'},{v:'fl',l:'Florida (30 hrs / 2yr)'}],
   us_nbdhe:[{v:'',l:'— No state override —'},{v:'ca',l:'California (75 hrs / 2yr)'},{v:'tx',l:'Texas (16 hrs / yr)'},{v:'ny',l:'New York (24 hrs / 2yr)'},{v:'fl',l:'Florida (30 hrs / 2yr)'}],
-  au_ahpra_vet:[{v:'',l:'— National standard (AHPRA) —'},{v:'nsw',l:'New South Wales'},{v:'vic',l:'Victoria'}],
-  au_ahpra_dental:[{v:'',l:'— National standard (AHPRA) —'},{v:'nsw',l:'New South Wales'},{v:'vic',l:'Victoria'}],
   ca_cvma:[{v:'',l:'— No province override —'},{v:'on',l:'Ontario (40 hrs / yr)'}],
 };
-// Countries available per sector
-const COUNTRY_BY_SECTOR={
-  vet:[
-    {v:'uk_rcvs',l:'🇬🇧 United Kingdom — RCVS'},
-    {v:'uk_rvn', l:'🇬🇧 UK — RCVS (RVN)'},
-    {v:'us_avma',l:'🇺🇸 USA — AVMA / State Board'},
-    {v:'au_ahpra_vet',l:'🇦🇺 Australia — AHPRA (Vet)'},
-    {v:'ie_vci', l:'🇮🇪 Ireland — VCI'},
-    {v:'nz_vcnz',l:'🇳🇿 New Zealand — VCNZ'},
-    {v:'za_savc',l:'🇿🇦 South Africa — SAVC'},
-    {v:'ca_cvma',l:'🇨🇦 Canada — CVMA'},
-    {v:'in_vci_india',l:'🇮🇳 India — VCI'},
-  ],
-  dental:[
-    {v:'us_nbdhe',      l:'🇺🇸 USA — NBDHE (Dental Hygienist)'},
-    {v:'au_ahpra_dental',l:'🇦🇺 Australia — AHPRA (Dental)'},
-    {v:'ie_dci',        l:'🇮🇪 Ireland — Dental Council'},
-    {v:'nz_dcnz',       l:'🇳🇿 New Zealand — DCNZ'},
-  ],
+
+// ── UK/RCVS Jurisdiction Auto-determination ────────────────────────────────
+// Returns null if we can't auto-determine (non-UK or non-RCVS authority),
+// or an object with the auto-derived rule values.
+function deriveJurisdictionRules(sector, country, role, status) {
+  // Only apply UK RCVS auto-rules
+  if (country !== 'uk_rcvs') return null;
+
+  const nonPractising = ['non_practising', 'removed', 'suspended', 'not_on_register'].includes(status);
+  const practising    = ['active', 'full', 'practising'].includes(status);
+
+  if (nonPractising) {
+    return {
+      cycle: 'annual',            // cycle still tracked but hours = 0
+      requiredHours: 0,
+      carryOver: false,
+      source: 'RCVS — Non-practising / removed (voluntary CPD only)',
+      locked: true,
+    };
+  }
+
+  if (practising) {
+    const hoursMap = {
+      vet_surgeon:        35,
+      rvn:                15,
+      student_rvn:         0,    // not yet required
+      advanced_practitioner: 35, // same annual cycle; 5-yr designation tracked separately
+    };
+    const required = hoursMap[role] ?? null;  // null = role not in map, fall through to DB
+    if (required === null) return null;        // unknown role → let DB rule decide
+    return {
+      cycle: 'annual',
+      requiredHours: required,
+      carryOver: false,  // RCVS: no carry-over
+      source: `RCVS — Auto-determined: ${required} hrs/yr, Annual (1 Jan–31 Dec), no carry-over`,
+      locked: true,
+    };
+  }
+
+  return null; // unrecognised status → DB rule wins
+}
+
+// Returns true if the cycle type and required hours are auto-locked by jurisdiction rules
+function isJurisdictionAutoLocked() {
+  return !!deriveJurisdictionRules(S.sector, S.country, S.role, S.registrationStatus);
+}
+// ── State — authoritative widget data store ────────────────────────────────
+const S={
+  sector:'vet',country:'uk_rcvs',state:'',role:'vet_surgeon',
+  registrationStatus:'active',registrationYear:'2020',
+  // Authority/rule fields (set by configBuilder)
+  authority:'RCVS',cpd_term:'CPD',cpd_term_full:'Continuing Professional Development',
+  splitBarConcept:'structured',  // 'structured' | 'verifiable' | 'none'
+  baseRequired:35,structuredMin:20,unitType:'hours',displayUnit:'hours',
+  cycle:'annual',splitLabel:'Structured / Non-structured',topics:[],
+  carryOver:false,carryOverPct:0,prevCompleted:0,
+  pauseAllowed:true,pauseMax:6,pauseMonths:0,
+  newGradRequired:0,proRata:false,regMonthsAgo:0,
+  nonClinCap:null,deferral:false,nonPractisingExempt:false,spreadRule:null,wetlabMultiplier:null,
+  // Compliance / first-renewal / caps
+  firstRenewalExempt:false,    // rule.first_renewal_ce_exempt — entire first renewal is CE-free
+  firstRenewalProrataUnits:0,  // rule.first_renewal_prorata_units — reduced first-renewal hours (vs exempt)
+  blsCreditCap:null,           // rule.bls_credit_cap — max BLS hrs credited (e.g. CO: 2)
+  presenterCreditCap:null,     // rule.presenter_credit_cap — max presenter/teaching hrs (e.g. CO: 6)
+  ceWindowMonths:null,         // rule.ce_window_months — rolling CE window (e.g. CT: 24 months despite annual renewal)
+  selfStudyPermitted:true,     // rule.self_study_permitted — explicit self-study exclusion (e.g. CT RDH)
+  maxSelfStudyNoTest:null,     // rule.max_self_study_no_test — DE Type A cap (non-interactive, no exam)
+  maxSelfStudyCombined:null,   // rule.max_self_study_with_test — DE combined Type A+B cap
+  cprRequiredNonCpe:false,     // rule.cpr_required_non_cpe — CPR renewal condition (earns 0 CE/CPE credit)
+  // Progress (from cycle / sliders)
+  completed:20,structuredDone:12,nonClinDone:0,
+  // Reflection lifecycle
+  reflectionRequired:false,  // gated by rule: reflection_required_for_compliance
+  reflectedDone:0,           // hours where stage='reflected'
+  // Display prefs
+  showTopics:true,showSplit:true,showCycle:true,compact:false,
+  hasMandatoryTopics:true,hasDEA:false,cycleStart:'2026-01-01',
+  isStatutorilyRegistered:true,tier:'generalist',
+  // Authority UI labels (from ui_labels JSON)
+  uiLabels:{},unitShort:'hrs',
 };
-const SECTOR_DEFAULTS={vet:'uk_rcvs',dental:'au_ahpra_dental'};
+const CIRC=2*Math.PI*45;
+
+// ── API helpers ────────────────────────────────────────────────────────────
+async function apiFetch(path){const r=await fetch(path);if(!r.ok)throw new Error(`API ${path} → ${r.status}`);return r.json()}
+
+// ── Config Builder: converts DB rule → S fields ────────────────────────────
+function configBuilder(authorityKey,roleKey){
+  const auth=API_CACHE.authorities.find(a=>a.authority_key===authorityKey);
+  const cacheKey=`${authorityKey}:${roleKey}`;
+  const rule=API_CACHE.rules[cacheKey];
+  if(!auth||!rule)return null;
+  const cycleMap={annual:'annual',biennial:'biennial',triennial:'triennial','5_year':'5year',rolling_3:'rolling3'};
+  const cycleType=cycleMap[rule.cycle_type]||rule.cycle_type;
+  const nonClinCap=rule.max_non_clinical_units
+    ?{max:rule.max_non_clinical_units,pct:rule.max_non_clinical_percent||0,label:`${rule.max_non_clinical_percent||'?'}% cap (${auth.split_label||'non-clinical'})`}
+    :null;
+  const spreadRule=rule.spread_rule_units
+    ?{minUnits:rule.spread_rule_units,windowMonths:rule.spread_rule_months,label:`${rule.spread_rule_units} hrs min / any ${rule.spread_rule_months/12}yr window`}
+    :null;
+  const topics=(rule.topics||[]).map(t=>t.topic_name);
+  const uiLabels=auth.ui_labels||(auth.ui_labels_parsed)||{};
+  return{
+    authority:rule.authority_abbreviation||auth.authority_abbreviation,
+    cpd_term:auth.cpd_term||'CPD',
+    cpd_term_full:auth.cpd_term_full||'Continuing Professional Development',
+    unitType:auth.unit_label||'hours',
+    splitLabel:auth.split_label||'',
+    splitBarConcept:auth.split_bar_concept||'structured',
+    uiLabels,
+    unitShort:uiLabels.unit_short||auth.unit_label||'hrs',
+    baseRequired:rule.total_units_required||0,
+    structuredMin:rule.min_structured_units||rule.min_verifiable_units||0,
+    cycle:cycleType,
+    topics,
+    hasMandatoryTopics:!!(rule.mandatory_topics_enabled||auth.mandatory_topics_enabled),
+    reflectionRequired:!!rule.reflection_required_for_compliance,
+    carryOver:!!rule.carry_over_allowed,carryOverPct:0,
+    pauseAllowed:!!rule.pause_allowed,pauseMax:rule.pause_max_months||0,
+    newGradRequired:rule.new_graduate_reduced_units||0,
+    proRata:!!rule.pro_rata_for_part_year,
+    nonClinCap,deferral:!!rule.deferral_allowed,
+    nonPractisingExempt:!!rule.non_practising_exempt,
+    spreadRule,wetlabMultiplier:null,
+    isStatutorilyRegistered:rule.is_statutorily_registered!==0,
+    tier:rule.tier||'generalist',
+    firstRenewalExempt:!!rule.first_renewal_ce_exempt,
+    firstRenewalProrataUnits:rule.first_renewal_prorata_units||0,
+    blsCreditCap:rule.bls_credit_cap||null,
+    presenterCreditCap:rule.presenter_credit_cap||null,
+    ceWindowMonths:rule.ce_window_months||null,
+    selfStudyPermitted:rule.self_study_permitted!==0,
+    maxSelfStudyNoTest:rule.max_self_study_no_test||null,
+    maxSelfStudyCombined:rule.max_self_study_with_test||null,
+    cprRequiredNonCpe:!!rule.cpr_required_non_cpe,
+  };
+}
+
+// ── Load all data from API on init ─────────────────────────────────────────
+async function loadFromAPI(){
+  try{
+    // Parallel: authorities + practitioner + cycle + all rules
+    const[authorities,allRules,practitioner,cycle]=await Promise.all([
+      apiFetch('/api/authorities'),
+      apiFetch('/api/rules'),
+      apiFetch('/api/practitioners/me').catch(()=>null),
+      apiFetch('/api/cycles/current').catch(()=>null),
+    ]);
+    API_CACHE.authorities=authorities;
+    API_CACHE.practitioner=practitioner;
+    API_CACHE.cycle=cycle;
+    // Build rules + roles cache from flat rules list
+    for(const rule of allRules){
+      const key=`${rule.authority_key}:${rule.role_key}`;
+      API_CACHE.rules[key]=rule; // topics attached after next call if needed
+      if(!API_CACHE.roles[rule.authority_key])API_CACHE.roles[rule.authority_key]=[];
+      if(!API_CACHE.roles[rule.authority_key].find(r=>r.role_key===rule.role_key)){
+        API_CACHE.roles[rule.authority_key].push({
+          role_key:rule.role_key,role_name:rule.role_name,
+          tier:rule.tier,is_statutorily_registered:rule.is_statutorily_registered,
+          role_abbreviation:rule.role_abbreviation,sector:rule.sector,
+        });
+      }
+    }
+    // Load topics for the active rule
+    if(cycle&&cycle.rule_id){
+      const activeRuleKey=`${cycle.authority_key}:${cycle.role_key}`;
+      if(!API_CACHE.rules[activeRuleKey]){
+        try{API_CACHE.rules[activeRuleKey]=await apiFetch(`/api/rules/${cycle.rule_id}`);}catch(e){}
+      }else if(!(API_CACHE.rules[activeRuleKey].topics)){
+        try{const full=await apiFetch(`/api/rules/${cycle.rule_id}`);API_CACHE.rules[activeRuleKey]=full;}catch(e){}
+      }
+      API_CACHE.currentTopics=API_CACHE.rules[activeRuleKey]?.topics||[];
+    }
+    // Populate S from practitioner + cycle data
+    const reg=practitioner?.registration;
+    if(reg){
+      const apiSector=reg.sector||'veterinary';
+      S.sector=apiSector==='veterinary'?'vet':'dental';
+      S.country=reg.authority_key||'uk_rcvs';
+      S.role=reg.role_key||'vet_surgeon';
+      S.registrationStatus=reg.registration_status||'active';
+      S.hasDEA=!!reg.holds_dea_registration;
+    }
+    if(cycle){
+      S.completed=cycle.units_completed||0;
+      // Use the correct completed field based on the authority's split framework
+      S.structuredDone=S.splitBarConcept==='verifiable'
+        ?(cycle.verifiable_completed||0)
+        :(cycle.structured_completed||0);
+      S.nonClinDone=cycle.non_clinical_completed||0;
+      S.cycleStart=cycle.cycle_start_date||'2026-01-01';
+      S.reflectedDone=cycle.reflected_completed||0;
+      S.reflectionRequired=!!cycle.reflection_required_for_compliance;
+    }
+    // Apply display settings
+    const ds=practitioner?.demo_settings||{};
+    if(ds.sector)S.sector=ds.sector;
+    if(ds.cycle)S.cycle=ds.cycle;
+    if(ds.baseRequired!=null)S.baseRequired=ds.baseRequired;
+    if(ds.structuredMin!=null)S.structuredMin=ds.structuredMin;
+    if(ds.prevCompleted!=null)S.prevCompleted=ds.prevCompleted;
+    if(ds.pauseMonths!=null)S.pauseMonths=ds.pauseMonths;
+    if(ds.regMonthsAgo!=null)S.regMonthsAgo=ds.regMonthsAgo;
+    if(ds.registrationStatus)S.registrationStatus=ds.registrationStatus;
+    if(ds.registrationYear!=null)S.registrationYear=ds.registrationYear;
+    if(ds.hasMandatoryTopics!==undefined)S.hasMandatoryTopics=ds.hasMandatoryTopics;
+    if(ds.showSplit!==undefined)S.showSplit=ds.showSplit;
+    if(ds.hasDEA!==undefined)S.hasDEA=ds.hasDEA;
+    // display always defaults to show-all: if(ds.showTopicsPanel!==undefined)S.showTopics=ds.showTopicsPanel;
+    // if(ds.showCycleStrip!==undefined)S.showCycle=ds.showCycleStrip;
+    // if(ds.compactMode!==undefined)S.compact=ds.compactMode;
+    if(ds.proRata!==undefined)S.proRata=ds.proRata;
+    if(ds.cycleStart)S.cycleStart=ds.cycleStart;
+  }catch(e){
+    console.warn('[API] loadFromAPI failed, using defaults:',e.message);
+  }
+}
+
+// ── Populate dropdowns from API cache ─────────────────────────────────────
 function updateCountryDropdown(){
   const dd=el('selCountry');if(!dd)return;
-  const opts=COUNTRY_BY_SECTOR[S.sector]||COUNTRY_BY_SECTOR.vet;
-  dd.innerHTML=opts.map(o=>`<option value="${o.v}"${o.v===S.country?' selected':''}>${o.l}</option>`).join('');
-  // If current country not valid for this sector, reset to sector default
-  const valid=opts.some(o=>o.v===S.country);
-  if(!valid){S.country=SECTOR_DEFAULTS[S.sector]||opts[0].v;dd.value=S.country}
+  const apiSector=S.sector==='vet'?'veterinary':'dental';
+  const FLAG={GB:'🇬🇧',US:'🇺🇸',AU:'🇦🇺',IE:'🇮🇪',NZ:'🇳🇿',ZA:'🇿🇦',CA:'🇨🇦',IN:'🇮🇳'};
+  const opts=API_CACHE.authorities.filter(a=>a.sector===apiSector||a.sector==='both');
+  dd.innerHTML=opts.map(a=>`<option value="${a.authority_key}"${a.authority_key===S.country?' selected':''}>${FLAG[a.country]||''} ${a.country_name||a.country} — ${a.authority_abbreviation}</option>`).join('');
+  const valid=opts.some(a=>a.authority_key===S.country);
+  if(!valid&&opts.length){S.country=opts[0].authority_key;dd.value=S.country}
 }
-// Country groups that have no sub-national variation
-const NO_STATE=['uk_rcvs','uk_rvn','ie_vci','ie_dci','nz_vcnz','nz_dcnz','za_savc','in_vci_india'];
 function updateStateDropdown(){
   const dd=el('selState');if(!dd)return;
   const opts=STATE_OPTIONS[S.country];
-  const disabled=NO_STATE.includes(S.country)||!opts;
-  dd.disabled=disabled;
-  dd.style.opacity=disabled?'0.4':'1';
-  dd.style.cursor=disabled?'not-allowed':'auto';
-  if(disabled){
-    dd.innerHTML='<option value="">— Not applicable for this jurisdiction —</option>';
-    S.state='';
-  } else {
+  const disabled=!opts;
+  dd.disabled=disabled;dd.style.opacity=disabled?'0.4':'1';dd.style.cursor=disabled?'not-allowed':'auto';
+  if(disabled){dd.innerHTML='<option value="">— Not applicable for this jurisdiction —</option>';S.state='';}
+  else{
     dd.innerHTML=opts.map(o=>`<option value="${o.v}">${o.l}</option>`).join('');
-    // Only keep current state if still valid
-    const valid=opts.some(o=>o.v===S.state);
-    if(!valid){S.state='';dd.value=''}
+    const valid=opts.some(o=>o.v===S.state);if(!valid){S.state='';dd.value='';}
   }
 }
-// All roles per sector
-const ALL_VET_ROLES=[
-  {v:'vet_surgeon',      l:'Veterinary Surgeon / Veterinarian'},
-  {v:'rvn',             l:'Registered Veterinary Nurse (RVN)'},
-  {v:'vet_tech',        l:'Veterinary Technician'},
-  {v:'vet_technologist',l:'Veterinary Technologist'},
-  {v:'vet_nurse',       l:'Veterinary Nurse'},
-  {v:'vet_paraprofessional',l:'Veterinary Paraprofessional'},
-  {v:'vet_student',     l:'Veterinary Student'},
-];
-const ALL_DENTAL_ROLES=[
-  {v:'dentist',                  l:'Dentist'},
-  {v:'dental_hygienist',         l:'Dental Hygienist'},
-  {v:'dental_therapist',         l:'Dental Therapist'},
-  {v:'dental_nurse',             l:'Dental Nurse'},
-  {v:'dental_technician',        l:'Dental Technician'},
-  {v:'oral_health_therapist',    l:'Oral Health Therapist'},
-  {v:'orthodontic_therapist',    l:'Orthodontic Therapist'},
-  {v:'clinical_dental_technician',l:'Clinical Dental Technician'},
-  {v:'dental_prosthetist',       l:'Dental Prosthetist'},
-];
-const SECTOR_DEFAULT_ROLE={vet:'vet_surgeon',dental:'dentist'};
-// Disable rules: cond(country) returns true if role should be disabled
-const ROLE_DISABLED_RULES={
-  rvn:               {cond:c=>!['uk_rcvs','uk_rvn'].includes(c),          tip:'RVN is a UK RCVS designation'},
-  vet_technologist:  {cond:c=>!['us_avma','ca_cvma'].includes(c),          tip:'Bachelor-level tech credential in USA/Canada only'},
-  vet_nurse:         {cond:c=>!['au_ahpra_vet','ie_vci','nz_vcnz','za_savc'].includes(c), tip:'Vet nurse registration not available in this jurisdiction'},
-  vet_paraprofessional:{cond:c=>c!=='au_ahpra_vet',                        tip:'AVA category in Australia only'},
-  orthodontic_therapist:{cond:c=>true,                                     tip:'Registered by GDC — UK dental not currently in demo'},
-  clinical_dental_technician:{cond:c=>true,                                tip:'Registered by GDC — UK dental not currently in demo'},
-  dental_therapist:  {cond:c=>c==='us_nbdhe',                              tip:'Dental Therapist limited to specific US states only'},
-  oral_health_therapist:{cond:c=>!['au_ahpra_dental','nz_dcnz'].includes(c),tip:'Combined scope role in AU/NZ only'},
-  dental_prosthetist:{cond:c=>c!=='au_ahpra_dental',                       tip:'AHPRA-registered role in Australia only'},
-  dental_nurse:      {cond:c=>!['ie_dci'].includes(c),                     tip:'Registered dental nurse role — UK GDC not currently in demo'},
-};
-// Role → topics + split label
-const ROLE_DEF={
-  vet_surgeon:         {topics:['Clinical skills','Practice management','Ethics & welfare'],splitLabel:'Structured / Non-structured',hideSplit:false},
-  rvn:                 {topics:['Clinical skills','Animal welfare','Professional skills'],splitLabel:'Structured / Non-structured',hideSplit:false},
-  vet_tech:            {topics:['Technical skills','Patient care','Safety'],splitLabel:'Category 1 / Category 2',hideSplit:false},
-  vet_technologist:    {topics:['Technical skills','Pharmacology','Anaesthesia'],splitLabel:'Category 1 / Category 2',hideSplit:false},
-  vet_nurse:           {topics:['Clinical nursing','Animal welfare','Professional skills'],splitLabel:'Structured / Non-structured',hideSplit:false},
-  vet_paraprofessional:{topics:['Animal handling','Basic clinical care'],splitLabel:null,hideSplit:true},
-  vet_student:         {topics:['Clinical skills','Professional development'],splitLabel:null,hideSplit:true},
-  dentist:             {topics:['Clinical topics','Medical emergencies','Radiography'],splitLabel:'Verifiable / Non-verifiable',hideSplit:false},
-  dental_hygienist:    {topics:['Infection control','Medical emergencies','Patient care'],splitLabel:'Verifiable / Non-verifiable',hideSplit:false},
-  dental_therapist:    {topics:['Clinical topics','Patient safety','Safeguarding'],splitLabel:'Verifiable / Non-verifiable',hideSplit:false},
-  dental_nurse:        {topics:['Clinical topics','Infection control','Safeguarding'],splitLabel:'Verifiable / Non-verifiable',hideSplit:false},
-  dental_technician:   {topics:['Technical skills','Materials safety'],splitLabel:'Verifiable / Non-verifiable',hideSplit:false},
-  oral_health_therapist:{topics:['Clinical topics','Medical emergencies','Patient communication'],splitLabel:'Verifiable / Non-verifiable',hideSplit:false},
-  orthodontic_therapist:{topics:['Clinical orthodontics','Patient safety','Radiography'],splitLabel:'Verifiable / Non-verifiable',hideSplit:false},
-  clinical_dental_technician:{topics:['Technical skills','Materials science','Patient care'],splitLabel:'Verifiable / Non-verifiable',hideSplit:false},
-  dental_prosthetist:  {topics:['Technical skills','Patient assessment','Materials'],splitLabel:'Verifiable / Non-verifiable',hideSplit:false},
-};
 function updateRoleDropdown(){
   const dd=el('selRole');if(!dd)return;
-  const roles=S.sector==='dental'?ALL_DENTAL_ROLES:ALL_VET_ROLES;
+  const roles=API_CACHE.roles[S.country]||[];
+  if(!roles.length){dd.innerHTML='<option value="">— No roles for this authority —</option>';return;}
   dd.innerHTML=roles.map(r=>{
-    const rule=ROLE_DISABLED_RULES[r.v];
-    const dis=rule&&rule.cond(S.country);
-    return`<option value="${r.v}"${dis?' disabled':''} title="${dis?rule.tip:''}">${r.l}${dis?' — '+rule.tip:''}</option>`;
+    const hasRule=!!API_CACHE.rules[`${S.country}:${r.role_key}`];
+    return`<option value="${r.role_key}"${r.role_key===S.role?' selected':''}${!hasRule?' disabled':''} title="${!hasRule?'No CPD rule defined for this role yet':''}">${r.role_name}${!hasRule?' — (no rule yet)':''}</option>`;
   }).join('');
-  // If current role is now disabled or missing, reset to sector default
   const cur=dd.querySelector(`option[value="${S.role}"]:not([disabled])`);
   if(!cur){
-    S.role=SECTOR_DEFAULT_ROLE[S.sector]||'vet_surgeon';
-    dd.value=S.role;
-    const rd=ROLE_DEF[S.role];
-    if(rd){S.topics=[...rd.topics];if(rd.splitLabel)S.splitLabel=rd.splitLabel}
+    const first=roles.find(r=>!!API_CACHE.rules[`${S.country}:${r.role_key}`]);
+    if(first){S.role=first.role_key;dd.value=S.role;}
   }
 }
-// Per-topic rules
-const TOPIC_RULES={
-  'Medical emergencies':{minPerCycle:10,minPerYear:2,mustBeLive:true,mustBeInPerson:true},
-  'Controlled substances (DEA)':{minPerCycle:3,mustBeLive:false},
-  'Controlled substances':{minPerCycle:3,mustBeLive:false},
-  'Ethics & professionalism':{minPerCycle:1,mustBeLive:true},
-  'Opioid prescribing':{minPerCycle:2,mustBeLive:false},
-};
-// State
-const S={
-  country:'uk_rcvs',state:'',registrationYear:'2020',registrationStatus:'active',
-  role:'vet_surgeon',cycle:'annual',baseRequired:35,structuredMin:20,unitType:'hours',
-  authority:'RCVS',splitLabel:'Structured / Non-structured',
-  topics:['Clinical skills','Practice management','Ethics & welfare'],
-  carryOver:false,carryOverPct:0,prevCompleted:0,
-  pauseAllowed:true,pauseMax:6,pauseMonths:3,
-  newGradRequired:20,proRata:false,regMonthsAgo:6,
-  nonClinCap:null,deferral:false,nonPractisingExempt:true,spreadRule:null,
-  completed:20,structuredDone:12,nonClinDone:0,displayUnit:'hours',
-  showTopics:true,showSplit:true,showCycle:true,compact:false,
-  hasMandatoryTopics:true,hasDEA:false,cycleStart:'2026-01-01',sector:'vet',
-};
-const CIRC=2*Math.PI*45;
+
+// ── Apply preset from API cache ────────────────────────────────────────────
+async function applyPreset(authorityKey){
+  // Ensure roles for this authority are loaded
+  if(!API_CACHE.roles[authorityKey]){
+    try{
+      const auth=await apiFetch(`/api/authorities/${authorityKey}`);
+      API_CACHE.roles[authorityKey]=auth.roles||[];
+    }catch(e){console.warn('[API] Failed to load roles for',authorityKey);}
+  }
+  // Ensure rule for this authority+role is loaded (fetches topics too)
+  const cacheKey=`${authorityKey}:${S.role}`;
+  if(!API_CACHE.rules[cacheKey]||!API_CACHE.rules[cacheKey].topics){
+    try{
+      const rule=await apiFetch(`/api/rules?authority=${authorityKey}&role=${S.role}`);
+      if(rule&&rule.rule_id){
+        // Fetch with topics
+        const full=await apiFetch(`/api/rules/${rule.rule_id}`);
+        API_CACHE.rules[cacheKey]=full;
+      }else{
+        // Role may not exist in this authority — find first available role+rule
+        const roles=API_CACHE.roles[authorityKey]||[];
+        const firstRole=roles.find(r=>API_CACHE.rules[`${authorityKey}:${r.role_key}`]);
+        if(firstRole){S.role=firstRole.role_key;}
+        const altKey=`${authorityKey}:${S.role}`;
+        if(!API_CACHE.rules[altKey]||!API_CACHE.rules[altKey].topics){
+          const altRule=await apiFetch(`/api/rules?authority=${authorityKey}&role=${S.role}`);
+          if(altRule&&altRule.rule_id){
+            const full=await apiFetch(`/api/rules/${altRule.rule_id}`);
+            API_CACHE.rules[altKey]=full;
+          }
+        }
+      }
+    }catch(e){console.warn('[API] Failed to load rule for',authorityKey,S.role);}
+  }
+  const cfg=configBuilder(authorityKey,S.role);
+  if(cfg){
+    Object.assign(S,cfg);
+    S.displayUnit=S.unitType;
+    API_CACHE.currentTopics=API_CACHE.rules[`${authorityKey}:${S.role}`]?.topics||[];
+  }
+  syncControls();
+}
+
+
+
 // Helpers
 function cycleMonthsFor(c){return{annual:12,biennial:24,triennial:36,'5year':60,rolling3:36}[c]||12}
 function cycleMonths(){return cycleMonthsFor(S.cycle)}
@@ -175,21 +322,35 @@ function cycleEnd(){const d=new Date(S.cycleStart);d.setMonth(d.getMonth()+cycle
 function daysLeft(){return Math.max(0,Math.ceil((cycleEnd()-new Date())/86400000))}
 function isNewGrad(){const yr=parseInt(S.registrationYear);return(new Date().getFullYear()-yr)<=1}
 function isUS(){return['us_avma','us_nbdhe'].includes(S.country)||['ca','tx','ny','fl'].includes(S.state)}
-function uLbl(n,short){const v=n%1===0?n.toFixed(0):n.toFixed(1);const u=S.displayUnit==='hours'?'hrs':S.displayUnit==='points'?'pts':S.displayUnit==='ceus'?'CEUs':'cr';return short?v+' '+u:v+' '+u}
+function uLbl(n){const v=n%1===0?n.toFixed(0):n.toFixed(1);const u=S.unitShort||(S.displayUnit==='hours'?'hrs':S.displayUnit==='points'?'pts':S.displayUnit==='ceus'?'CEUs':'cr');return v+' '+u}
 function fmtDate(d){return d.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})}
 // Priority hierarchy → effective required
 function effectiveRequired(){
   const status=S.registrationStatus;
+  // Priority 0: jurisdiction auto-determination (overrides everything for locked authorities)
+  const derived=deriveJurisdictionRules(S.sector,S.country,S.role,status);
+  if(derived){
+    let req=derived.requiredHours;
+    // Still honour new-grad reduction within auto-determined cycle
+    if(isNewGrad()&&S.newGradRequired>0&&req>0)req=S.newGradRequired;
+    // Pro-rata still applies even for auto-determined authorities
+    if(S.proRata&&S.regMonthsAgo>0){const total=cycleMonths();const rem=Math.max(0,total-S.regMonthsAgo);req=Math.round(req*rem/total)}
+    if(status==='paused'&&S.pauseAllowed){const total=cycleMonths();const active=Math.max(0,total-S.pauseMonths);req=Math.round(req*active/total)}
+    return Math.max(0,req);
+  }
+  // Legacy/non-auto path
   if(status==='non_practising'||status==='student')return 0;
+  // First-renewal: full exempt (e.g. CA first renewal, CO ≤12 months)
+  if(status==='first_renewal_exempt'||S.firstRenewalExempt)return 0;
+  // First-renewal pro-rata (e.g. CO >12 months → 15 dental / 16 vet)
+  if(status==='first_renewal_prorata'&&S.firstRenewalProrataUnits>0)return S.firstRenewalProrataUnits;
+  // Inactive — CE waived
+  if(status==='inactive')return 0;
   let req=S.baseRequired;
-  // State override (priority 5 — before new grad)
   const so=STATE_OVERRIDES[S.state];
   if(so&&so.required)req=so.required;
-  // New grad (priority 4)
   if(isNewGrad()&&S.newGradRequired>0)req=S.newGradRequired;
-  // Pro-rata mid-year (priority 5b)
   if(S.proRata&&S.regMonthsAgo>0){const total=cycleMonths();const rem=Math.max(0,total-S.regMonthsAgo);req=Math.round(req*rem/total)}
-  // Paused (priority 3)
   if(status==='paused'&&S.pauseAllowed){const total=cycleMonths();const active=Math.max(0,total-S.pauseMonths);req=Math.round(req*active/total)}
   return Math.max(0,req)
 }
@@ -206,41 +367,42 @@ function complianceStatus(p){
   if(p>=timePct-10)return'green';if(p>=timePct-30)return'amber';return'red'
 }
 function carryOverAvailable(){
+  // Carry-over is never available for auto-locked jurisdictions (e.g. RCVS)
+  if(deriveJurisdictionRules(S.sector,S.country,S.role,S.registrationStatus))return 0;
   if(!S.carryOver)return 0;
   const surplus=Math.max(0,S.prevCompleted-S.baseRequired);
   const cap=S.carryOverPct>0?Math.floor(S.baseRequired*S.carryOverPct):surplus;
   return Math.min(surplus,cap)
-}
-// Apply preset
-function applyPreset(key){
-  const p=PRESETS[key];if(!p)return;
-  Object.assign(S,{
-    authority:p.authority,baseRequired:p.required,structuredMin:p.structured,
-    unitType:p.unitType,displayUnit:p.unitType,cycle:p.cycle,
-    splitLabel:p.splitLabel,topics:[...p.topics],
-    carryOver:p.carryOver,carryOverPct:p.carryOverPct||0,
-    pauseAllowed:p.pauseAllowed,pauseMax:p.pauseMax||0,
-    newGradRequired:p.newGradRequired||0,proRata:p.proRata,
-    nonClinCap:p.nonClinCap,deferral:p.deferral,
-    nonPractisingExempt:p.nonPractisingExempt,spreadRule:p.spreadRule,
-  });
-  // authority properties also set
-  const wetlabKey=PRESETS[key]&&PRESETS[key].wetlabMultiplier?PRESETS[key].wetlabMultiplier:null;
-  S.wetlabMultiplier=wetlabKey;
-  const rd=ROLE_DEF[S.role];if(rd){S.topics=[...rd.topics];if(rd.splitLabel)S.splitLabel=rd.splitLabel}
-  syncControls()
 }
 function syncControls(){
   setRng('numRequired','numRequiredVal',S.baseRequired);
   setRng('numStructMin','numStructMinVal',S.structuredMin);
   setRng('numCompleted','numCompletedVal',Math.min(S.completed,S.baseRequired));
   setRng('numStructDone','numStructDoneVal',Math.min(S.structuredDone,S.baseRequired));
-  sel('selCycle').value=S.cycle;
+  const cycSel=sel('selCycle');
+  if(cycSel){cycSel.value=effectiveCycle();}
+  // Lock/unlock cycle selector based on jurisdiction auto-derivation
+  const locked=isJurisdictionAutoLocked();
+  if(cycSel){cycSel.disabled=locked;cycSel.style.opacity=locked?'0.6':'1';cycSel.style.cursor=locked?'not-allowed':'auto';cycSel.title=locked?'Auto-determined from jurisdiction rules':''}
 }
-function setRng(id,vid,v){const e=el(id);e.value=v;el(vid).textContent=v}
+function setRng(id,vid,v){const e=el(id);if(!e)return;e.value=v;const ve=el(vid);if(ve)ve.textContent=v}
 function el(id){return document.getElementById(id)}
 function sel(id){return document.getElementById(id)}
-// Render
+// Persist slider changes back to API
+function persistProgress(){
+  fetch('/api/cycles/current',{method:'GET'})
+    .then(r=>r.json())
+    .then(cycle=>{
+      if(!cycle||!cycle.cycle_id)return;
+      fetch(`/api/cycles/${cycle.cycle_id}`,{
+        method:'PUT',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({units_completed:S.completed,structured_completed:S.structuredDone,non_clinical_completed:S.nonClinDone})
+      });
+    }).catch(()=>{});
+}
+
+// ── Render ─────────────────────────────────────────────────────────────────
 function render(){
   const req=effectiveRequired();const cyc=effectiveCycle();
   const p=pct(req);const cs=complianceStatus(p);
@@ -250,17 +412,26 @@ function render(){
   const ringCirc=2*Math.PI*35;const rfg=el('ring-fg');
   if(rfg){rfg.style.strokeDasharray=ringCirc;rfg.style.strokeDashoffset=ringCirc-(p/100)*ringCirc}
   const ppct=el('profile-pct');if(ppct)ppct.textContent=p+'%';
+  // CPD/CE term — dynamic from authority
+  document.querySelectorAll('.cpd-term-label').forEach(e=>e.textContent=S.cpd_term||'CPD');
   // Badges
   const badges=el('w-badges');if(badges){
     badges.innerHTML='';
     if(ng&&S.newGradRequired>0)badges.innerHTML+='<span class="wpill-badge wpill-newgrad">🎓 New Graduate</span>';
     if(status==='specialist')badges.innerHTML+='<span class="wpill-badge wpill-specialist">🔬 Specialist</span>';
     if(status==='advanced')badges.innerHTML+='<span class="wpill-badge wpill-ap">✦ Advanced Practitioner</span>';
+    if(!S.isStatutorilyRegistered)badges.innerHTML+='<span class="wpill-badge" style="background:#6b7280">Voluntary CPD</span>';
   }
   // Status banners
   const bannerEl=el('w-status-banner');if(bannerEl){
-    if(status==='non_practising'){bannerEl.className='w-banner blue';bannerEl.classList.remove('hidden');bannerEl.textContent='ℹ Non-practising — CPD not required by this authority'}
-    else if(status==='student'){bannerEl.className='w-banner grey';bannerEl.classList.remove('hidden');bannerEl.textContent='ℹ Student registration — CPD requirements begin after full registration'}
+    if(status==='non_practising'){bannerEl.className='w-banner blue';bannerEl.classList.remove('hidden');bannerEl.textContent=`ℹ Non-practising — ${S.cpd_term} not required by this authority`}
+    else if(status==='student'){bannerEl.className='w-banner grey';bannerEl.classList.remove('hidden');bannerEl.textContent=`ℹ Student registration — ${S.cpd_term} requirements begin after full registration`}
+    else if(status==='inactive'){bannerEl.className='w-banner blue';bannerEl.classList.remove('hidden');bannerEl.textContent=`ℹ Inactive registration — CE not required during inactive renewal. You may NOT practise.`}
+    else if(status==='first_renewal_exempt'||S.firstRenewalExempt){bannerEl.className='w-banner blue';bannerEl.classList.remove('hidden');bannerEl.textContent=`ℹ First renewal — CE exempt (registered within threshold). No CE required at this renewal.`}
+    else if(status==='first_renewal_prorata'&&S.firstRenewalProrataUnits>0){bannerEl.className='w-banner amber';bannerEl.classList.remove('hidden');bannerEl.textContent=`🗓 First renewal — reduced requirement: ${uLbl(S.firstRenewalProrataUnits)} required (pro-rata)`}
+    else if(status==='reactivating'){bannerEl.className='w-banner amber';bannerEl.classList.remove('hidden');bannerEl.textContent=`⚠ Reactivating — CE required for last active period AND inactive/expired period. Up to double the normal cycle requirement.`}
+    else if(!S.selfStudyPermitted){bannerEl.className='w-banner amber';bannerEl.classList.remove('hidden');bannerEl.textContent=`⚠ Self-study (reading journals/books) is NOT a qualifying CE format for this role. Only live/interactive and approved online courses count.`}
+    else if(S.cprRequiredNonCpe){bannerEl.className='w-banner blue';bannerEl.classList.remove('hidden');bannerEl.textContent=`ℹ CPR certification is required at renewal but earns ZERO CE credit. Ensure your CPR cert is current separately.`}
     else if(status==='paused'){bannerEl.className='w-banner amber';bannerEl.classList.remove('hidden');bannerEl.textContent=`⏸ Paused — reduced requirement: ${uLbl(req)} (${S.pauseMonths} months paused)`}
     else if(ng&&S.newGradRequired>0){bannerEl.className='w-banner amber';bannerEl.classList.remove('hidden');bannerEl.textContent='🎓 Reduced requirements apply in your first registration cycle'}
     else{bannerEl.classList.add('hidden')}
@@ -278,63 +449,158 @@ function render(){
   const sComp=el('sCompleted');if(sComp)sComp.textContent=disabled?'—':uLbl(S.completed);
   const sReq=el('sRequired');if(sReq)sReq.textContent=disabled?'—':uLbl(req);
   const sRem=el('sRemaining');if(sRem){const rem=Math.max(0,req-S.completed);sRem.textContent=disabled?'—':(rem===0?'✓ Done':uLbl(rem));sRem.className='stat-val '+(rem===0?'success':cs==='red'?'danger':'amber')}
-  const sCyc=el('sCycle');if(sCyc){const cycLbl={annual:'Annual',biennial:'Biennial',triennial:'3-year','5year':'5-year',rolling3:'Rolling 3yr'}[cyc]||cyc;sCyc.textContent=cycLbl+' ('+S.authority+')'}
-  // Split bar
+  const sCyc=el('sCycle');if(sCyc){
+    const cycLbl={annual:'Annual',biennial:'Biennial',triennial:'3-year','5year':'5-year',rolling3:'Rolling 3yr'}[cyc]||cyc;
+    // For jurisdictions with annual renewal but longer CE window (e.g. CT: annual renewal + 24-month window)
+    const windowNote=S.ceWindowMonths&&S.ceWindowMonths!==cycleMonths()?` (${S.ceWindowMonths}-month CE window)`:'';
+    sCyc.textContent=cycLbl+windowNote+' ('+S.authority+')'}
+  // Split bar — hideSplit if paraprofessional / student tier
   const wSplit=el('wSplit');if(wSplit){
-    const rd=ROLE_DEF[S.role];const hideSplit=rd&&rd.hideSplit;
+    // Hide split when: no minimum required, paraprofessional tier, or explicit 'none' concept
+    const hideSplit=S.tier==='paraprofessional'||S.tier==='new_graduate'||S.structuredMin===0||S.splitBarConcept==='none';
     wSplit.classList.toggle('hidden',!S.showSplit||S.compact||hideSplit);
     if(S.showSplit&&!S.compact&&!hideSplit&&req>0){
+      const isVerifiable=S.splitBarConcept==='verifiable';
       const totalPct=Math.min(100,(S.completed/req)*100);
-      const sPct=Math.min(totalPct,(S.structuredDone/req)*100);
-      el('splitBarA').style.width=totalPct+'%';el('splitBarA').style.background=fillColour;
-      el('splitBarB').style.width=sPct+'%';el('splitBarB').style.background=fillColour;
+      const sPct=Math.min(100,(S.structuredDone/req)*100);
+      const nonVerifPct=isVerifiable?Math.min(100,Math.max(0,((S.nonClinDone||0)/req)*100)):0;
+      const barA=el('splitBarA');const barB=el('splitBarB');
+      if(barA){barA.style.left='0';barA.style.width=sPct+'%';barA.style.background=fillColour;barA.style.opacity='1';}
+      if(barB){
+        if(isVerifiable){
+          // 3-segment: A=verifiable (solid), B=non-verifiable (amber after A)
+          const capExceeded=S.nonClinCap&&S.nonClinDone>S.nonClinCap.max;
+          barB.style.left=sPct+'%';
+          barB.style.width=nonVerifPct>0?nonVerifPct+'%':'0';
+          barB.style.background=capExceeded?'#b91c1c':'#d97706';
+          barB.style.opacity=nonVerifPct>0?'0.75':'0';
+        }else{
+          // 2-segment: A=structured (solid), B=non-structured (faded, after A)
+          barB.style.left=sPct+'%';
+          barB.style.width=Math.max(0,totalPct-sPct)+'%';
+          barB.style.background=fillColour;
+          barB.style.opacity='0.2';
+        }
+      }
       el('splitLbl').textContent=S.splitLabel;
-      const structDeficit=S.structuredDone<S.structuredMin;
-      el('splitVal').textContent=uLbl(S.structuredDone)+' / '+uLbl(S.structuredMin)+' structured';
-      el('splitVal').className='split-hdr-val'+(structDeficit?' amber':'');
-      // Spread rule chip
+      const deficit=S.structuredDone<S.structuredMin;
+      const concept=S.splitLabel.split('/')[0].trim().toLowerCase();
+      el('splitVal').textContent=uLbl(S.structuredDone)+' / '+uLbl(S.structuredMin)+' '+concept;
+      el('splitVal').className='split-hdr-val'+(deficit?' amber':'');
+      // Chip: spread rule (structured) or non-verifiable cap warning (verifiable)
       const sc=el('spreadChip');if(sc){
-        if(S.spreadRule){sc.classList.remove('hidden');sc.className='split-chip '+(S.structuredDone>=S.spreadRule.minUnits?'ok':'warn');sc.textContent=(S.structuredDone>=S.spreadRule.minUnits?'✓ ':'⚠ ')+S.spreadRule.label}
-        else sc.classList.add('hidden')
+        if(S.spreadRule){
+          sc.classList.remove('hidden');sc.className='split-chip '+(S.structuredDone>=S.spreadRule.minUnits?'ok':'warn');
+          sc.textContent=(S.structuredDone>=S.spreadRule.minUnits?'✓ ':'⚠ ')+S.spreadRule.label;
+        }else if(isVerifiable&&S.nonClinCap&&S.nonClinDone>0){
+          const over=S.nonClinDone>S.nonClinCap.max;
+          sc.classList.remove('hidden');sc.className='split-chip '+(over?'warn':'ok');
+          sc.textContent=(over?'⚠ Cap exceeded: ':'◐ Non-verifiable: ')+uLbl(S.nonClinDone)+' / '+uLbl(S.nonClinCap.max);
+        }else{sc.classList.add('hidden');}
       }
     }
   }
-  // Non-clinical cap
+  // Non-clinical cap bar — hide for verifiable authorities (cap already shown in split chip)
   const wNC=el('wNonClin');if(wNC){
-    if(S.nonClinCap&&!S.compact){wNC.classList.remove('hidden');const over=S.nonClinDone>S.nonClinCap.max;el('ncLbl').textContent=S.nonClinCap.label;el('ncVal').textContent=uLbl(S.nonClinDone)+' / '+uLbl(S.nonClinCap.max);el('ncVal').className='nonclin-val'+(over?' over':'');const ncPct=Math.min(100,(S.nonClinDone/req)*100);const ncCap=Math.min(100,(S.nonClinCap.max/req)*100);el('ncBar').style.width=Math.min(ncPct,ncCap)+'%';el('ncBar').style.background=over?'#b91c1c':fillColour;el('ncBarOver').style.width=over?Math.min(ncPct-ncCap,100-ncCap)+'%':'0%'}
-    else wNC.classList.add('hidden')
+    const showNC=S.nonClinCap&&!S.compact&&S.splitBarConcept!=='verifiable';
+    if(showNC){wNC.classList.remove('hidden');const over=S.nonClinDone>S.nonClinCap.max;el('ncLbl').textContent=S.nonClinCap.label;el('ncVal').textContent=uLbl(S.nonClinDone)+' / '+uLbl(S.nonClinCap.max);el('ncVal').className='nonclin-val'+(over?' over':'');const ncPct=Math.min(100,(S.nonClinDone/req)*100);const ncCap=Math.min(100,(S.nonClinCap.max/req)*100);el('ncBar').style.width=Math.min(ncPct,ncCap)+'%';el('ncBar').style.background=over?'#b91c1c':fillColour;el('ncBarOver').style.width=over?Math.min(ncPct-ncCap,100-ncCap)+'%':'0%';}
+    else wNC.classList.add('hidden');
   }
   // Carry-over chip
   const wCarry=el('wCarry');if(wCarry){
     if(carryAmt>0&&!S.compact){wCarry.classList.remove('hidden');el('carryAmt').textContent=uLbl(carryAmt)}
     else wCarry.classList.add('hidden')
   }
-  // Topics
+  // Reflection bar — shown for RCVS/GDC where reflection gates compliance
+  const wReflect=el('wReflect');
+  if(wReflect){
+    if(S.reflectionRequired&&!S.compact){
+      wReflect.classList.remove('hidden');
+      const rDone=S.reflectedDone;
+      const rPct=Math.min(100,(rDone/req)*100);
+      const recPct=Math.min(100,(S.completed/req)*100);
+      const rCompliant=rDone>=req;
+      // Recorded bar (total hours — grey overlay)
+      const barRec=el('barRecorded');
+      if(barRec){barRec.style.width=recPct+'%';barRec.style.background='rgba(255,255,255,0.12)';}
+      // Reflected bar (compliant portion — teal/amber based on completion)
+      const barRef=el('barReflected');
+      if(barRef){barRef.style.width=rPct+'%';barRef.style.background=rCompliant?'#14b8a6':fillColour;}
+      // Labels
+      const refLbl=el('reflectLbl');if(refLbl)refLbl.textContent='Reflected';
+      const refVal=el('reflectVal');
+      if(refVal){
+        refVal.textContent=uLbl(rDone)+' / '+uLbl(req)+' reflected';
+        refVal.className='reflect-val'+(rCompliant?'':' amber');
+      }
+      // Compliance gate chip
+      const refChip=el('reflectGateChip');
+      if(refChip){
+        refChip.classList.remove('hidden');
+        refChip.className='split-chip'+(rCompliant?' ok':' warn');
+        refChip.textContent=rCompliant?'✓ Reflection complete':'⏳ Reflection needed for compliance';
+      }
+    } else {
+      wReflect.classList.add('hidden');
+      const refChip=el('reflectGateChip');if(refChip)refChip.classList.add('hidden');
+    }
+  }
+  // Topics — bar row design (scales to any number of topics, mobile-safe)
   const wTopics=el('wTopics');if(wTopics){
-    const show=S.showTopics&&S.hasMandatoryTopics&&!S.compact;wTopics.classList.toggle('hidden',!show);
+    const show=S.showTopics&&!S.compact;wTopics.classList.toggle('hidden',!show);
     if(show){
-      let topicList=[...S.topics];
-      if(S.hasDEA&&isUS())topicList.push('Controlled substances (DEA)');
+      const topicList=S.topics.length?S.topics:['Clinical skills','Practice management','Professional development'];
+      const topicDetails=API_CACHE.currentTopics||[];
       const perTopic=req/topicList.length;let done=0;
-      el('topicsList').innerHTML=topicList.map((t,i)=>{
-        const tr=TOPIC_RULES[t]||{};const thresh=i*perTopic;
-        const status2=S.completed>=thresh+perTopic?'done':S.completed>thresh?'partial':'todo';
-        if(status2==='done')done++;
-        const completed2=status2==='done'?perTopic:status2==='partial'?S.completed-thresh:0;
-        const icon=status2==='done'?'✓':status2==='partial'?'◐':'○';
-        const liveBadge=tr.mustBeLive?'<span class="topic-flag">LIVE</span>':'';
-        const minBadge=tr.minPerCycle?` min ${tr.minPerCycle} hrs`:'';
-        return`<div class="topic-row"><span class="topic-dot ${status2}">${icon}</span><span class="topic-name">${t}${liveBadge}<span style="font-size:9.5px;color:#9aaabb">${minBadge}</span></span><span class="topic-hrs">${status2==='todo'?'0 '+S.displayUnit.slice(0,3):uLbl(+completed2.toFixed(1))}</span></div>`
+      const now2=new Date();const start2=new Date(S.cycleStart);
+      const timePct2=Math.min(100,Math.max(0,((now2-start2)/(cycleEnd()-start2))*100));
+      const splitLabel1=(S.uiLabels&&S.uiLabels.split_label_positive)||S.splitLabel.split('/')[0].trim()||'Structured';
+      el('topicsList').innerHTML=topicList.map((t)=>{
+        const td=topicDetails.find(x=>x.topic_name===t)||{};
+        const minU=td.min_units_per_cycle||perTopic;
+        // Approximate per-topic completion from overall structured progress
+        const topicDone=Math.min(minU,(S.structuredDone/Math.max(req,1))*minU*1.15);
+        const barPct=Math.min(100,Math.round((topicDone/minU)*100));
+        const isDone=topicDone>=minU;if(isDone)done++;
+        const isAtRisk=!isDone&&timePct2>55&&barPct<35;
+        const sc=isDone?'topic-ok':isAtRisk?'topic-risk':'topic-warn';
+        const shortfall=isDone?'':uLbl(+(minU-topicDone).toFixed(1));
+        const verifiableChip=S.splitBarConcept==='verifiable'&&isDone?` · ${splitLabel1}`:'';
+        const chipText=isDone?`✓ Done${verifiableChip}`:isAtRisk?`✗ Needs ${shortfall}`:`⚠ Needs ${shortfall}`;
+        const liveFlag=td.must_be_live?'<span class="topic-flag">LIVE</span>':'';
+        const spotlight=isAtRisk?' topic-bar-row--spotlight':'';
+        return`<div class="topic-bar-row${spotlight}">
+  <div class="tbr-top"><span class="tbr-name">${t}${liveFlag}</span><span class="tbr-chip ${sc}">${chipText}</span></div>
+  <div class="tbr-bar-wrap"><div class="tbr-track"><div class="tbr-fill ${sc}" style="width:${barPct}%"></div></div><span class="tbr-count">${uLbl(+topicDone.toFixed(1))} / ${uLbl(minU)}</span></div>
+</div>`;
       }).join('');
-      el('topicsCount').textContent=done+' of '+topicList.length+' met'
+      el('topicsCount').textContent=done+' of '+topicList.length+' met';
     }
   }
   // Compliance
   const wC=el('wCompliance');if(wC){
     wC.className='w-compliance c-'+cs;
-    const txt={green:p>=100?'Complete — all requirements met':'On track — good progress',amber:'At risk — falling behind schedule',red:'Action needed — critical gap',blue:'Non-practising — CPD not required',grey:'Student — requirements activate on full registration'};
+    const labels=S.uiLabels||{};
+    const splitDeficit=S.structuredMin>0&&S.structuredDone<S.structuredMin;
+    const capOver=S.splitBarConcept==='verifiable'&&S.nonClinCap&&S.nonClinDone>S.nonClinCap.max;
+    // Build authority-specific amber/red messages
+    let splitMsg='';
+    if(splitDeficit){
+      const shortfall=uLbl(+(S.structuredMin-S.structuredDone).toFixed(1));
+      splitMsg=(labels.deficit_message||'You need {n} more '+S.splitLabel.split('/')[0].trim().toLowerCase()+' hrs').replace('{n}',shortfall);
+    }
+    const capMsg=capOver?(labels.cap_exceeded_message||'Cap exceeded — excess hours will not count'):'';
+    const deficitAmber=capMsg||splitMsg||'At risk — falling behind schedule';
+    const deficitRed=capMsg||splitMsg||'Action needed — critical gap';
+    const txt={
+      green:p>=100?`Complete — all ${S.cpd_term} requirements met`:`On track — good progress`,
+      amber:deficitAmber,
+      red:deficitRed,
+      blue:`Non-practising — ${S.cpd_term} not required`,
+      grey:'Student — requirements activate on full registration'
+    };
     const badge={green:p>=100?'Complete ✓':'On Track',amber:'At Risk',red:'Action Needed',blue:'Not Required',grey:'Student'};
-    el('cText').textContent=txt[cs];el('cBadge').textContent=badge[cs]
+    el('cText').textContent=txt[cs];el('cBadge').textContent=badge[cs];
   }
   // Cycle strip
   const wCyc=el('wCycle');if(wCyc){
@@ -346,111 +612,171 @@ function render(){
   }
   // Compact
   const cpdW=el('cpdWidget');if(cpdW)cpdW.classList.toggle('compact',S.compact);
-  // Unit pills — auto-derived from authority unit type, no manual toggle
+  // Unit pills
   const UNIT_LABELS={hours:'Hours',ceus:'CEUs',credits:'Credits',points:'Points'};
   const pills=document.querySelectorAll('.unit-pill');
   pills.forEach(pill=>{
-    if(pill.dataset.unit==='hours'){
-      pill.textContent='Hours';pill.classList.add('active');pill.classList.remove('hidden');
-    } else {
-      // Second pill: show only if authority uses a non-hours unit
-      if(S.unitType!=='hours'){
-        pill.textContent=UNIT_LABELS[S.unitType]||S.unitType;
-        pill.dataset.unit=S.unitType;
-        pill.classList.remove('hidden');
-        pill.classList.toggle('active',S.displayUnit===S.unitType);
-        // Sync first pill active state
-        pills[0]&&pills[0].classList.toggle('active',S.displayUnit==='hours');
-      } else {
-        pill.classList.add('hidden');pill.classList.remove('active');
-      }
-    }
+    if(pill.dataset.unit==='hours'){pill.textContent='Hours';pill.classList.add('active');pill.classList.remove('hidden');}
+    else{if(S.unitType!=='hours'){pill.textContent=UNIT_LABELS[S.unitType]||S.unitType;pill.dataset.unit=S.unitType;pill.classList.remove('hidden');pill.classList.toggle('active',S.displayUnit===S.unitType);pills[0]&&pills[0].classList.toggle('active',S.displayUnit==='hours');}else{pill.classList.add('hidden');pill.classList.remove('active');}}
   });
-  // DEA toggle — disable if not US
   const deaRow=el('deaRow');if(deaRow)deaRow.classList.toggle('disabled',!isUS());
-  // Pro-rata controls visibility
   const proRataRow=el('proRataRow');const regMonthsRow=el('regMonthsRow');
   if(proRataRow)proRataRow.classList.toggle('hidden',!S.proRata);
   if(regMonthsRow)regMonthsRow.classList.toggle('hidden',!S.proRata);
-  // Pause months row
   const pauseRow=el('pauseMonthsRow');if(pauseRow)pauseRow.classList.toggle('hidden',S.registrationStatus!=='paused');
+  // Hide the 'Previous cycle completed' slider for auto-locked jurisdictions — carry-over has no effect
+  const prevCycleRow=el('prevCompletedRow');if(prevCycleRow)prevCycleRow.classList.toggle('hidden',isJurisdictionAutoLocked());
+  if(window._syncSplitBtn)window._syncSplitBtn();
   renderRuleSummary()
 }
+
 // ── Active Rules transparency panel ────────────────────────────────────────
 function renderRuleSummary(){
   const req=effectiveRequired();const cyc=effectiveCycle();
   const status=S.registrationStatus;const ng=isNewGrad();
   const so=STATE_OVERRIDES[S.state];
-  // Priority banner
+  const derived=deriveJurisdictionRules(S.sector,S.country,S.role,status);
   let priorityMsg='';
-  if(status==='non_practising')priorityMsg='Priority 1 active: Non-practising — CPD requirement waived (0 units required)';
-  else if(status==='student')priorityMsg='Priority 2 active: Student registration — CPD ring disabled until full registration';
+  if(derived){
+    if(derived.requiredHours===0)
+      priorityMsg=`Jurisdiction auto-determined: ${derived.source} — no CPD required`;
+    else
+      priorityMsg=`Jurisdiction auto-determined: ${derived.source}`;
+  }else if(status==='non_practising')priorityMsg=`Priority 1 active: Non-practising — ${S.cpd_term} requirement waived (0 units required)`;
+  else if(status==='student')priorityMsg=`Priority 2 active: Student registration — ${S.cpd_term} ring disabled until full registration`;
   else if(status==='paused')priorityMsg=`Priority 3 active: Paused (${S.pauseMonths} months) — requirement reduced pro-rata to ${req} ${S.unitType}`;
   else if(ng&&S.newGradRequired>0)priorityMsg=`Priority 4 active: New graduate — requirement reduced from ${S.baseRequired} to ${S.newGradRequired} ${S.unitType}`;
   else if(S.proRata&&S.regMonthsAgo>0)priorityMsg=`Priority 5 active: Pro-rata mid-year registrant (${S.regMonthsAgo} months ago) — requirement reduced to ${req} ${S.unitType}`;
   else if(so&&so.required)priorityMsg=`Priority 5 active: State override (${S.state.toUpperCase()}) — requirement set to ${so.required} hrs / ${so.cycle}`;
   const banner=el('rulePriorityBanner');const bannerTxt=el('rulePriorityText');
   if(banner){priorityMsg?banner.classList.remove('hidden'):banner.classList.add('hidden');if(bannerTxt)bannerTxt.textContent=priorityMsg}
-  // Row builder
   const unitSuffix={hours:'hrs',points:'pts',credits:'cr',ceus:'CEUs'}[S.unitType]||S.unitType;
-  function row(lbl,val,cls){return`<div class="rule-item"><span class="rule-lbl">${lbl}</span><span class="rule-val${cls?' '+cls:''}">${val}</span></div>`}
+  function row(lbl,val,cls){return`<div class="rule-item"><span class="rule-lbl">${lbl}</span><span class="rule-val${cls?' '+cls:''}"><span>${val}</span></span></div>`}
   const nonPract=status==='non_practising';const student=status==='student';
   const stateChip=so&&so.required?` <span class="rule-override ro-state">STATE OVERRIDE</span>`:'';
   const ngChip=ng&&S.newGradRequired>0?` <span class="rule-override ro-newgrad">NEW GRAD</span>`:'';
   const pauseChip=status==='paused'?` <span class="rule-override ro-paused">PAUSED</span>`:'';
   const proRataChip=S.proRata&&S.regMonthsAgo>0?` <span class="rule-override ro-prorata">PRO-RATA</span>`:'';
-  const reqDisplay=nonPract||student?`0 ${unitSuffix} (exempt)`:`${req} ${unitSuffix}${stateChip}${ngChip}${pauseChip}${proRataChip}`;
+  const autoChip=derived?` <span class="rule-override ro-auto">AUTO</span>`:'';
+  const exempt=nonPract||student||(derived&&derived.requiredHours===0);
+  const reqDisplay=exempt?`0 ${unitSuffix} (exempt)${autoChip}`:`${req} ${unitSuffix}${autoChip||stateChip}${ngChip}${pauseChip}${proRataChip}`;
   const cycLabel={annual:'Annual (12 months)',biennial:'Biennial (24 months)',triennial:'Triennial (36 months)','5year':'5-year rolling',rolling3:'Rolling 3-year window'}[cyc]||cyc;
+  const cycLabelFull=cycLabel+(derived?` <span class="rule-override ro-auto">AUTO-LOCKED</span>`:'');
   const carryAmt=carryOverAvailable();
-  const grid=el('rulesGrid');
-  if(!grid)return;
+  const carryVal=derived
+    ?'Not permitted — RCVS: each CPD year is self-contained (no carry-over between years)'
+    :S.carryOver?(carryAmt>0?`${carryAmt} ${unitSuffix} available from previous cycle`:'Permitted — no surplus from previous cycle')
+    :'Not permitted by this authority';
+  const grid=el('rulesGrid');if(!grid)return;
   grid.innerHTML=[
-    row('Regulatory Authority',S.authority),
-    row('Units Required / Cycle',reqDisplay,nonPract||student?'muted':''),
-    row('Cycle Type',cycLabel),
-    row('Authority Unit Type',{hours:'Hours (hrs) — standard for this authority',points:'Points (pts)',credits:`Credits (cr) — 1 credit = 1 hour${S.wetlabMultiplier?` | Wetlab / hands-on activities earn ${S.wetlabMultiplier}× credits per contact hour`:''}`,ceus:'CE Units (CEUs) — 1 CEU = 1 hour, standard US dental'}[S.unitType]||S.unitType),
-    row('Structured / Verifiable Min',S.structuredMin>0?`${S.structuredMin} ${unitSuffix} minimum`:'None required',S.structuredMin>0?'':'muted'),
+    row('Regulatory Authority',`${S.authority}`),
+
+    row('Framework Term',`<strong>${S.cpd_term}</strong> (${S.cpd_term_full})`),
+    row('Units Required / Cycle',reqDisplay,exempt?'muted':''),
+    row('Cycle Type',cycLabelFull),
+    row('Authority Unit Type',{hours:'Hours (hrs)',points:'Points (pts)',credits:`Credits (cr) — 1 credit = 1 hour${S.wetlabMultiplier?` | Wetlab earns ${S.wetlabMultiplier}× credits per contact hour`:''}`,ceus:'CE Units (CEUs) — 1 CEU = 1 hour'}[S.unitType]||S.unitType),
+    row('Structured / Verifiable Min',S.structuredMin>0?`${S.structuredMin} ${unitSuffix} minimum ${S.splitLabel?'('+S.splitLabel.split('/')[0].trim()+')':''}`: 'None required',S.structuredMin>0?'':'muted'),
     row('Split Bar Label',S.splitLabel||'—',S.splitLabel?'':'muted'),
     row('Mandatory Topics',S.hasMandatoryTopics&&S.topics.length?S.topics.join(', '):'Not required for this authority / role',S.hasMandatoryTopics?'':'muted'),
     row('DEA / Prescribing CE',S.hasDEA&&isUS()?'Required — 3 hrs min / cycle':'Not applicable',S.hasDEA&&isUS()?'':'muted'),
     row('Non-clinical Cap',S.nonClinCap?`${S.nonClinCap.max} ${unitSuffix} max (${S.nonClinCap.pct}%) — ${S.nonClinCap.label}`:'No cap for this authority',S.nonClinCap?'amber':'muted'),
     row('Spread Rule',S.spreadRule?S.spreadRule.label:'No spread rule for this authority',S.spreadRule?'amber':'muted'),
-    row('Carry-over',S.carryOver?(carryAmt>0?`${carryAmt} ${unitSuffix} available from previous cycle`:'Permitted — no surplus from previous cycle'):'Not permitted by this authority',S.carryOver&&carryAmt>0?'purple':'muted'),
+    row('Carry-over',carryVal,derived||!S.carryOver?'muted':carryAmt>0?'purple':'muted'),
     row('Pause / Deferral',S.pauseAllowed?`Up to ${S.pauseMax} months — proportional hour reduction`:(S.deferral?'Deferral on application only':'Not permitted'),S.pauseAllowed?'':'muted'),
     row('Pro-rata (mid-year reg.)',S.proRata?'Applicable — formula: required × (months remaining ÷ cycle months)':'Not applicable for this authority',S.proRata?'amber':'muted'),
     row('New Graduate Rule',ng&&S.newGradRequired>0?`Reduced to ${S.newGradRequired} ${unitSuffix} (first cycle only)`:'Not in new graduate window',ng&&S.newGradRequired>0?'amber':'muted'),
-    row('Registration Status',{active:'Active / Full — standard requirements apply',non_practising:'Non-practising — CPD exempt',student:'Student — CPD not yet required',paused:'Paused — pro-rata reduction applied',specialist:'Specialist — standard hours, specialist topics',advanced:'Advanced Practitioner — standard hours with AP badge'}[status]||status,nonPract||student?'amber':''),
+    row('Statutory Registration',S.isStatutorilyRegistered?'Yes — mandatory CPD enforced':'No — voluntary CPD engagement only',S.isStatutorilyRegistered?'':'amber'),
+    row('Registration Status',{active:'Active / Full — standard requirements apply',non_practising:`Non-practising — ${S.cpd_term} exempt`,student:'Student — CPD not yet required',paused:'Paused — pro-rata reduction applied',specialist:'Specialist — standard hours, specialist topics',advanced:'Advanced Practitioner — standard hours with AP badge'}[status]||status,nonPract||student?'amber':''),
+    derived?row('Jurisdiction Rule Source',derived.source,'purple'):'',
   ].join('')
 }
+
+
+
+// ── Demo settings persistence ──────────────────────────────────────────────
+let _pdsTimer=null;
+function persistDemoSettings(){
+  clearTimeout(_pdsTimer);
+  _pdsTimer=setTimeout(()=>{
+    fetch('/api/practitioners/me/settings',{
+      method:'PUT',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        sector:S.sector,cycle:S.cycle,
+        baseRequired:S.baseRequired,structuredMin:S.structuredMin,
+        prevCompleted:S.prevCompleted,pauseMonths:S.pauseMonths,regMonthsAgo:S.regMonthsAgo,
+        registrationStatus:S.registrationStatus,registrationYear:S.registrationYear,
+        hasMandatoryTopics:S.hasMandatoryTopics,showSplit:S.showSplit,hasDEA:S.hasDEA,
+        showTopicsPanel:S.showTopics,showCycleStrip:S.showCycle,compactMode:S.compact,
+        proRata:S.proRata,cycleStart:S.cycleStart,
+      })
+    }).catch(()=>{});
+  },1200);
+}
+// Seed all form inputs from S state after load
+function syncUIFromState(){
+  const s=(id,v)=>{const e=el(id);if(e)e.value=v;};
+  const sv=(id,v)=>{const e=el(id);if(e)e.textContent=v;};
+  const st=(id,v)=>{const e=el(id);if(e)e.checked=!!v;};
+  s('selCycle',S.cycle);s('selRegStatus',S.registrationStatus);s('selRegYear',S.registrationYear);
+  s('selCycleStart',S.cycleStart);
+  s('numRequired',S.baseRequired);sv('numRequiredVal',S.baseRequired);
+  s('numStructMin',S.structuredMin);sv('numStructMinVal',S.structuredMin);
+  s('numCompleted',S.completed);sv('numCompletedVal',parseFloat(S.completed).toFixed(1));
+  s('numStructDone',S.structuredDone);sv('numStructDoneVal',parseFloat(S.structuredDone).toFixed(1));
+  s('numNonClin',S.nonClinDone);sv('numNonClinVal',parseFloat(S.nonClinDone).toFixed(1));
+  s('numPrevCompleted',S.prevCompleted);sv('numPrevCompletedVal',S.prevCompleted);
+  s('numPauseMonths',S.pauseMonths);sv('numPauseMonthsVal',S.pauseMonths);
+  s('numRegMonths',S.regMonthsAgo);sv('numRegMonthsVal',S.regMonthsAgo);
+  st('togTopics',S.hasMandatoryTopics);st('togSplit',S.showSplit);st('togDEA',S.hasDEA);
+  st('togShowTopics',S.showTopics);st('togShowCycle',S.showCycle);st('togCompact',S.compact);
+  st('togProRata',S.proRata);
+  document.querySelectorAll('.s-tab').forEach(t=>t.classList.toggle('active',t.dataset.sector===S.sector));
+  document.querySelectorAll('.unit-pill').forEach(p=>p.classList.toggle('active',p.dataset.unit===(S.displayUnit==='hours'?'hours':'points')));
+}
 // Event wiring helpers
-function onRng(id,vid,prop,cb){el(id).addEventListener('input',function(){S[prop]=parseFloat(this.value);el(vid).textContent=parseFloat(this.value).toFixed(this.step&&parseFloat(this.step)<1?1:0);if(cb)cb();render()})}
-function onSel(id,prop,cb){el(id).addEventListener('change',function(){S[prop]=this.value;if(cb)cb();render()})}
-function onTog(id,prop,cb){el(id).addEventListener('change',function(){S[prop]=this.checked;if(cb)cb();render()})}
+function onRng(id,vid,prop,cb){const e=el(id);if(!e)return;e.addEventListener('input',function(){S[prop]=parseFloat(this.value);const ve=el(vid);if(ve)ve.textContent=parseFloat(this.value).toFixed(this.step&&parseFloat(this.step)<1?1:0);if(cb)cb();persistDemoSettings();render()})}
+function onSel(id,prop,cb){const e=el(id);if(!e)return;e.addEventListener('change',function(){S[prop]=this.value;if(cb)cb();persistDemoSettings();render()})}
+function onTog(id,prop,cb){const e=el(id);if(!e)return;e.addEventListener('change',function(){S[prop]=this.checked;if(cb)cb();persistDemoSettings();render()})}
 // Init after DOM ready
-function initWidget(){
-  lucide.createIcons();
-  // Country → repopulate state dropdown, then apply preset
-  el('selCountry').addEventListener('change',function(){S.country=this.value;S.state='';applyPreset(this.value);updateStateDropdown();updateRoleDropdown();render()});
-  // State
-  el('selState').addEventListener('change',function(){S.state=this.value;render()});
-  // Reg year
-  onSel('selRegYear','registrationYear');
-  // Reg status
+async function initWidget(){
+  // Show loading state
+  const w=el('cpdWidget');if(w)w.style.opacity='0.5';
+  // Load all data from API
+  await loadFromAPI();
+  // Populate dropdowns from API cache
+  updateCountryDropdown();updateStateDropdown();updateRoleDropdown();
+  // Apply config for initial authority+role from DB
+  await applyPreset(S.country);
+  // Seed all form inputs from restored S state
+  syncUIFromState();
+  // Wire up event listeners
+  el('selCountry')?.addEventListener('change',async function(){
+    S.country=this.value;S.state='';
+    await applyPreset(this.value);
+    updateStateDropdown();updateRoleDropdown();render();
+    // Persist authority change back to DB
+    fetch('/api/practitioners/me/registration',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({authority_key:this.value,role_key:S.role})}).catch(()=>{});
+  });
+  el('selState')?.addEventListener('change',function(){S.state=this.value;render()});
+  // selRegYear change handled below by calcRegMonths
+
   onSel('selRegStatus','registrationStatus');
-  // Role
-  el('selRole').addEventListener('change',function(){S.role=this.value;const rd=ROLE_DEF[S.role];if(rd){S.topics=[...rd.topics];if(rd.splitLabel)S.splitLabel=rd.splitLabel};render()});
-  // Cycle
+  el('selRole')?.addEventListener('change',async function(){
+    S.role=this.value;
+    await applyPreset(S.country);render();
+    fetch('/api/practitioners/me/registration',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({role_key:this.value})}).catch(()=>{});
+  });
   onSel('selCycle','cycle');
-  // Sliders
   onRng('numRequired','numRequiredVal','baseRequired',()=>{S.structuredMin=Math.min(S.structuredMin,S.baseRequired)});
   onRng('numStructMin','numStructMinVal','structuredMin');
-  onRng('numCompleted','numCompletedVal','completed');
-  onRng('numStructDone','numStructDoneVal','structuredDone');
+  onRng('numCompleted','numCompletedVal','completed',()=>setTimeout(persistProgress,1500));
+  onRng('numStructDone','numStructDoneVal','structuredDone',()=>setTimeout(persistProgress,1500));
   onRng('numNonClin','numNonClinVal','nonClinDone');
   onRng('numPrevCompleted','numPrevCompletedVal','prevCompleted');
+  onRng('numReflectedDone','numReflectedDoneVal','reflectedDone');
+
   onRng('numPauseMonths','numPauseMonthsVal','pauseMonths');
   onRng('numRegMonths','numRegMonthsVal','regMonthsAgo');
-  // Toggles
   onTog('togTopics','hasMandatoryTopics');
   onTog('togSplit','showSplit');
   onTog('togDEA','hasDEA');
@@ -458,24 +784,114 @@ function initWidget(){
   onTog('togShowCycle','showCycle');
   onTog('togCompact','compact');
   onTog('togProRata','proRata');
-  // Cycle start
-  el('selCycleStart').addEventListener('change',function(){S.cycleStart=this.value;render()});
+  el('selCycleStart')?.addEventListener('change',function(){S.cycleStart=this.value;persistDemoSettings();calcRegMonths();render()});
+
+  // Auto-calculate months since registration from year + cycle start date
+  function calcRegMonths(){
+    const yr = parseInt(el('selRegYear')?.value);
+    if (!yr || !S.cycleStart) return;
+    // Use 1 Sep of the selected year as the assumed registration date (typical UK graduation)
+    const regDate = new Date(yr, 8, 1); // month is 0-indexed; 8 = September
+    const refDate  = new Date(S.cycleStart);
+    let months = (refDate.getFullYear() - regDate.getFullYear()) * 12
+               + (refDate.getMonth()    - regDate.getMonth());
+    if (refDate.getDate() < regDate.getDate()) months--;
+    months = Math.max(1, months);
+    const slider = el('numRegMonths');
+    const label  = el('numRegMonthsVal');
+    if (slider) { slider.max = Math.max(parseInt(slider.max)||35, months); slider.value = months; }
+    if (label)  label.textContent = months;
+    S.regMonthsAgo = months;
+  }
+  // Wire selRegYear to also trigger auto-calc
+  el('selRegYear')?.addEventListener('change', function(){ S.registrationYear=this.value; calcRegMonths(); persistDemoSettings(); render(); });
+  calcRegMonths(); // run once on load
+
   // Sector tabs
   document.querySelectorAll('.s-tab').forEach(tab=>{
-    tab.addEventListener('click',()=>{
+    tab.addEventListener('click',async()=>{
       document.querySelectorAll('.s-tab').forEach(t=>t.classList.remove('active'));
       tab.classList.add('active');S.sector=tab.dataset.sector;
-      S.country=SECTOR_DEFAULTS[S.sector]||'uk_rcvs';
-      S.state='';updateCountryDropdown();applyPreset(S.country);updateStateDropdown();updateRoleDropdown();render()
+      const apiSector=S.sector==='vet'?'veterinary':'dental';
+      const firstAuth=API_CACHE.authorities.find(a=>a.sector===apiSector||a.sector==='both');
+      if(firstAuth)S.country=firstAuth.authority_key;
+      S.state='';S.role='';
+      updateCountryDropdown();await applyPreset(S.country);updateStateDropdown();updateRoleDropdown();
+      persistDemoSettings();render();
     })
   });
   // Unit pills
   document.querySelectorAll('.unit-pill').forEach(pill=>{
     pill.addEventListener('click',()=>{S.displayUnit=pill.dataset.unit==='hours'?'hours':'points';render()})
   });
-  // Block dead links
   document.querySelectorAll('a[href="#"]').forEach(a=>a.addEventListener('click',e=>e.preventDefault()));
-  // Init
-  updateCountryDropdown();applyPreset('uk_rcvs');updateStateDropdown();updateRoleDropdown();render()
+  // ── More menu toggle ──────────────────────────────────────────────────────
+  const moreBtn=el('wMoreBtn');const moreMenu=el('wMoreMenu');
+  if(moreBtn&&moreMenu){
+    moreBtn.addEventListener('click',e=>{
+      e.stopPropagation();
+      const open=moreMenu.hidden;moreMenu.hidden=!open;moreBtn.setAttribute('aria-expanded',String(open));
+    });
+    document.addEventListener('click',()=>{if(moreMenu)moreMenu.hidden=true;});
+  }
+  // ── Topics toggle (syncs widget button <-> drawer checkbox) ───────────────
+  function syncTopicsBtn(){
+    const cb=el('togShowTopics');const btn=el('btnToggleTopics');
+    if(btn&&cb){btn.setAttribute('aria-pressed',cb.checked?'true':'false');btn.textContent=cb.checked?'📋 Hide topics checklist':'📋 Show topics checklist';}
+  }
+  el('btnToggleTopics')?.addEventListener('click',()=>{
+    const cb=el('togShowTopics');if(cb){cb.checked=!cb.checked;cb.dispatchEvent(new Event('change'));}
+    syncTopicsBtn();if(el('wMoreMenu'))el('wMoreMenu').hidden=true;
+  });
+  el('togShowTopics')?.addEventListener('change',()=>syncTopicsBtn());
+  syncTopicsBtn();
+  // ── Split bar toggle (syncs widget button <-> drawer checkbox) ────────────
+  function syncSplitBtn(){
+    const cb=el('togSplit');const btn=el('btnToggleSplit');
+    if(btn&&cb){
+      const lbl=S.splitLabel||'Structured / Non-structured';
+      btn.setAttribute('aria-pressed',cb.checked?'true':'false');
+      btn.textContent=cb.checked?`📊 Hide ${lbl}`:`📊 Show ${lbl}`;
+    }
+  }
+  window._syncSplitBtn=syncSplitBtn;
+  el('btnToggleSplit')?.addEventListener('click',()=>{
+    const cb=el('togSplit');if(cb){cb.checked=!cb.checked;cb.dispatchEvent(new Event('change'));}
+    syncSplitBtn();if(el('wMoreMenu'))el('wMoreMenu').hidden=true;
+  });
+  el('togSplit')?.addEventListener('change',()=>syncSplitBtn());
+  syncSplitBtn();
+  // ── Cycle strip toggle ────────────────────────────────────────────────────
+  function syncCycleBtn(){
+    const cb=el('togShowCycle');const btn=el('btnToggleCycle');
+    if(btn&&cb){btn.setAttribute('aria-pressed',cb.checked?'true':'false');btn.textContent=cb.checked?'📅 Hide cycle date strip':'📅 Show cycle date strip';}
+  }
+  el('btnToggleCycle')?.addEventListener('click',()=>{
+    const cb=el('togShowCycle');if(cb){cb.checked=!cb.checked;cb.dispatchEvent(new Event('change'));}
+    syncCycleBtn();if(el('wMoreMenu'))el('wMoreMenu').hidden=true;
+  });
+  el('togShowCycle')?.addEventListener('change',()=>syncCycleBtn());
+  syncCycleBtn();
+  // ── Compact mode toggle ───────────────────────────────────────────────────
+  function syncCompactBtn(){
+    const cb=el('togCompact');const btn=el('btnToggleCompact');
+    if(btn&&cb){btn.setAttribute('aria-pressed',cb.checked?'true':'false');btn.textContent=cb.checked?'⬜ Exit compact mode':'⬜ Compact mode (donut + stats only)';}
+  }
+  el('btnToggleCompact')?.addEventListener('click',()=>{
+    const cb=el('togCompact');if(cb){cb.checked=!cb.checked;cb.dispatchEvent(new Event('change'));}
+    syncCompactBtn();if(el('wMoreMenu'))el('wMoreMenu').hidden=true;
+  });
+  el('togCompact')?.addEventListener('change',()=>syncCompactBtn());
+  syncCompactBtn();
+
+
+
+
+  // Remove loading state and render
+  if(w){w.style.opacity='';w.style.transition='opacity 0.3s';}
+  render();
 }
+// ── Global API for Activity Log drawer ─────────────────────────────────────
+window.wRefresh = async function() { await loadFromAPI(); render(); };
+window.getWidgetState = function() { return S; };
 document.addEventListener('DOMContentLoaded',initWidget);

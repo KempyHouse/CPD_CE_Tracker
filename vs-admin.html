@@ -8,231 +8,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="shared.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
+  <link rel="stylesheet" href="dist/app.css" />
   <style>
-    /* ── Database viewer ────────────────────────────────────── */
-    .db-wrap {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-
-    .db-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 4px;
-    }
-
-    .db-header h2 {
-      font-size: 18px;
-      font-weight: 700;
-      color: var(--vs-navy);
-      letter-spacing: -0.2px;
-    }
-
-    .db-header p {
-      font-size: 12px;
-      color: var(--color-muted);
-      margin-top: 2px;
-    }
-
-    .db-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-      gap: 10px;
-      margin-bottom: 8px;
-    }
-
-    .db-pill {
-      background: var(--color-white);
-      border: 1.5px solid var(--color-border);
-      border-radius: 8px;
-      padding: 12px 14px;
-      cursor: pointer;
-      transition: all 0.15s ease;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .db-pill:hover {
-      border-color: var(--vs-purple);
-      background: #f5f3ff;
-      transform: translateY(-1px);
-      box-shadow: 0 3px 10px rgba(92,63,163,0.1);
-    }
-
-    .db-pill.active {
-      border-color: var(--vs-purple);
-      background: var(--vs-purple);
-      color: #fff;
-      box-shadow: 0 3px 12px rgba(92,63,163,0.25);
-    }
-
-    .db-pill .pill-icon {
-      width: 28px;
-      height: 28px;
-      border-radius: 6px;
-      background: rgba(92,63,163,0.1);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-      font-size: 13px;
-    }
-
-    .db-pill.active .pill-icon {
-      background: rgba(255,255,255,0.2);
-    }
-
-    .db-pill-text { min-width: 0; }
-
-    .db-pill-name {
-      font-size: 12px;
-      font-weight: 600;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .db-pill-count {
-      font-size: 10px;
-      opacity: 0.6;
-      margin-top: 1px;
-    }
-
-    /* Table detail panel */
-    .db-detail {
-      background: var(--color-white);
-      border-radius: var(--radius-card);
-      box-shadow: var(--shadow-card);
-      overflow: hidden;
-      display: none;
-    }
-
-    .db-detail.visible { display: block; }
-
-    .db-detail-header {
-      background: linear-gradient(120deg, var(--vs-navy), var(--vs-teal));
-      padding: 16px 20px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    .db-detail-header h3 {
-      font-size: 15px;
-      font-weight: 700;
-      color: #fff;
-      font-family: 'Courier New', monospace;
-    }
-
-    .db-detail-header p {
-      font-size: 11px;
-      color: rgba(255,255,255,0.7);
-      margin-top: 2px;
-    }
-
-    .db-detail-meta {
-      display: flex;
-      gap: 8px;
-    }
-
-    .db-badge {
-      font-size: 10px;
-      font-weight: 600;
-      padding: 3px 8px;
-      border-radius: 20px;
-      background: rgba(255,255,255,0.15);
-      color: #fff;
-    }
-
-    /* Fields table */
-    .db-fields {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 12.5px;
-    }
-
-    .db-fields thead tr {
-      background: #f7f8fa;
-      border-bottom: 2px solid var(--color-border);
-    }
-
-    .db-fields thead th {
-      padding: 9px 12px;
-      text-align: left;
-      font-size: 10.5px;
-      font-weight: 700;
-      color: var(--color-muted);
-      letter-spacing: 0.6px;
-      text-transform: uppercase;
-      white-space: nowrap;
-    }
-
-    .db-fields tbody tr {
-      border-bottom: 1px solid #f0f1f4;
-      transition: background 0.1s;
-    }
-
-    .db-fields tbody tr:hover { background: #fafbff; }
-
-    .db-fields td {
-      padding: 8px 12px;
-      vertical-align: middle;
-    }
-
-    /* Field name column */
-    .db-fields .col-field {
-      font-family: 'Courier New', monospace;
-      font-size: 12px;
-      font-weight: 600;
-      color: var(--vs-navy);
-      white-space: nowrap;
-    }
-
-    /* Key badge colours */
-    .key-badge {
-      display: inline-block;
-      font-size: 9.5px;
-      font-weight: 700;
-      padding: 2px 7px;
-      border-radius: 4px;
-      text-transform: uppercase;
-      letter-spacing: 0.3px;
-      white-space: nowrap;
-    }
-    .key-pk   { background: #FFD700; color: #5a4000; }
-    .key-fk   { background: #92D050; color: #1e4d00; }
-    .key-enum { background: #FFC000; color: #5a3500; }
-    .key-calc { background: #D9D9D9; color: #444; }
-    .key-bool { background: #DCE6F1; color: #1a4080; }
-    .key-uniq { background: #e8d5ff; color: #4a1d8c; }
-    .key-none { background: transparent; color: transparent; }
-
-    /* Type tag */
-    .type-tag {
-      font-family: 'Courier New', monospace;
-      font-size: 11px;
-      color: #667;
-      background: #f3f4f7;
-      padding: 2px 6px;
-      border-radius: 3px;
-      white-space: nowrap;
-    }
-
-    /* Nullable dot */
-    .nullable-yes { color: #aaa; font-size: 11px; }
-    .nullable-no  { color: #333; font-weight: 600; font-size: 11px; }
-
-    .desc-cell {
-      font-size: 11.5px;
-      color: var(--color-muted);
-      max-width: 340px;
-    }
-
-    /* Sidebar active state */
     .sidebar-nav li span.nav-active,
     .sidebar-nav li a.nav-active {
       background: #eef2fb;
@@ -240,31 +18,66 @@
       font-weight: 600;
     }
   </style>
+  <link rel="stylesheet" href="icon-rail.css" />
 </head>
 <body>
 
-  <!-- ════ TOP NAV ════ -->
-  <nav class="top-nav" role="navigation" aria-label="Main navigation">
-    <div class="top-nav__inner">
-      <a href="index.html" class="logo" aria-label="Vetstream home">
-        <img src="images/vetstream-logo.png" alt="Vetstream" height="36" />
+  <!-- NOTIFICATION BANNER -->
+  <div class="notif-banner notif-banner--teal" id="notifBanner">
+    🔔 You have 12 practitioners with CE records due for audit this month
+    <button class="notif-banner__dismiss" onclick="document.getElementById('notifBanner').classList.add('notif-banner--hidden')" aria-label="Dismiss">×</button>
+  </div>
+
+  <!-- TAB NAV -->
+  <nav class="tab-nav" role="navigation" aria-label="Main navigation">
+    <div class="tab-nav__inner">
+      <a href="index.html" class="tab-nav__logo" aria-label="Vetstream home">
+        <img src="images/vetstream-logo.png" alt="Vetstream" height="50" />
       </a>
-      <button class="btn-account" style="margin-left:auto;">My Account</button>
+      <div class="tab-nav__tabs">
+        <div class="mega-menu">
+          <a class="tab-nav__item tab-nav__item--has-menu mega-menu__trigger active" href="vs-admin.html" aria-current="page">Admin Portal</a>
+          <div class="mega-menu__dropdown">
+            <div class="mega-menu__section">
+              <div class="mega-menu__section-title">Administration</div>
+              <a class="mega-menu__link mega-menu__link--active" href="vs-admin.html"><span class="mega-menu__link-icon">📊</span><div><div class="mega-menu__link-text">Dashboard</div><div class="mega-menu__link-sub">Platform overview &amp; stats</div></div></a>
+              <a class="mega-menu__link mega-menu__link--dim" href="#"><span class="mega-menu__link-icon" style="background:#f3f4f6">👥</span><div><div class="mega-menu__link-text">Users</div><div class="mega-menu__link-sub">Manage practitioner accounts</div></div></a>
+              <a class="mega-menu__link mega-menu__link--dim" href="#"><span class="mega-menu__link-icon" style="background:#f3f4f6">🏢</span><div><div class="mega-menu__link-text">Organisations</div><div class="mega-menu__link-sub">Multi-site management</div></div></a>
+            </div>
+            <div class="mega-menu__section">
+              <div class="mega-menu__section-title">Rules &amp; Data</div>
+              <a class="mega-menu__link mega-menu__link--dim" href="#"><span class="mega-menu__link-icon" style="background:#f3f4f6">📜</span><div><div class="mega-menu__link-text">CE Rules</div><div class="mega-menu__link-sub">Jurisdiction-specific requirements</div></div></a>
+              <a class="mega-menu__link mega-menu__link--dim" href="#"><span class="mega-menu__link-icon" style="background:#f3f4f6">📋</span><div><div class="mega-menu__link-text">Authorities</div><div class="mega-menu__link-sub">Licensing bodies &amp; boards</div></div></a>
+              <a class="mega-menu__link mega-menu__link--dim" href="#"><span class="mega-menu__link-icon" style="background:#f3f4f6">🔑</span><div><div class="mega-menu__link-text">Roles</div><div class="mega-menu__link-sub">Professional role registry</div></div></a>
+            </div>
+          </div>
+        </div>
+        <div class="mega-menu">
+          <a class="tab-nav__item tab-nav__item--has-menu mega-menu__trigger" href="team-management.html">Team Management</a>
+          <div class="mega-menu__dropdown">
+            <div class="mega-menu__section">
+              <div class="mega-menu__section-title">Team</div>
+              <a class="mega-menu__link" href="team-management.html"><span class="mega-menu__link-icon">📈</span><div><div class="mega-menu__link-text">CPD Overview</div><div class="mega-menu__link-sub">Compliance dashboard</div></div></a>
+              <a class="mega-menu__link" href="my-team.html"><span class="mega-menu__link-icon">👤</span><div><div class="mega-menu__link-text">My Team</div><div class="mega-menu__link-sub">View &amp; manage members</div></div></a>
+              <a class="mega-menu__link mega-menu__link--dim" href="#"><span class="mega-menu__link-icon" style="background:#f3f4f6">✉️</span><div><div class="mega-menu__link-text">Invite Members</div><div class="mega-menu__link-sub">Send onboarding invites</div></div></a>
+            </div>
+            <div class="mega-menu__section">
+              <div class="mega-menu__section-title">Settings &amp; Reports</div>
+              <a class="mega-menu__link mega-menu__link--dim" href="#"><span class="mega-menu__link-icon" style="background:#f3f4f6">🔒</span><div><div class="mega-menu__link-text">Roles &amp; Permissions</div></div></a>
+              <a class="mega-menu__link mega-menu__link--dim" href="#"><span class="mega-menu__link-icon" style="background:#f3f4f6">📄</span><div><div class="mega-menu__link-text">Team Reports</div></div></a>
+            </div>
+          </div>
+        </div>
+        <a class="tab-nav__item" href="index.html">My Dashboard</a>
+        <a class="tab-nav__item" href="#">Course Library</a>
+        <a class="tab-nav__item" href="#">My Learning</a>
+        <a class="tab-nav__item" href="#">My Achievements</a>
+      </div>
     </div>
   </nav>
 
-  <!-- ════ TAB NAV ════ -->
-  <nav class="tab-nav" aria-label="Dashboard tabs">
-    <div class="tab-nav__inner">
-      <a class="tab-nav__item active" href="vs-admin.html"        aria-current="page">Admin Portal</a>
-      <a class="tab-nav__item"        href="team-management.html" >Team Management</a>
-      <a class="tab-nav__item"        href="index.html"           >My Dashboard</a>
-      <a class="tab-nav__item"        href="#"                    >Course Library</a>
-      <a class="tab-nav__item"        href="#"                    >My Learning</a>
-      <a class="tab-nav__item"        href="#"                    >My Achievements</a>
-      <a class="tab-nav__item"        href="#"                    >My Account</a>
-    </div>
-  </nav>
+
+
 
   <!-- ════ PAGE ════ -->
   <div class="page">
@@ -275,25 +88,10 @@
       <span id="bc-section">Overview</span>
     </nav>
 
-    <!-- Sidebar -->
-    <aside class="sidebar" aria-label="Admin sidebar">
-      <div class="sidebar-card">
-        <p class="sidebar-card__heading">Admin Portal</p>
-        <ul class="sidebar-nav" id="admin-nav">
-          <li><span class="nav-item" data-section="overview">Dashboard</span></li>
-          <li><span class="nav-item" data-section="overview">Users</span></li>
-          <li><span class="nav-item" data-section="overview">Organisations</span></li>
-          <li><span class="nav-item" data-section="overview">Reports</span></li>
-          <li><span class="nav-item nav-active" data-section="db">Database Tables</span></li>
-          <li><span class="nav-item" data-section="overview">Settings</span></li>
-        </ul>
-      </div>
-    </aside>
-
     <!-- Main -->
     <main class="main" id="main-content">
 
-      <!-- Blank placeholder (other sections) -->
+      <!-- Placeholder (all sections) -->
       <div id="section-overview" class="widget-area" style="display:none;" aria-label="Content area">
         <div class="widget-area__placeholder">
           <svg class="widget-area__icon" viewBox="0 0 52 52" fill="none">
@@ -307,384 +105,28 @@
         </div>
       </div>
 
-      <!-- Database Tables section -->
-      <div id="section-db" class="db-wrap">
-
-        <div class="db-header">
-          <div>
-            <h2>Database Tables</h2>
-            <p>10 tables · PostgreSQL schema · Select a table to inspect its fields</p>
-          </div>
-        </div>
-
-        <!-- Table selector pills -->
-        <div class="db-grid" id="db-grid"></div>
-
-        <!-- Field detail panel -->
-        <div class="db-detail" id="db-detail">
-          <div class="db-detail-header">
-            <div>
-              <h3 id="detail-title"></h3>
-              <p id="detail-desc"></p>
-            </div>
-            <div class="db-detail-meta">
-              <span class="db-badge" id="detail-count"></span>
-              <span class="db-badge" id="detail-sector"></span>
-            </div>
-          </div>
-          <table class="db-fields" id="detail-table">
-            <thead>
-              <tr>
-                <th>Field</th>
-                <th>Type</th>
-                <th>Key</th>
-                <th>Nullable</th>
-                <th>Description</th>
-              </tr>
-            </thead>
-            <tbody id="detail-body"></tbody>
-          </table>
-        </div>
-
-      </div>
     </main>
   </div>
 
   <script>
-    // ── Block dead-end links ─────────────────────────────────────
     document.querySelectorAll('a[href="#"]').forEach(a =>
       a.addEventListener('click', e => e.preventDefault())
     );
 
-    // ── Schema data ──────────────────────────────────────────────
-    // [field, type, key, nullable, description]
-    const SCHEMA = [
-      {
-        name: 'practitioners',
-        icon: '👤',
-        desc: 'Individual professional user',
-        fields: [
-          ['practitioner_id',    'UUID',         'PK',   'No',  'Primary key — unique identifier for the practitioner'],
-          ['first_name',         'VARCHAR',       '-',    'No',  "Practitioner's first/given name"],
-          ['last_name',          'VARCHAR',       '-',    'No',  "Practitioner's last/family name"],
-          ['email',              'VARCHAR',       'UNIQ', 'No',  'Unique email address (login identity)'],
-          ['date_of_birth',      'DATE',          '-',    'Yes', 'Optional date of birth'],
-          ['country_of_practice','CHAR(2)',       'FK',   'Yes', 'ISO country code → countries'],
-          ['profile_photo_url',  'VARCHAR',       '-',    'Yes', 'URL to practitioner profile photo'],
-          ['created_at',         'TIMESTAMPTZ',   '-',    'No',  'Record creation timestamp (UTC)'],
-          ['updated_at',         'TIMESTAMPTZ',   '-',    'No',  'Record last updated timestamp (UTC)'],
-        ],
-      },
-      {
-        name: 'registrations',
-        icon: '📋',
-        desc: 'Authority registrations per practitioner',
-        fields: [
-          ['registration_id',                   'UUID',         'PK',   'No',  'Primary key'],
-          ['practitioner_id',                   'UUID',         'FK',   'No',  'FK → practitioners'],
-          ['authority_id',                      'UUID',         'FK',   'No',  'FK → registration_authorities'],
-          ['role_id',                           'UUID',         'FK',   'No',  'FK → professional_roles'],
-          ['registration_number',               'VARCHAR',      '-',    'Yes', 'Official registration number'],
-          ['registration_date',                 'DATE',         '-',    'Yes', 'Date first registered'],
-          ['registration_status',               'ENUM',         'ENUM', 'No',  'active | non_practising | suspended | lapsed | student | temporary'],
-          ['is_new_graduate',                   'BOOLEAN',      'BOOL', 'No',  'Triggers reduced/different CPD rules'],
-          ['new_graduate_start_date',           'DATE',         '-',    'Yes', 'Start of new graduate programme'],
-          ['is_specialist',                     'BOOLEAN',      'BOOL', 'No',  'e.g. RCVS Specialist, AHPRA Specialist'],
-          ['specialty_area',                    'VARCHAR',      '-',    'Yes', 'e.g. orthopaedics, periodontics'],
-          ['is_advanced_practitioner',          'BOOLEAN',      'BOOL', 'No',  'e.g. RCVS Advanced Practitioner'],
-          ['advanced_practitioner_designation', 'VARCHAR',      '-',    'Yes', 'e.g. "dentistry in cats"'],
-          ['is_dual_registered',                'BOOLEAN',      'BOOL', 'No',  'e.g. AUS hygienist + therapist dual registration'],
-          ['holds_dea_registration',            'BOOLEAN',      'BOOL', 'No',  'USA only — triggers controlled substances CE'],
-          ['holds_prescribing_rights',          'BOOLEAN',      'BOOL', 'No',  'May trigger opioid/drug safety CE'],
-          ['practice_type',                     'ENUM',         'ENUM', 'No',  'clinical | non_clinical | educator | academic | government | industry'],
-          ['fte_percentage',                    'INTEGER',      '-',    'Yes', '% of full-time (0–100). Used for pro-rata calculations'],
-          ['active_from',                       'DATE',         '-',    'No',  'Date registration became active'],
-          ['active_to',                         'DATE',         '-',    'Yes', 'Date registration ended (NULL = active)'],
-          ['created_at',                        'TIMESTAMPTZ',  '-',    'No',  'Record creation timestamp'],
-          ['updated_at',                        'TIMESTAMPTZ',  '-',    'No',  'Record last updated timestamp'],
-        ],
-      },
-      {
-        name: 'registration_authorities',
-        icon: '🏛️',
-        desc: 'Regulatory bodies (GDC, RCVS, HPCSA, DBA…)',
-        fields: [
-          ['authority_id',           'UUID',        'PK',   'No',  'Primary key'],
-          ['authority_name',         'VARCHAR',     '-',    'No',  'Full official name e.g. "General Dental Council"'],
-          ['authority_abbreviation', 'VARCHAR',     '-',    'No',  'Short code e.g. GDC, RCVS, HPCSA, DBA, VCI'],
-          ['country',                'CHAR(2)',     'FK',   'No',  'ISO country code → countries'],
-          ['region',                 'VARCHAR',     '-',    'Yes', 'Sub-national region e.g. "Ontario", "Western Australia"'],
-          ['sector',                 'ENUM',        'ENUM', 'No',  'veterinary | dental | both'],
-          ['website_url',            'VARCHAR',     '-',    'Yes', 'Official authority website'],
-          ['cpd_platform_url',       'VARCHAR',     '-',    'Yes', 'CPD portal URL e.g. GDC eGDC, RCVS 1CPD'],
-          ['uses_hours',             'BOOLEAN',     'BOOL', 'No',  'Measures CPD in hours'],
-          ['uses_points',            'BOOLEAN',     'BOOL', 'No',  'Measures CPD in points'],
-          ['uses_ceus',              'BOOLEAN',     'BOOL', 'No',  'Measures CPD in CEUs (e.g. HPCSA)'],
-          ['uses_credits',           'BOOLEAN',     'BOOL', 'No',  'Measures CPD in credits (e.g. VCI Ireland)'],
-          ['unit_label',             'VARCHAR',     '-',    'No',  'Display label e.g. "hours", "points", "CEUs"'],
-          ['units_per_hour',         'DECIMAL(5,2)','-',    'No',  'Conversion factor (e.g. 1.0 standard; 2.0 for wetlabs in some authorities)'],
-        ],
-      },
-      {
-        name: 'professional_roles',
-        icon: '🩺',
-        desc: 'Roles recognised by each authority',
-        fields: [
-          ['role_id',           'UUID',    'PK',   'No',  'Primary key'],
-          ['authority_id',      'UUID',    'FK',   'No',  'FK → registration_authorities'],
-          ['role_name',         'VARCHAR', '-',    'No',  'e.g. "Veterinary Surgeon", "Dental Nurse", "Oral Health Therapist"'],
-          ['role_abbreviation', 'VARCHAR', '-',    'Yes', 'e.g. DVM, RVN, RDN, DH, OHT'],
-          ['sector',            'ENUM',    'ENUM', 'No',  'veterinary | dental | both'],
-          ['tier',              'ENUM',    'ENUM', 'No',  'generalist | advanced_practitioner | specialist | paraprofessional | technician | nurse | assistant | new_graduate'],
-        ],
-      },
-      {
-        name: 'cpd_requirement_rules',
-        icon: '⚙️',
-        desc: 'Core rules engine — one row per authority × role × period',
-        fields: [
-          ['rule_id',                  'UUID',         'PK',   'No',  'Primary key — one row encodes an entire jurisdiction\'s CPD framework'],
-          ['authority_id',             'UUID',         'FK',   'No',  'FK → registration_authorities'],
-          ['role_id',                  'UUID',         'FK',   'No',  'FK → professional_roles'],
-          ['effective_from',           'DATE',         '-',    'No',  'Date from which this rule set applies'],
-          ['effective_to',             'DATE',         '-',    'Yes', 'Date superseded (NULL = currently active)'],
-          ['cycle_type',               'ENUM',         'ENUM', 'No',  'annual | biennial | triennial | 4_year | 5_year | rolling_2 | rolling_3 | rolling_5'],
-          ['cycle_length_months',      'INTEGER',      '-',    'No',  'Cycle duration in months e.g. 12, 24, 36, 60'],
-          ['cycle_start_month',        'INTEGER',      '-',    'Yes', 'Month cycle starts (1=Jan … 12=Dec). NULL if rolling'],
-          ['cycle_start_day',          'INTEGER',      '-',    'Yes', 'Day of month cycle starts'],
-          ['cycle_start_anchor',       'ENUM',         'ENUM', 'No',  'calendar | registration_anniversary | fixed_date'],
-          ['total_units_required',     'DECIMAL(8,2)', '-',    'No',  'Total units required per cycle'],
-          ['annual_minimum_units',     'DECIMAL(8,2)', '-',    'Yes', 'Minimum units per year within cycle (e.g. RCVS 35/yr)'],
-          ['spread_rule_units',        'DECIMAL(8,2)', '-',    'Yes', 'Min units in any rolling window (e.g. GDC 10 hrs/24 months)'],
-          ['spread_rule_months',       'INTEGER',      '-',    'Yes', 'Length of spread rule window in months'],
-          ['min_structured_units',     'DECIMAL(8,2)', '-',    'Yes', 'Min structured CPD per cycle (e.g. AUS 15/3yr)'],
-          ['min_verifiable_units',     'DECIMAL(8,2)', '-',    'Yes', 'Min verifiable CPD per cycle (e.g. GDC: all 100 hrs)'],
-          ['max_unstructured_units',   'DECIMAL(8,2)', '-',    'Yes', 'Cap on unstructured units that count'],
-          ['max_non_clinical_units',   'DECIMAL(8,2)', '-',    'Yes', 'Cap on non-clinical units (e.g. AUS 12/60 hrs)'],
-          ['max_non_clinical_percent', 'DECIMAL(5,2)', '-',    'Yes', 'Cap as % of total (e.g. DBA Australia 20%)'],
-          ['carry_over_allowed',       'BOOLEAN',      'BOOL', 'No',  'Surplus units may carry to next cycle'],
-          ['carry_over_max_units',     'DECIMAL(8,2)', '-',    'Yes', 'Cap on carry-over units'],
-          ['pause_allowed',            'BOOLEAN',      'BOOL', 'No',  'Cycle can be paused (e.g. RCVS 6-month pause)'],
-          ['pause_max_months',         'INTEGER',      '-',    'Yes', 'Maximum pause duration in months'],
-          ['pause_reduced_units',      'DECIMAL(8,2)', '-',    'Yes', 'Reduced units required after pause'],
-          ['new_graduate_exemption',   'BOOLEAN',      'BOOL', 'No',  'New grads have reduced/waived requirements'],
-          ['new_graduate_months',      'INTEGER',      '-',    'Yes', 'Duration of new graduate rules in months'],
-          ['pro_rata_for_part_year',   'BOOLEAN',      'BOOL', 'No',  'Mid-year registrants get pro-rated targets (e.g. AUS, Ireland)'],
-          ['non_practising_exempt',    'BOOLEAN',      'BOOL', 'No',  'Non-practising registrants exempt (e.g. RCVS)'],
-          ['postgrad_study_exempts',   'BOOLEAN',      'BOOL', 'No',  'Postgraduate study counts as CPD equivalent (e.g. AUS, NZ)'],
-          ['deferral_allowed',         'BOOLEAN',      'BOOL', 'No',  'Cycle can be formally deferred (e.g. SAVC, VCNZ)'],
-          ['notes',                    'TEXT',         '-',    'Yes', 'Free text for jurisdiction-specific edge cases'],
-          ['created_at',               'TIMESTAMPTZ',  '-',    'No',  'Record creation timestamp'],
-          ['updated_at',               'TIMESTAMPTZ',  '-',    'No',  'Record last updated timestamp'],
-        ],
-      },
-      {
-        name: 'mandatory_topic_rules',
-        icon: '📌',
-        desc: 'Per-topic CPD requirements attached to a rule',
-        fields: [
-          ['topic_rule_id',              'UUID',         'PK',   'No',  'Primary key'],
-          ['rule_id',                    'UUID',         'FK',   'No',  'FK → cpd_requirement_rules'],
-          ['topic_name',                 'VARCHAR',      '-',    'No',  'e.g. "Medical Emergencies", "Controlled Substances", "Ethics"'],
-          ['topic_category',             'ENUM',         'ENUM', 'No',  'mandatory | recommended | capped'],
-          ['min_units_per_cycle',        'DECIMAL(8,2)', '-',    'Yes', 'Min units in this topic per cycle (e.g. GDC 10 hrs/5yr)'],
-          ['min_units_per_year',         'DECIMAL(8,2)', '-',    'Yes', 'Min units per year (e.g. GDC 2 hrs/yr medical emergencies)'],
-          ['max_units_per_cycle',        'DECIMAL(8,2)', '-',    'Yes', 'Cap on units that count (e.g. VCI max 6 hrs independent study)'],
-          ['max_units_per_year',         'DECIMAL(8,2)', '-',    'Yes', 'Cap per year'],
-          ['max_percent_of_total',       'DECIMAL(5,2)', '-',    'Yes', 'Cap as % of total (e.g. VCI 25% management)'],
-          ['must_be_live',               'BOOLEAN',      'BOOL', 'No',  'Must be live delivery (e.g. Georgia USA: 1 hr live professionalism)'],
-          ['must_be_in_person',          'BOOLEAN',      'BOOL', 'No',  'Must be in-person (e.g. CPR/BLS practical)'],
-          ['applies_if_holds_dea',       'BOOLEAN',      'BOOL', 'No',  'Only applies with DEA registration (USA)'],
-          ['applies_if_prescriber',      'BOOLEAN',      'BOOL', 'No',  'Only applies if holds prescribing rights'],
-          ['applies_if_does_radiography','BOOLEAN',      'BOOL', 'No',  'Only applies if practitioner does radiography (GDC)'],
-          ['notes',                      'TEXT',         '-',    'Yes', 'Notes on this topic requirement'],
-          ['created_at',                 'TIMESTAMPTZ',  '-',    'No',  'Record creation timestamp'],
-        ],
-      },
-      {
-        name: 'cpd_cycles',
-        icon: '🔄',
-        desc: 'Generated CPD cycle instances per registration',
-        fields: [
-          ['cycle_id',                 'UUID',         'PK',   'No',  'Primary key'],
-          ['registration_id',          'UUID',         'FK',   'No',  'FK → registrations'],
-          ['rule_id',                  'UUID',         'FK',   'No',  'FK → cpd_requirement_rules'],
-          ['cycle_number',             'INTEGER',      '-',    'No',  'Sequential number — used for SAVC phase-in graduated requirements'],
-          ['cycle_start_date',         'DATE',         '-',    'No',  'First day of this cycle'],
-          ['cycle_end_date',           'DATE',         '-',    'No',  'Last day of this cycle'],
-          ['units_required',           'DECIMAL(8,2)', '-',    'No',  'Units required (may be pro-rated from rule total)'],
-          ['min_structured_required',  'DECIMAL(8,2)', '-',    'Yes', 'Minimum structured units for this cycle'],
-          ['min_verifiable_required',  'DECIMAL(8,2)', '-',    'Yes', 'Minimum verifiable units for this cycle'],
-          ['max_non_clinical_allowed', 'DECIMAL(8,2)', '-',    'Yes', 'Maximum non-clinical units that count'],
-          ['units_completed',          'DECIMAL(8,2)', '-',    'No',  'CALCULATED: total approved units completed'],
-          ['structured_completed',     'DECIMAL(8,2)', '-',    'No',  'CALCULATED: structured units completed'],
-          ['verifiable_completed',     'DECIMAL(8,2)', '-',    'No',  'CALCULATED: verifiable units completed'],
-          ['non_clinical_completed',   'DECIMAL(8,2)', '-',    'No',  'CALCULATED: non-clinical units completed'],
-          ['mandatory_topics_met',     'BOOLEAN',      'BOOL', 'No',  'CALCULATED: all mandatory topic minimums reached'],
-          ['spread_rule_met',          'BOOLEAN',      'BOOL', 'Yes', 'CALCULATED: spread rule satisfied (e.g. GDC 10 hrs/24 months). NULL if not applicable'],
-          ['status',                   'ENUM',         'ENUM', 'No',  'in_progress | complete | non_compliant | deferred | paused | exempt'],
-          ['is_paused',                'BOOLEAN',      'BOOL', 'No',  'Cycle is currently paused'],
-          ['pause_start_date',         'DATE',         '-',    'Yes', 'Date pause began'],
-          ['pause_end_date',           'DATE',         '-',    'Yes', 'Date pause ended (NULL if still paused)'],
-          ['audit_selected',           'BOOLEAN',      'BOOL', 'No',  'Selected for random audit by authority'],
-          ['audit_submitted_date',     'DATE',         '-',    'Yes', 'Date audit evidence submitted'],
-          ['notes',                    'TEXT',         '-',    'Yes', 'Admin notes'],
-          ['created_at',               'TIMESTAMPTZ',  '-',    'No',  'Record creation timestamp'],
-          ['updated_at',               'TIMESTAMPTZ',  '-',    'No',  'Record last updated timestamp'],
-        ],
-      },
-      {
-        name: 'cpd_activities',
-        icon: '📝',
-        desc: 'Individual CPD activity log entries',
-        fields: [
-          ['activity_id',            'UUID',         'PK',   'No',  'Primary key'],
-          ['registration_id',        'UUID',         'FK',   'No',  'FK → registrations'],
-          ['cycle_id',               'UUID',         'FK',   'No',  'FK → cpd_cycles'],
-          ['activity_title',         'VARCHAR',      '-',    'No',  'Title of the CPD activity'],
-          ['activity_description',   'TEXT',         '-',    'Yes', 'Detailed description'],
-          ['activity_date',          'DATE',         '-',    'No',  'Date undertaken'],
-          ['provider_name',          'VARCHAR',      '-',    'Yes', 'e.g. BSAVA, Agilio, VetCEE'],
-          ['provider_accreditation', 'VARCHAR',      '-',    'Yes', 'e.g. RACE, SAVC, GDC approved, RCDSO'],
-          ['activity_type',          'ENUM',         'ENUM', 'No',  'conference_session | workshop | wetlab | seminar | webinar_live | webinar_recorded | online_course | self_directed_reading | peer_discussion | clinical_audit | postgraduate_study | publication_authored | presentation_given | resuscitation_training | other (25 values)'],
-          ['delivery_format',        'ENUM',         'ENUM', 'No',  'in_person | online_live | online_self_paced | blended | reading | podcast | wetlab | conference | publication | postgraduate_study'],
-          ['topic_category',         'VARCHAR',      '-',    'Yes', 'Links to mandatory_topic_rules.topic_name'],
-          ['is_clinical',            'BOOLEAN',      'BOOL', 'No',  'Clinical/scientific (TRUE) vs management/non-clinical (FALSE)'],
-          ['is_verifiable',          'BOOLEAN',      'BOOL', 'No',  'Meets GDC definition of verifiable CPD'],
-          ['is_structured',          'BOOLEAN',      'BOOL', 'No',  'Meets AUS/NZ definition of structured CPD'],
-          ['is_accredited',          'BOOLEAN',      'BOOL', 'No',  'Formally accredited by relevant authority'],
-          ['accreditation_number',   'VARCHAR',      '-',    'Yes', 'Accreditation reference number'],
-          ['units_claimed',          'DECIMAL(8,2)', '-',    'No',  'Units claimed by practitioner'],
-          ['units_awarded',          'DECIMAL(8,2)', '-',    'Yes', 'Units awarded after caps/rules applied (NULL = same as claimed)'],
-          ['units_multiplier',       'DECIMAL(4,2)', '-',    'No',  'Multiplier (e.g. 2.0 for VCI wetlabs). Default 1.0'],
-          ['certificates_url',       'VARCHAR',      '-',    'Yes', 'URL to certificate of completion'],
-          ['evidence_document_url',  'VARCHAR',      '-',    'Yes', 'URL to supporting evidence'],
-          ['reflection_text',        'TEXT',         '-',    'Yes', 'Practitioner reflection — required by RCVS 1CPD, GDC eCPD, DCNZ'],
-          ['reflection_date',        'DATE',         '-',    'Yes', 'Date reflection was written'],
-          ['peer_discussed',         'BOOLEAN',      'BOOL', 'No',  'Discussed with a peer (NZ DCNZ requirement)'],
-          ['peer_name',              'VARCHAR',      '-',    'Yes', 'Peer discussed with'],
-          ['pdp_goal_linked',        'UUID',         'FK',   'Yes', 'FK → pdp_goals (optional link)'],
-          ['is_presenter',           'BOOLEAN',      'BOOL', 'No',  'Claiming presenter credit'],
-          ['is_author',              'BOOLEAN',      'BOOL', 'No',  'Claiming publication author credit'],
-          ['publication_doi',        'VARCHAR',      '-',    'Yes', 'DOI of published article'],
-          ['postgrad_year',          'INTEGER',      '-',    'Yes', 'Year of postgraduate study programme'],
-          ['status',                 'ENUM',         'ENUM', 'No',  'draft | submitted | approved | rejected | queried'],
-          ['created_at',             'TIMESTAMPTZ',  '-',    'No',  'Record creation timestamp'],
-          ['updated_at',             'TIMESTAMPTZ',  '-',    'No',  'Record last updated timestamp'],
-        ],
-      },
-      {
-        name: 'pdp_goals',
-        icon: '🎯',
-        desc: 'Personal Development Plan goals (RCVS, GDC, DCNZ)',
-        fields: [
-          ['goal_id',           'UUID',         'PK',   'No',  'Primary key'],
-          ['registration_id',   'UUID',         'FK',   'No',  'FK → registrations'],
-          ['cycle_id',          'UUID',         'FK',   'No',  'FK → cpd_cycles'],
-          ['goal_title',        'VARCHAR',      '-',    'No',  'Short title for the development goal'],
-          ['goal_description',  'TEXT',         '-',    'Yes', 'Full description of the intended learning outcome'],
-          ['field_of_practice', 'VARCHAR',      '-',    'Yes', 'Area of practice this goal relates to'],
-          ['target_date',       'DATE',         '-',    'Yes', 'Target completion date'],
-          ['status',            'ENUM',         'ENUM', 'No',  'planned | in_progress | met | carried_forward'],
-          ['created_at',        'TIMESTAMPTZ',  '-',    'No',  'Record creation timestamp'],
-          ['updated_at',        'TIMESTAMPTZ',  '-',    'No',  'Record last updated timestamp'],
-        ],
-      },
-      {
-        name: 'countries',
-        icon: '🌍',
-        desc: 'Country reference/lookup table',
-        fields: [
-          ['country_code',         'CHAR(2)', 'PK', 'No',  'ISO 3166-1 alpha-2 code (e.g. GB, AU, US, ZA, IE, NZ)'],
-          ['country_name',         'VARCHAR', '-',  'No',  'Full country name'],
-          ['default_authority_id', 'UUID',    'FK', 'Yes', 'FK → registration_authorities. Primary regulator for this country (NULL if multi-authority)'],
-        ],
-      },
-    ];
-
-    // ── Render pills ────────────────────────────────────────────
-    const grid    = document.getElementById('db-grid');
-    const detail  = document.getElementById('db-detail');
-    const pills   = [];
-
-    SCHEMA.forEach((table, i) => {
-      const pill = document.createElement('div');
-      pill.className = 'db-pill' + (i === 0 ? ' active' : '');
-      pill.dataset.idx = i;
-      pill.innerHTML = `
-        <div class="pill-icon">${table.icon}</div>
-        <div class="db-pill-text">
-          <div class="db-pill-name">${table.name}</div>
-          <div class="db-pill-count">${table.fields.length} fields</div>
-        </div>`;
-      pill.addEventListener('click', () => showTable(i));
-      grid.appendChild(pill);
-      pills.push(pill);
-    });
-
-    // ── Key badge mapping ───────────────────────────────────────
-    function keyBadge(k) {
-      const map = {
-        'PK':   '<span class="key-badge key-pk">PK</span>',
-        'FK':   '<span class="key-badge key-fk">FK</span>',
-        'ENUM': '<span class="key-badge key-enum">ENUM</span>',
-        'CALC': '<span class="key-badge key-calc">CALC</span>',
-        'BOOL': '<span class="key-badge key-bool">BOOL</span>',
-        'UNIQ': '<span class="key-badge key-uniq">UNIQ</span>',
-        '-':    '',
-      };
-      return map[k] || '';
-    }
-
-    // ── Show table detail ───────────────────────────────────────
-    function showTable(idx) {
-      pills.forEach(p => p.classList.remove('active'));
-      pills[idx].classList.add('active');
-
-      const t = SCHEMA[idx];
-      document.getElementById('detail-title').textContent = t.name;
-      document.getElementById('detail-desc').textContent = t.desc;
-      document.getElementById('detail-count').textContent = `${t.fields.length} fields`;
-      document.getElementById('detail-sector').textContent = 'PostgreSQL';
-
-      const tbody = document.getElementById('detail-body');
-      tbody.innerHTML = t.fields.map(([f, type, key, nullable, desc]) => `
-        <tr>
-          <td class="col-field">${f}</td>
-          <td><span class="type-tag">${type}</span></td>
-          <td>${keyBadge(key)}</td>
-          <td class="${nullable === 'Yes' ? 'nullable-yes' : 'nullable-no'}">${nullable}</td>
-          <td class="desc-cell">${desc}</td>
-        </tr>`).join('');
-
-      detail.classList.add('visible');
-      detail.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    }
-
-    // Show first table by default
-    showTable(0);
-
-    // ── Sidebar nav ─────────────────────────────────────────────
-    const sectionDb       = document.getElementById('section-db');
     const sectionOverview = document.getElementById('section-overview');
     const bcSection       = document.getElementById('bc-section');
+
+    sectionOverview.style.display = 'flex';
 
     document.querySelectorAll('.nav-item').forEach(item => {
       item.addEventListener('click', function() {
         document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('nav-active'));
         this.classList.add('nav-active');
-        const section = this.dataset.section;
-        if (section === 'db') {
-          sectionDb.style.display = 'flex';
-          sectionOverview.style.display = 'none';
-          bcSection.textContent = 'Database Tables';
-        } else {
-          sectionDb.style.display = 'none';
-          sectionOverview.style.display = 'flex';
-          bcSection.textContent = this.textContent;
-        }
+        sectionOverview.style.display = 'flex';
+        bcSection.textContent = this.textContent;
       });
     });
   </script>
+<script src="dist/icon-rail.js"></script>
 </body>
 </html>

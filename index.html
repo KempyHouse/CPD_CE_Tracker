@@ -7,32 +7,28 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
-<link rel="stylesheet" href="shared.css">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
+<link rel="stylesheet" href="dist/app.css">
 <link rel="stylesheet" href="widget-cpd.css">
+  <link rel="stylesheet" href="icon-rail.css" />
 </head>
 <body>
 
-<!-- TOP NAV -->
-<nav class="top-nav" role="navigation" aria-label="Main navigation">
-  <div class="top-nav__inner">
-    <a href="index.html" class="logo" aria-label="Vetstream home">
-      <img src="images/vetstream-logo.png" alt="Vetstream" height="36">
-    </a>
-    <button class="btn-account" style="margin-left:auto">My Account</button>
-  </div>
-</nav>
-
 <!-- TAB NAV -->
-<nav class="tab-nav" aria-label="Dashboard tabs">
+<nav class="tab-nav" role="navigation" aria-label="Main navigation">
   <div class="tab-nav__inner">
-    <a class="tab-nav__item" href="vs-admin.html">Admin Portal</a>
-    <a class="tab-nav__item" href="team-management.html">Team Management</a>
-    <a class="tab-nav__item active" href="index.html" aria-current="page">My Dashboard</a>
-    <a class="tab-nav__item" href="#">Course Library</a>
-    <a class="tab-nav__item" href="#">My Learning</a>
-    <a class="tab-nav__item" href="#">My Achievements</a>
-    <a class="tab-nav__item" href="#">My Account</a>
+    <a href="index.html" class="tab-nav__logo" aria-label="Vetstream home">
+      <img src="images/vetstream-logo.png" alt="Vetstream" height="50">
+    </a>
+    <div class="tab-nav__tabs">
+      <a class="tab-nav__item" href="vs-admin.html">Admin Portal</a>
+      <a class="tab-nav__item" href="team-management.html">Team Management</a>
+      <a class="tab-nav__item active" href="index.html" aria-current="page">My Dashboard</a>
+      <a class="tab-nav__item" href="#">Course Library</a>
+      <a class="tab-nav__item" href="#">My Learning</a>
+      <a class="tab-nav__item" href="#">My Achievements</a>
+      <a class="tab-nav__item" href="#">My Account</a>
+    </div>
   </div>
 </nav>
 
@@ -55,10 +51,7 @@
         <li><span>My Business</span></li>
       </ul>
     </div>
-    <div class="sidebar-card sidebar-card--subscribe">
-      <p>Complete your<br>subscription!</p>
-      <button class="btn-subscribe">Subscribe here</button>
-    </div>
+
   </aside>
 
   <!-- Main -->
@@ -84,7 +77,8 @@
           </svg>
           <div class="ring-inner">
             <span class="ring-inner__pct" id="profile-pct">0%</span>
-            <span class="ring-inner__label">Complete<br>Rate</span>
+            <span class="ring-inner__label">Complete</span>
+
           </div>
         </div>
       </div>
@@ -92,7 +86,7 @@
 
     <!-- Widget label -->
     <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#9aaabb;margin-bottom:8px;display:flex;align-items:center;gap:8px">
-      Widget 1 — CPD Progress
+      Widget 1 — <span class="cpd-term-label">CPD</span> Progress
       <span style="flex:1;height:1px;background:var(--color-border)"></span>
     </div>
 
@@ -101,16 +95,25 @@
 
       <div class="w-header">
         <div class="w-title">
-          <span class="w-title-icon"><i data-lucide="activity" style="width:15px;height:15px"></i></span>
-          <span>CPD Progress</span>
+          <span class="w-title-icon"><span class="material-symbols-outlined" style="font-size:15px;vertical-align:middle" style="width:15px;height:15px">monitoring</span></span>
+          <span><span class="cpd-term-label">CPD</span> Progress</span>
           <span id="w-badges"></span>
         </div>
         <div class="w-header-right">
-          <div class="unit-pills">
-            <button class="unit-pill active" data-unit="hours">Hours</button>
-            <button class="unit-pill" data-unit="points">Points</button>
+          <div class="w-more-wrap">
+            <button class="w-more-btn" id="wMoreBtn" title="More options" aria-label="More options" aria-expanded="false">⋯</button>
+            <div class="w-more-menu" id="wMoreMenu" hidden>
+              <div class="w-more-group-label">Actions</div>
+              <a href="cpd-report.html" target="_blank" class="w-more-item">📄 Full report</a>
+              <button class="w-more-item" id="btnLogActivity">📝 Log activity</button>
+              <div class="w-more-divider"></div>
+              <div class="w-more-group-label">Display</div>
+              <button class="w-more-item" id="btnToggleTopics" aria-pressed="true">📋 Show topics checklist</button>
+              <button class="w-more-item" id="btnToggleSplit" aria-pressed="true">📊 Show structured / verifiable split</button>
+              <button class="w-more-item" id="btnToggleCycle" aria-pressed="true">📅 Show cycle date strip</button>
+              <button class="w-more-item" id="btnToggleCompact" aria-pressed="false">⬜ Compact mode (donut + stats only)</button>
+            </div>
           </div>
-          <a href="#" class="w-action">Log activity <i data-lucide="chevron-right" style="width:11px;height:11px"></i></a>
         </div>
       </div>
 
@@ -166,9 +169,22 @@
 
       <!-- Carry-over -->
       <div class="w-carry hidden" id="wCarry">
-        <i data-lucide="arrow-right-circle" style="width:13px;height:13px;color:#5b21b6"></i>
+        <span class="material-symbols-outlined" style="font-size:13px;vertical-align:middle;color:#5b21b6">arrow_circle_right</span>
         <span style="color:var(--color-muted)">Carry-over available from previous cycle:</span>
         <span class="carry-chip" id="carryAmt">—</span>
+      </div>
+
+      <!-- Reflection gate bar (RCVS/GDC: compliance gated on reflected hours) -->
+      <div class="w-split hidden" id="wReflect">
+        <div class="split-hdr">
+          <span class="split-hdr-lbl" id="reflectLbl">Reflected</span>
+          <span class="split-hdr-val" id="reflectVal">—</span>
+        </div>
+        <div class="split-track" style="margin-bottom:4px">
+          <div class="split-bar-a" id="barRecorded" style="opacity:0.3"></div>
+          <div class="split-bar-a" id="barReflected"></div>
+        </div>
+        <span class="split-chip hidden" id="reflectGateChip">⏳ Reflection needed</span>
       </div>
 
       <!-- Mandatory topics -->
@@ -196,252 +212,675 @@
 
     </div><!-- /cpdWidget -->
 
-    <!-- Variable legend -->
-    <div class="var-legend">
-      <span class="var-tag"><span class="vdot" style="background:#3b82f6"></span>Account / profile</span>
-      <span class="var-tag"><span class="vdot" style="background:#8b5cf6"></span>Role / registration</span>
-      <span class="var-tag"><span class="vdot" style="background:#10b981"></span>Learner-configurable</span>
-    </div>
-
-    <!-- ══ ACTIVE RULES PANEL ══ -->
-    <div class="rules-panel" id="rulesPanel">
-      <div class="rules-panel-hdr">
-        <div class="rules-panel-title">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
-          Active Rules Applied
+    <!-- ══ RECENT ACTIVITIES ══ -->
+    <div class="act-log-card" id="actLogCard">
+      <div class="act-log-hdr">
+        <div class="act-log-title">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h4"/></svg>
+          Recent <span class="cpd-term-label">CPD</span> Activities
         </div>
-        <span class="rules-panel-sub">Live derivation — updates as you change the config</span>
+        <span class="act-log-count" id="actLogCount"></span>
       </div>
-      <div class="rules-grid" id="rulesGrid"></div>
-      <div class="rule-priority-banner hidden" id="rulePriorityBanner">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-        <span id="rulePriorityText"></span>
+      <div id="actLogList"></div>
+      <div class="act-log-empty hidden" id="actLogEmpty">
+        <p>No activities logged yet for this cycle.</p>
+        <button class="act-log-add-btn" id="actLogAddBtn">Log your first activity →</button>
       </div>
     </div>
 
-    <!-- ══ DEMO CONFIG ══ -->
-    <div class="demo-wrap">
-      <div class="demo-hdr">
-        <div class="demo-hdr-title">⚙ Demo Configuration</div>
-        <div class="demo-hdr-sub">Change any variable to see the widget update live</div>
+    <!-- ══ PDP GOALS ══ -->
+    <div class="pdp-card" id="pdpCard">
+      <div class="pdp-hdr">
+        <div class="pdp-hdr-title">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+          My PDP Goals
+        </div>
+        <button class="pdp-add-btn" id="pdpAddBtn">＋ Add goal</button>
       </div>
-
-      <div class="demo-grid">
-
-        <!-- ACCOUNT / PROFILE -->
-        <div class="demo-sec">
-          <div class="demo-sec-title">Account / Profile <span class="dbadge dbadge-a">ACCOUNT</span></div>
-
-          <!-- Sector toggle — account-level, moved here from above widget -->
-          <div class="f-row">
-            <div class="f-lbl">Sector <span class="f-note">set at account creation</span></div>
-            <div class="sector-tabs" style="margin-bottom:8px">
-              <button class="s-tab active" data-sector="vet">🐾 Veterinary</button>
-              <button class="s-tab" data-sector="dental">🦷 Dental</button>
-            </div>
+      <!-- Inline add form (hidden by default) -->
+      <div class="pdp-add-form hidden" id="pdpAddForm">
+        <div class="pdp-field">
+          <label for="pdpTitle">Goal title *</label>
+          <input type="text" id="pdpTitle" class="pdp-input" placeholder="e.g. Complete soft tissue surgery module">
+        </div>
+        <div class="pdp-form-row">
+          <div class="pdp-field">
+            <label for="pdpField">Field of practice</label>
+            <input type="text" id="pdpField" class="pdp-input" placeholder="e.g. Surgery, Dentistry">
           </div>
-
-          <div class="f-row">
-            <div class="f-lbl">Country / Jurisdiction <span class="f-note">sets authority + rules</span></div>
-            <select class="df" id="selCountry">
-              <option value="uk_rcvs">🇬🇧 United Kingdom — RCVS</option>
-              <option value="uk_rvn">🇬🇧 UK — RCVS (RVN)</option>
-              <option value="us_avma">🇺🇸 USA — AVMA / State Board</option>
-              <option value="us_nbdhe">🇺🇸 USA — NBDHE (Dental Hygienist)</option>
-              <option value="au_ahpra_vet">🇦🇺 Australia — AHPRA (Vet)</option>
-              <option value="au_ahpra_dental">🇦🇺 Australia — AHPRA (Dental)</option>
-              <option value="ie_vci">🇮🇪 Ireland — VCI</option>
-              <option value="ie_dci">🇮🇪 Ireland — Dental Council</option>
-              <option value="nz_vcnz">🇳🇿 New Zealand — VCNZ</option>
-              <option value="nz_dcnz">🇳🇿 New Zealand — DCNZ</option>
-              <option value="za_savc">🇿🇦 South Africa — SAVC</option>
-              <option value="ca_cvma">🇨🇦 Canada — CVMA</option>
-              <option value="in_vci_india">🇮🇳 India — VCI</option>
-            </select>
-          </div>
-
-          <div class="f-row">
-            <div class="f-lbl">State / Province <span class="f-note">US/AU/CA — overrides required hrs</span></div>
-            <select class="df" id="selState">
-              <option value="">— Not applicable —</option>
-              <option value="ca">California (75 hrs / 2yr)</option>
-              <option value="tx">Texas (16 hrs / yr)</option>
-              <option value="ny">New York (24 hrs / 2yr)</option>
-              <option value="fl">Florida (30 hrs / 2yr)</option>
-              <option value="nsw">NSW, Australia</option>
-              <option value="vic">Victoria, Australia</option>
-              <option value="on">Ontario, Canada (40 hrs / yr)</option>
-            </select>
-          </div>
-
-          <div class="f-row">
-            <div class="f-lbl">Year of first registration</div>
-            <select class="df" id="selRegYear">
-              <option value="2026">2026 — New graduate</option>
-              <option value="2025">2025 — Year 1</option>
-              <option value="2024">2024 — Year 2</option>
-              <option value="2020" selected>2020 — Established</option>
-              <option value="2015">2015 — Experienced</option>
-              <option value="2005">2005 — 10+ years</option>
-            </select>
-          </div>
-
-          <div class="f-row">
-            <div class="f-lbl">Registration status</div>
-            <select class="df" id="selRegStatus">
-              <option value="active">Active / Full</option>
-              <option value="non_practising">Non-practising</option>
-              <option value="student">Student</option>
-              <option value="paused">Paused / Maternity leave</option>
-              <option value="specialist">Specialist</option>
-              <option value="advanced">Advanced Practitioner</option>
-            </select>
-          </div>
-
-          <div class="f-row hidden" id="pauseMonthsRow">
-            <div class="f-lbl">Months paused <span class="f-note">max: authority limit</span></div>
-            <div class="rng-row">
-              <input type="range" id="numPauseMonths" min="1" max="12" value="3" step="1">
-              <span class="rng-val" id="numPauseMonthsVal">3</span>
-            </div>
-          </div>
-
-          <div class="f-row">
-            <div class="f-lbl">Previous cycle completed <span class="f-note">carry-over check</span></div>
-            <div class="rng-row">
-              <input type="range" id="numPrevCompleted" min="0" max="200" value="0" step="1">
-              <span class="rng-val" id="numPrevCompletedVal">0</span>
-            </div>
+          <div class="pdp-field">
+            <label for="pdpDate">Target date</label>
+            <input type="date" id="pdpDate" class="pdp-input">
           </div>
         </div>
-
-        <!-- ROLE / REGISTRATION -->
-        <div class="demo-sec">
-          <div class="demo-sec-title">Role / Registration <span class="dbadge dbadge-r">ROLE</span></div>
-
-          <div class="f-row">
-            <div class="f-lbl">Professional role</div>
-            <select class="df" id="selRole">
-              <option value="vet_surgeon">Veterinary Surgeon / DVM</option>
-              <option value="rvn">Registered Vet Nurse (RVN)</option>
-              <option value="vet_tech">Vet Technician (US/AU)</option>
-              <option value="vet_tech_specialist">Vet Tech Specialist</option>
-              <option value="vet_paraprofessional">Vet Paraprofessional</option>
-              <option value="dentist">Dentist</option>
-              <option value="dental_hygienist">Dental Hygienist</option>
-              <option value="dental_therapist">Dental Therapist</option>
-              <option value="dental_nurse">Dental Nurse</option>
-              <option value="dental_technician">Dental Technician</option>
-              <option value="oral_health_therapist">Oral Health Therapist</option>
-            </select>
-          </div>
-
-          <div class="f-row">
-            <div class="f-lbl">CPD cycle type <span class="f-note">set by authority</span></div>
-            <select class="df" id="selCycle">
-              <option value="annual">Annual (12 months)</option>
-              <option value="biennial">Biennial (2 years)</option>
-              <option value="triennial">Triennial (3 years)</option>
-              <option value="5year">5-year rolling</option>
-              <option value="rolling3">Rolling 3-year window</option>
-            </select>
-          </div>
-
-          <div class="f-row">
-            <div class="f-lbl">Total units required per cycle</div>
-            <div class="rng-row">
-              <input type="range" id="numRequired" min="5" max="200" value="35" step="1">
-              <span class="rng-val" id="numRequiredVal">35</span>
-            </div>
-          </div>
-
-          <div class="f-row">
-            <div class="f-lbl">Min structured / verifiable units</div>
-            <div class="rng-row">
-              <input type="range" id="numStructMin" min="0" max="100" value="20" step="1">
-              <span class="rng-val" id="numStructMinVal">20</span>
-            </div>
-          </div>
-
-          <div class="tog-row">
-            <span class="tog-lbl">Has mandatory topics requirement</span>
-            <label class="tog"><input type="checkbox" id="togTopics" checked><span class="tog-track"></span></label>
-          </div>
-          <div class="tog-row">
-            <span class="tog-lbl">Show structured/verifiable split bar</span>
-            <label class="tog"><input type="checkbox" id="togSplit" checked><span class="tog-track"></span></label>
-          </div>
-          <div class="tog-row" id="deaRow">
-            <span class="tog-lbl">Has DEA / prescribing CE (US only)</span>
-            <label class="tog"><input type="checkbox" id="togDEA"><span class="tog-track"></span></label>
-          </div>
+        <div class="pdp-field">
+          <label for="pdpDesc">Description (optional)</label>
+          <textarea id="pdpDesc" class="pdp-input" rows="2" placeholder="What do you want to achieve and why?"></textarea>
         </div>
-
-        <!-- LEARNER-CONFIGURABLE -->
-        <div class="demo-sec">
-          <div class="demo-sec-title">Learner-Configurable <span class="dbadge dbadge-l">IN WIDGET</span></div>
-
-          <div class="f-row">
-            <div class="f-lbl">Units completed so far</div>
-            <div class="rng-row">
-              <input type="range" id="numCompleted" min="0" max="200" value="20" step="0.5">
-              <span class="rng-val" id="numCompletedVal">20</span>
-            </div>
-          </div>
-
-          <div class="f-row">
-            <div class="f-lbl">Structured / verifiable done</div>
-            <div class="rng-row">
-              <input type="range" id="numStructDone" min="0" max="200" value="12" step="0.5">
-              <span class="rng-val" id="numStructDoneVal">12</span>
-            </div>
-          </div>
-
-          <div class="f-row">
-            <div class="f-lbl">Non-clinical units done <span class="f-note">cap check</span></div>
-            <div class="rng-row">
-              <input type="range" id="numNonClin" min="0" max="60" value="0" step="0.5">
-              <span class="rng-val" id="numNonClinVal">0</span>
-            </div>
-          </div>
-
-          <div class="f-row">
-            <div class="f-lbl">Cycle start date</div>
-            <input type="date" class="df" id="selCycleStart" value="2026-01-01">
-          </div>
-
-          <div class="tog-row">
-            <span class="tog-lbl">Pro-rata (mid-year registrant)</span>
-            <label class="tog"><input type="checkbox" id="togProRata"><span class="tog-track"></span></label>
-          </div>
-          <div class="f-row hidden" id="proRataRow">
-            <div class="f-lbl">Months since registration</div>
-            <div class="rng-row">
-              <input type="range" id="numRegMonths" min="1" max="35" value="6" step="1">
-              <span class="rng-val" id="numRegMonthsVal">6</span>
-            </div>
-          </div>
-
-          <div class="tog-row">
-            <span class="tog-lbl">Show mandatory topics checklist</span>
-            <label class="tog"><input type="checkbox" id="togShowTopics" checked><span class="tog-track"></span></label>
-          </div>
-          <div class="tog-row">
-            <span class="tog-lbl">Show cycle date strip</span>
-            <label class="tog"><input type="checkbox" id="togShowCycle" checked><span class="tog-track"></span></label>
-          </div>
-          <div class="tog-row">
-            <span class="tog-lbl">Compact mode (donut + stats only)</span>
-            <label class="tog"><input type="checkbox" id="togCompact"><span class="tog-track"></span></label>
-          </div>
+        <div class="pdp-form-actions">
+          <button class="pdp-save-btn" id="pdpSaveBtn">Save goal</button>
+          <button class="pdp-cancel-btn" id="pdpCancelBtn">Cancel</button>
         </div>
+        <div id="pdpAddError" style="color:#b91c1c;font-size:11.5px;margin-top:6px;font-weight:500;"></div>
+      </div>
+      <div id="pdpList"></div>
+      <div class="pdp-empty hidden" id="pdpEmpty">No learning goals yet. Add your first goal above.</div>
+    </div>
 
-      </div><!-- /demo-grid -->
-    </div><!-- /demo-wrap -->
+
 
   </main>
 </div>
 
-<script src="widget-cpd.js"></script>
+
+<!-- ══ DEMO CONFIGURATOR TOGGLE ══ -->
+<button class="demo-toggle" id="demoToggle" aria-label="Toggle Demo Configurator" aria-expanded="false">
+  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
+  <span>Demo</span>
+</button>
+
+<!-- ══ DEMO CONFIGURATOR DRAWER ══ -->
+<aside class="demo-drawer" id="demoDrawer" aria-label="Demo Configurator">
+  <div class="demo-drawer__header">
+    <div class="demo-drawer__title">
+      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
+      Demo Configurator
+    </div>
+    <button class="demo-drawer__close" id="demoDrawerClose" aria-label="Close">✕</button>
+  </div>
+  <div class="demo-drawer__sub">Change any variable to see the widget update live</div>
+
+  <div class="demo-drawer__body">
+
+    <!-- PROFILE & ROLE (merged) -->
+    <div class="demo-acc" data-acc="account">
+      <button class="demo-acc__hdr" aria-expanded="true">
+        <span class="demo-acc__label">Profile &amp; Role <span class="dbadge dbadge-a">ACCOUNT</span> <span class="dbadge dbadge-r">ROLE</span></span>
+        <svg class="demo-acc__chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      <div class="demo-acc__body">
+
+      <div class="f-row">
+        <div class="f-lbl" title="The sector this practitioner works in — determines which authority and ruleset applies">Sector</div>
+        <div class="sector-tabs" style="margin-bottom:8px">
+          <button class="s-tab active" data-sector="vet">🐾 Veterinary</button>
+          <button class="s-tab" data-sector="dental">🦷 Dental</button>
+        </div>
+      </div>
+
+      <div class="f-row">
+        <div class="f-lbl" title="The country and regulatory authority — auto-sets the CPD framework, term, required hours, and cycle type">Country / Jurisdiction <span class="f-note">sets authority + rules</span></div>
+        <select class="df" id="selCountry">
+          <!-- Populated from API by widget-cpd.js -->
+        </select>
+      </div>
+
+      <div class="f-row">
+        <div class="f-lbl" title="US, Australian or Canadian state/province — may apply additional local requirements on top of the national authority rules">State / Province <span class="f-note">US/AU/CA — overrides required hrs</span></div>
+        <select class="df" id="selState">
+          <option value="">— Not applicable —</option>
+          <option value="ca">California (75 hrs / 2yr)</option>
+          <option value="tx">Texas (16 hrs / yr)</option>
+          <option value="ny">New York (24 hrs / 2yr)</option>
+          <option value="fl">Florida (30 hrs / 2yr)</option>
+          <option value="nsw">NSW, Australia</option>
+          <option value="vic">Victoria, Australia</option>
+          <option value="on">Ontario, Canada (40 hrs / yr)</option>
+        </select>
+      </div>
+
+      <div class="f-row">
+        <div class="f-lbl" title="Year of first registration — used to determine if a new-graduate reduced requirement applies in the first cycle">Year of first registration</div>
+        <select class="df" id="selRegYear">
+          <option value="2026">2026 — New graduate</option>
+          <option value="2025">2025 — Year 1</option>
+          <option value="2024">2024 — Year 2</option>
+          <option value="2020" selected>2020 — Established</option>
+          <option value="2015">2015 — Experienced</option>
+          <option value="2005">2005 — 10+ years</option>
+        </select>
+      </div>
+
+      <div class="f-row">
+        <div class="f-lbl" title="Practising = full CPD required. Non-practising / suspended = 0 hrs required. Paused = pro-rata reduction applied.">Registration status</div>
+        <select class="df" id="selRegStatus">
+          <option value="active">Active / Full</option>
+          <option value="non_practising">Non-practising</option>
+          <option value="student">Student</option>
+          <option value="paused">Paused / Maternity leave</option>
+          <option value="specialist">Specialist</option>
+          <option value="advanced">Advanced Practitioner</option>
+        </select>
+      </div>
+
+      <div class="f-row hidden" id="pauseMonthsRow">
+        <div class="f-lbl" title="How many months this practitioner has been on an approved pause — reduces the annual requirement proportionally">Months paused <span class="f-note">max: authority limit</span></div>
+        <div class="rng-row">
+          <input type="range" id="numPauseMonths" min="1" max="12" value="3" step="1">
+          <span class="rng-val" id="numPauseMonthsVal">3</span>
+        </div>
+      </div>
+
+      <div class="f-sep"></div>
+
+      <div class="f-row">
+        <div class="f-lbl" title="The professional role — determines which specific RCVS or authority ruleset applies (e.g. Vet Surgeon = 35 hrs, RVN = 15 hrs)">Professional role</div>
+        <select class="df" id="selRole">
+          <!-- Populated from API by widget-cpd.js -->
+        </select>
+      </div>
+
+      <div class="f-row">
+        <div class="f-lbl" title="Automatically set by the regulatory authority — cannot be changed for RCVS-regulated roles">CPD cycle type <span class="f-note">set by authority</span></div>
+        <select class="df" id="selCycle">
+          <option value="annual">Annual (12 months)</option>
+          <option value="biennial">Biennial (2 years)</option>
+          <option value="triennial">Triennial (3 years)</option>
+          <option value="5year">5-year rolling</option>
+          <option value="rolling3">Rolling 3-year window</option>
+        </select>
+      </div>
+
+      <div class="tog-row" id="deaRow">
+        <span class="tog-lbl" title="US only: some states require DEA-specific CE credits for prescribing practitioners">Has DEA / prescribing CE (US only)</span>
+        <label class="tog"><input type="checkbox" id="togDEA"><span class="tog-track"></span></label>
+      </div>
+
+      <div class="f-row">
+        <div class="f-lbl" title="The date this CPD cycle started — determines cycle end date and days remaining">Cycle start date</div>
+        <input type="date" class="df" id="selCycleStart" value="2026-01-01">
+      </div>
+
+      <div class="tog-row">
+        <span class="tog-lbl" title="Enable if the practitioner registered part-way through the cycle — CPD requirement is reduced proportionally to months remaining">Pro-rata (mid-year registrant)</span>
+        <label class="tog"><input type="checkbox" id="togProRata"><span class="tog-track"></span></label>
+      </div>
+      <div class="f-row hidden" id="proRataRow">
+        <div class="f-lbl" title="How many months ago the practitioner first registered — used to calculate their pro-rata CPD requirement for this cycle">Months since registration</div>
+        <div class="rng-row">
+          <input type="range" id="numRegMonths" min="1" max="35" value="6" step="1">
+          <span class="rng-val" id="numRegMonthsVal">6</span>
+        </div>
+      </div>
+
+    </div><!-- /demo-acc__body -->
+    </div><!-- /demo-acc profile+role -->
+
+    <!-- Hidden state checkboxes for more-menu toggles -->
+    <input type="checkbox" id="togSplit" checked hidden>
+    <input type="checkbox" id="togShowTopics" checked hidden>
+    <input type="checkbox" id="togShowCycle" checked hidden>
+    <input type="checkbox" id="togCompact" hidden>
+
+
+    <!-- DEMO SLIDERS -->
+    <div class="demo-acc" data-acc="sliders">
+      <button class="demo-acc__hdr" aria-expanded="false">
+        <span class="demo-acc__label">Demo Variables</span>
+
+        <svg class="demo-acc__chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      <div class="demo-acc__body" hidden>
+        <div class="f-row">
+          <div class="f-lbl" title="Simulate units logged so far this cycle">Units completed so far</div>
+          <div class="rng-row">
+            <input type="range" id="numCompleted" min="0" max="200" value="20" step="0.5">
+            <span class="rng-val" id="numCompletedVal">20</span>
+          </div>
+        </div>
+        <div class="f-row">
+          <div class="f-lbl" title="How many of those units are structured / verifiable">Structured / verifiable done</div>
+          <div class="rng-row">
+            <input type="range" id="numStructDone" min="0" max="200" value="12" step="0.5">
+            <span class="rng-val" id="numStructDoneVal">12</span>
+          </div>
+        </div>
+        <div class="f-row">
+          <div class="f-lbl" title="Non-clinical units — triggers the non-clinical cap check">Non-clinical units done <span class="f-note">cap check</span></div>
+          <div class="rng-row">
+            <input type="range" id="numNonClin" min="0" max="60" value="0" step="0.5">
+            <span class="rng-val" id="numNonClinVal">0</span>
+          </div>
+        </div>
+        <div class="f-row" id="prevCompletedRow">
+          <div class="f-lbl" title="Units completed in the previous cycle — used to calculate carry-over allowance">Previous cycle completed <span class="f-note">carry-over check</span></div>
+          <div class="rng-row">
+            <input type="range" id="numPrevCompleted" min="0" max="200" value="0" step="0.5">
+            <span class="rng-val" id="numPrevCompletedVal">0</span>
+          </div>
+        </div>
+        <div class="f-row" id="reflectedDoneRow">
+          <div class="f-lbl" title="Hours where reflection has been completed — gates compliance for RCVS/GDC practitioners">Reflected (Plan→Reflect done) <span class="f-note">RCVS / GDC</span></div>
+          <div class="rng-row">
+            <input type="range" id="numReflectedDone" min="0" max="100" value="0" step="0.5">
+            <span class="rng-val" id="numReflectedDoneVal">0</span>
+          </div>
+        </div>
+      </div><!-- /demo-acc__body -->
+    </div><!-- /demo-acc sliders -->
+
+    <!-- ACTIVE RULES PANEL (in drawer) -->
+    <div class="demo-acc demo-acc--rules" data-acc="rules">
+      <button class="demo-acc__hdr" aria-expanded="false">
+        <span class="demo-acc__label">
+          Active Rules Applied
+        </span>
+        <svg class="demo-acc__chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      <div class="demo-acc__body" hidden>
+        <div class="rules-panel-sub-inner">Live derivation — updates as you change the config</div>
+        <div class="rules-grid" id="rulesGrid"></div>
+        <div class="rule-priority-banner hidden" id="rulePriorityBanner">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          <span id="rulePriorityText"></span>
+        </div>
+      </div>
+    </div><!-- /demo-acc rules -->
+
+  </div><!-- /demo-drawer__body -->
+</aside>
+
+<script>
+(function() {
+  const DRAWER_WIDTH = 320;
+  const drawer   = document.getElementById('demoDrawer');
+  const toggle   = document.getElementById('demoToggle');
+  const closeBtn = document.getElementById('demoDrawerClose');
+  let open = false;
+
+  function setOpen(v) {
+    open = v;
+    drawer.classList.toggle('demo-drawer--open', v);
+    toggle.classList.toggle('demo-toggle--open', v);
+    toggle.setAttribute('aria-expanded', v ? 'true' : 'false');
+    document.body.style.paddingRight = v ? DRAWER_WIDTH + 'px' : '';
+  }
+
+  toggle.addEventListener('click', () => setOpen(!open));
+  closeBtn.addEventListener('click', () => setOpen(false));
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && open) setOpen(false); });
+
+  // ── Accordions (single-open) ───────────────────────
+  const accHeaders = drawer.querySelectorAll('.demo-acc__hdr');
+  accHeaders.forEach(hdr => {
+    hdr.addEventListener('click', () => {
+      const body   = hdr.nextElementSibling;
+      const isOpen = hdr.getAttribute('aria-expanded') === 'true';
+      // Close all
+      accHeaders.forEach(h => {
+        h.setAttribute('aria-expanded', 'false');
+        h.nextElementSibling.hidden = true;
+      });
+      // Open clicked (unless it was already open)
+      if (!isOpen) {
+        hdr.setAttribute('aria-expanded', 'true');
+        body.hidden = false;
+      }
+    });
+  });
+})();
+</script>
+
+<script src="widget-cpd.js?v=3"></script>
+
+<!-- ══ ACTIVITY LOG DRAWER ══ -->
+<div class="act-overlay" id="actOverlay"></div>
+<aside class="act-drawer" id="actDrawer" aria-label="Log CPD Activity">
+  <div class="act-drawer-header">
+    <h3 id="actDrawerTitle">Log CPD Activity</h3>
+    <button class="act-close" id="actClose" aria-label="Close">✕</button>
+  </div>
+  <form class="act-form" id="actForm" novalidate autocomplete="off">
+    <div class="af-field">
+      <label for="afTitle">Activity title *</label>
+      <input type="text" id="afTitle" class="af-input" placeholder="e.g. BSAVA Congress 2026" required>
+    </div>
+    <div class="af-row">
+      <div class="af-field">
+        <label for="afDate">Date *</label>
+        <input type="date" id="afDate" class="af-input" required>
+      </div>
+      <div class="af-field">
+        <label for="afUnits" id="afUnitsLbl">Hours *</label>
+        <input type="number" id="afUnits" class="af-input" value="1" min="0.5" max="99" step="0.5" required>
+      </div>
+    </div>
+    <div class="af-field">
+      <label for="afType">Activity type</label>
+      <select id="afType" class="af-input">
+        <option value="conference_session">Conference / Congress</option>
+        <option value="webinar">Webinar / Online session</option>
+        <option value="online_course">Online course / e-learning</option>
+        <option value="hands_on_lab">Wetlab / Hands-on practical</option>
+        <option value="journal_reading">Journal reading / Self-study</option>
+        <option value="peer_discussion">Peer discussion / Journal club</option>
+        <option value="teaching">Teaching / Presenting</option>
+        <option value="other">Other</option>
+      </select>
+    </div>
+    <div class="af-field">
+      <label for="afProvider">Provider (optional)</label>
+      <input type="text" id="afProvider" class="af-input" placeholder="e.g. BSAVA, Royal College">
+    </div>
+    <!-- Split toggle: structured/verifiable — hidden when concept is 'none' -->
+    <div class="af-field" id="afSplitSection">
+      <label id="afSplitLbl">Structured?</label>
+      <div class="af-toggle-row">
+        <button type="button" class="af-toggle-btn active" id="afSplitYes">✓ Yes — Structured</button>
+        <button type="button" class="af-toggle-btn" id="afSplitNo">Non-structured</button>
+      </div>
+      <span class="af-hint" id="afSplitHint">Structured CPD has defined learning outcomes and a formal format.</span>
+    </div>
+    <!-- Clinical toggle -->
+    <div class="af-field" id="afClinSection">
+      <label>Clinical?</label>
+      <div class="af-toggle-row">
+        <button type="button" class="af-toggle-btn active" id="afClinYes">✓ Yes — Clinical</button>
+        <button type="button" class="af-toggle-btn" id="afClinNo">Non-clinical</button>
+      </div>
+      <span class="af-hint">Non-clinical hours count toward the cap (where applicable).</span>
+    </div>
+    <!-- Topic (shown when authority has mandatory topics) -->
+    <div class="af-field hidden" id="afTopicSection">
+      <label for="afTopic">Topic category</label>
+      <select id="afTopic" class="af-input">
+        <option value="">— Not topic-specific —</option>
+      </select>
+    </div>
+    <div class="af-field">
+      <label for="afReflection">Reflection (optional)</label>
+      <textarea id="afReflection" class="af-input" rows="3" placeholder="What did you learn? How will this change your practice?"></textarea>
+    </div>
+  </form>
+  <div class="act-drawer-footer">
+    <button class="af-btn-save" id="afSave">Save activity</button>
+    <button class="af-btn-cancel" id="afCancel">Cancel</button>
+  </div>
+</aside>
+<div class="act-toast" id="actToast"></div>
+
+<script>
+(function() {
+  const overlay = document.getElementById('actOverlay');
+  const drawer  = document.getElementById('actDrawer');
+  const toast   = document.getElementById('actToast');
+  let splitPos = true, clinYes = true;
+
+  function openDrawer() {
+    const ws = window.getWidgetState ? window.getWidgetState() : {};
+    document.getElementById('actDrawerTitle').textContent = `Log ${ws.cpd_term||'CPD'} Activity`;
+    const uLabel = (ws.uiLabels&&ws.uiLabels.unit_singular)||ws.unitType||'hours';
+    document.getElementById('afUnitsLbl').textContent = uLabel.charAt(0).toUpperCase()+uLabel.slice(1)+' *';
+    // Split section
+    const splitSec = document.getElementById('afSplitSection');
+    const concept = ws.splitBarConcept||'structured';
+    if (!ws.showSplit || concept==='none' || !(ws.structuredMin>0)) {
+      splitSec.classList.add('hidden');
+    } else {
+      splitSec.classList.remove('hidden');
+      const pos = (ws.uiLabels&&ws.uiLabels.split_label_positive)||'Structured';
+      const neg = (ws.uiLabels&&ws.uiLabels.split_label_negative)||(concept==='verifiable'?'Non-verifiable':'Non-structured');
+      document.getElementById('afSplitLbl').textContent = pos+'?';
+      document.getElementById('afSplitYes').textContent = '✓ Yes — '+pos;
+      document.getElementById('afSplitNo').textContent = neg;
+      document.getElementById('afSplitHint').textContent = concept==='verifiable'
+        ? pos+' CPD requires documentary proof (certificate, attendance record, etc.).'
+        : pos+' CPD has defined learning outcomes and a formal delivery format.';
+    }
+    // Topic section
+    const topicSec = document.getElementById('afTopicSection');
+    const topicSel = document.getElementById('afTopic');
+    if (ws.hasMandatoryTopics && ws.topics && ws.topics.length) {
+      topicSec.classList.remove('hidden');
+      topicSel.innerHTML = '<option value="">— Not topic-specific —</option>' +
+        ws.topics.map(t=>`<option value="${t}">${t}</option>`).join('');
+    } else { topicSec.classList.add('hidden'); }
+    // Defaults
+    document.getElementById('afDate').value = new Date().toISOString().slice(0,10);
+    document.getElementById('afUnits').value = '1';
+    setSplit(true); setClin(true);
+    // Show
+    overlay.classList.add('visible');
+    requestAnimationFrame(()=>drawer.classList.add('open'));
+    setTimeout(()=>document.getElementById('afTitle').focus(), 350);
+  }
+
+  function closeDrawer() {
+    drawer.classList.remove('open');
+    overlay.classList.remove('visible');
+    document.getElementById('actForm').reset();
+  }
+
+  function setSplit(v){ splitPos=v; document.getElementById('afSplitYes').classList.toggle('active',v); document.getElementById('afSplitNo').classList.toggle('active',!v); }
+  function setClin(v) { clinYes=v;  document.getElementById('afClinYes').classList.toggle('active',v);  document.getElementById('afClinNo').classList.toggle('active',!v); }
+
+  function showToast(msg, type) {
+    toast.textContent = msg; toast.className = 'act-toast '+(type||'ok');
+    requestAnimationFrame(()=>toast.classList.add('show'));
+    setTimeout(()=>toast.classList.remove('show'), 3200);
+  }
+
+  async function saveActivity() {
+    const ws = window.getWidgetState ? window.getWidgetState() : {};
+    const concept = ws.splitBarConcept||'structured';
+    const title   = document.getElementById('afTitle').value.trim();
+    const date    = document.getElementById('afDate').value;
+    const units   = parseFloat(document.getElementById('afUnits').value)||0;
+    const type    = document.getElementById('afType').value;
+    const provider= document.getElementById('afProvider').value.trim()||null;
+    const reflect = document.getElementById('afReflection').value.trim()||null;
+    const topic   = document.getElementById('afTopic').value||null;
+    if (!title)        { showToast('Please enter an activity title','err'); return; }
+    if (!date)         { showToast('Please select a date','err'); return; }
+    if (units<=0)      { showToast('Please enter a valid number of units','err'); return; }
+    const btn = document.getElementById('afSave');
+    btn.disabled = true; btn.textContent = 'Saving…';
+    try {
+      const r = await fetch('/api/activities', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({
+          activity_title: title, activity_date: date,
+          activity_type: type, units_claimed: units,
+          provider_name: provider, reflection_text: reflect,
+          topic_category: topic, is_clinical: clinYes,
+          is_structured: concept!=='verifiable' ? splitPos : false,
+          is_verifiable: concept==='verifiable' ? splitPos : false,
+        })
+      });
+      if (!r.ok) { const e=await r.json(); throw new Error(e.error||'Server error'); }
+      closeDrawer();
+      showToast(`✓ ${ws.cpd_term||'CPD'} activity saved`);
+      if (window.wRefresh) await window.wRefresh();
+      refreshActivities();
+    } catch(e) {
+      showToast('Error: '+e.message, 'err');
+    } finally {
+      btn.disabled=false; btn.textContent='Save activity';
+    }
+  }
+
+  // ── Activity list ─────────────────────────────────────
+  const TYPE_ICON = {
+    conference_session:'🎤', webinar:'💻', online_course:'📚',
+    hands_on_lab:'🔬', journal_reading:'📖', peer_discussion:'💬',
+    teaching:'👨‍🏫', other:'📌'
+  };
+  const TYPE_LABEL = {
+    conference_session:'Conference', webinar:'Webinar', online_course:'Online course',
+    hands_on_lab:'Wetlab', journal_reading:'Self-study', peer_discussion:'Peer discussion',
+    teaching:'Teaching', other:'Other'
+  };
+  async function refreshActivities(){
+    const ws = window.getWidgetState ? window.getWidgetState() : {};
+    const unit = (ws.uiLabels&&ws.uiLabels.unit_short)||'hrs';
+    const concept = ws.splitBarConcept||'structured';
+    const posLabel = (ws.uiLabels&&ws.uiLabels.split_label_positive)||'Structured';
+    const negLabel = (ws.uiLabels&&ws.uiLabels.split_label_negative)||(concept==='verifiable'?'Non-verifiable':'Non-structured');
+    const list   = document.getElementById('actLogList');
+    const empty  = document.getElementById('actLogEmpty');
+    const count  = document.getElementById('actLogCount');
+    try {
+      const acts = await fetch('/api/activities').then(r=>r.json());
+      count.textContent = acts.length ? acts.length+' logged' : '';
+      if (!acts.length) {
+        list.innerHTML = ''; empty.classList.remove('hidden'); return;
+      }
+      empty.classList.add('hidden');
+      list.innerHTML = acts.map(a=>{
+        const icon = TYPE_ICON[a.activity_type]||'📌';
+        const lbl  = TYPE_LABEL[a.activity_type]||a.activity_type;
+        const d    = new Date(a.activity_date).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});
+        let chip = '';
+        if (concept!=='none'&&a.is_structured) chip=`<span class="act-chip act-chip-struct">${posLabel}</span>`;
+        else if (concept!=='none'&&a.is_verifiable) chip=`<span class="act-chip act-chip-verif">${posLabel}</span>`;
+        else if (concept!=='none') chip=`<span class="act-chip act-chip-non">${negLabel}</span>`;
+        const provStr = a.provider_name ? ` · ${a.provider_name}` : '';
+        return`<div class="act-entry" data-id="${a.activity_id}">
+  <div class="act-entry-icon">${icon}</div>
+  <div class="act-entry-body">
+    <div class="act-entry-title">${a.activity_title}</div>
+    <div class="act-entry-meta">${d} · ${lbl}${provStr} ${chip}</div>
+  </div>
+  <div class="act-entry-units">${a.units_awarded||a.units_claimed} ${unit}</div>
+  <button class="act-entry-del" data-del="${a.activity_id}" title="Delete activity">✕</button>
+</div>`;
+      }).join('');
+      // Wire delete buttons
+      list.querySelectorAll('[data-del]').forEach(btn=>{
+        btn.addEventListener('click', async function(){
+          const id = this.dataset.del;
+          const entry = list.querySelector(`[data-id="${id}"]`);
+          if (entry) { entry.style.opacity='0.4'; entry.style.pointerEvents='none'; }
+          try {
+            await fetch(`/api/activities/${id}`,{method:'DELETE'});
+            if (window.wRefresh) await window.wRefresh();
+            await refreshActivities();
+          } catch(e) {
+            if (entry){ entry.style.opacity=''; entry.style.pointerEvents=''; }
+            showToast('Delete failed: '+e.message,'err');
+          }
+        });
+      });
+    } catch(e) { count.textContent = 'Error loading'; }
+  }
+
+  // Wire events
+  document.querySelector('.w-action').addEventListener('click', e=>{e.preventDefault();openDrawer();});
+  document.getElementById('actClose').addEventListener('click', closeDrawer);
+  document.getElementById('afCancel').addEventListener('click', closeDrawer);
+  document.getElementById('afSave').addEventListener('click', saveActivity);
+  overlay.addEventListener('click', closeDrawer);
+  document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeDrawer(); });
+  document.getElementById('afSplitYes').addEventListener('click', ()=>setSplit(true));
+  document.getElementById('afSplitNo').addEventListener('click', ()=>setSplit(false));
+  document.getElementById('afClinYes').addEventListener('click', ()=>setClin(true));
+  document.getElementById('afClinNo').addEventListener('click', ()=>setClin(false));
+  document.getElementById('actLogAddBtn').addEventListener('click', ()=>openDrawer());
+
+  // Load activities after widget initialises
+  window.addEventListener('load', ()=>setTimeout(refreshActivities, 800));
+})();
+
+// ━━ PDP Goals ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+(function() {
+  const STATUS_ICON = { open:'○', in_progress:'◑', completed:'✓' };
+  const STATUS_LABEL = { open:'Open', in_progress:'In progress', completed:'Completed' };
+  const STATUS_NEXT  = { open:'in_progress', in_progress:'completed', completed:'open' };
+
+  async function loadGoals() {
+    const list  = document.getElementById('pdpList');
+    const empty = document.getElementById('pdpEmpty');
+    const goals = await fetch('/api/pdp-goals').then(r=>r.json()).catch(()=>[]);
+    if (!goals.length) { list.innerHTML=''; empty.classList.remove('hidden'); return; }
+    empty.classList.add('hidden');
+    list.innerHTML = goals.map(g => {
+      const st = g.status||'open';
+      const done = st==='completed';
+      const dateStr = g.target_date
+        ? ' · By '+new Date(g.target_date).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})
+        : '';
+      const field = g.field_of_practice ? ` · ${g.field_of_practice}` : '';
+      return `<div class="pdp-goal" data-id="${g.goal_id}">
+  <button class="pdp-status-btn ${st}" data-status-id="${g.goal_id}" data-status="${st}" title="Click to advance status">${STATUS_ICON[st]||'○'}</button>
+  <div class="pdp-goal-body">
+    <div class="pdp-goal-title${done?' done':''}">${g.goal_title}</div>
+    <div class="pdp-goal-meta">${STATUS_LABEL[st]||st}<span class="pdp-status-chip ${st}">${STATUS_LABEL[st]||st}</span>${field}${dateStr}</div>
+  </div>
+  <button class="pdp-del-btn" data-del-id="${g.goal_id}" title="Delete goal">✕</button>
+</div>`;
+    }).join('');
+    // Wire status cycle buttons
+    list.querySelectorAll('[data-status-id]').forEach(btn => {
+      btn.addEventListener('click', async function() {
+        const id = this.dataset.statusId;
+        const next = STATUS_NEXT[this.dataset.status]||'open';
+        this.className = `pdp-status-btn ${next}`;
+        this.textContent = STATUS_ICON[next];
+        this.dataset.status = next;
+        const row = this.closest('.pdp-goal');
+        const titleEl = row?.querySelector('.pdp-goal-title');
+        if (titleEl) titleEl.classList.toggle('done', next==='completed');
+        const chip = row?.querySelector('.pdp-status-chip');
+        if (chip) { chip.className=`pdp-status-chip ${next}`; chip.textContent=STATUS_LABEL[next]; }
+        const metaFirst = row?.querySelector('.pdp-goal-meta');
+        if (metaFirst) metaFirst.firstChild.textContent = STATUS_LABEL[next];
+        await fetch(`/api/pdp-goals/${id}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({status:next})}).catch(()=>{});
+      });
+    });
+    // Wire delete buttons
+    list.querySelectorAll('[data-del-id]').forEach(btn => {
+      btn.addEventListener('click', async function() {
+        const id = this.dataset.delId;
+        const row = document.querySelector(`.pdp-goal[data-id="${id}"]`);
+        if (row) { row.style.opacity='0.4'; row.style.pointerEvents='none'; }
+        await fetch(`/api/pdp-goals/${id}`,{method:'DELETE'}).catch(()=>{});
+        loadGoals();
+      });
+    });
+  }
+
+  async function addGoal() {
+    const title = document.getElementById('pdpTitle').value.trim();
+    const field = document.getElementById('pdpField').value.trim()||null;
+    const date  = document.getElementById('pdpDate').value||null;
+    const desc  = document.getElementById('pdpDesc').value.trim()||null;
+    if (!title) { document.getElementById('pdpTitle').focus(); return; }
+    const btn = document.getElementById('pdpSaveBtn');
+    const errEl = document.getElementById('pdpAddError');
+    btn.disabled=true; btn.textContent='Saving…';
+    if (errEl) errEl.textContent = '';
+    try {
+      const resp = await fetch('/api/pdp-goals',{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({goal_title:title,field_of_practice:field,target_date:date,goal_description:desc})});
+      if (!resp.ok) {
+        const data = await resp.json().catch(()=>({error:'Server error'}));
+        if (errEl) { errEl.textContent = '⚠ ' + (data.error || 'Failed to save'); return; }
+        alert('Failed to save goal: ' + (data.error || 'Server error'));
+        return;
+      }
+      // Clear form and hide
+      ['pdpTitle','pdpField','pdpDesc'].forEach(id=>document.getElementById(id).value='');
+      document.getElementById('pdpDate').value='';
+      document.getElementById('pdpAddForm').classList.add('hidden');
+      loadGoals();
+    } finally { btn.disabled=false; btn.textContent='Save goal'; }
+  }
+
+  // Wire form toggle
+  document.getElementById('pdpAddBtn').addEventListener('click', ()=>{
+    const form = document.getElementById('pdpAddForm');
+    form.classList.toggle('hidden');
+    if (!form.classList.contains('hidden')) document.getElementById('pdpTitle').focus();
+  });
+  document.getElementById('pdpSaveBtn').addEventListener('click', addGoal);
+  document.getElementById('pdpCancelBtn').addEventListener('click', ()=>{
+    document.getElementById('pdpAddForm').classList.add('hidden');
+  });
+  document.getElementById('pdpTitle').addEventListener('keydown', e=>{if(e.key==='Enter')addGoal();});
+
+  window.addEventListener('load', ()=>setTimeout(loadGoals, 900));
+})();
+</script>
+<script src="dist/icon-rail.js"></script>
 </body>
 </html>

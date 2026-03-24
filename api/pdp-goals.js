@@ -24,10 +24,16 @@ router.post('/', (req, res) => {
     if (!goal_title) return res.status(400).json({ error: 'goal_title required' });
     let cid = cycle_id, rid = registration_id;
     if (!cid || !rid) {
-      const cycle = db.prepare(`SELECT c.cycle_id, r.registration_id FROM cpd_cycles c
+      // Try in_progress cycle first, then fall back to any most-recent cycle
+      let cycle = db.prepare(`SELECT c.cycle_id, r.registration_id FROM cpd_cycles c
         JOIN registrations r ON c.registration_id = r.registration_id
         WHERE c.status='in_progress' ORDER BY c.created_at DESC LIMIT 1`).get();
-      if (!cycle) return res.status(400).json({ error: 'No active cycle' });
+      if (!cycle) {
+        cycle = db.prepare(`SELECT c.cycle_id, r.registration_id FROM cpd_cycles c
+          JOIN registrations r ON c.registration_id = r.registration_id
+          ORDER BY c.created_at DESC LIMIT 1`).get();
+      }
+      if (!cycle) return res.status(400).json({ error: 'No cycle found — please seed the database first.' });
       cid = cid || cycle.cycle_id; rid = rid || cycle.registration_id;
     }
     const id = uuidv4();

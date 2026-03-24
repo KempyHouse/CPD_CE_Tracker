@@ -1,15 +1,23 @@
 {
-  "scripts": {
-    "start": "node server.js",
-    "dev": "node server.js"
-  },
-  "devDependencies": {
-    "exceljs": "^4.4.0"
-  },
-  "dependencies": {
-    "better-sqlite3": "^12.8.0",
-    "cors": "^2.8.6",
-    "express": "^5.2.1",
-    "uuid": "^13.0.0"
-  }
+    "scripts":  {
+                    "start":  "node server.js",
+                    "dev":  "node server.js",
+                    "build:css":  "tailwindcss -i styles/app.css -o dist/app.css --minify",
+                    "dev:css":  "tailwindcss -i styles/app.css -o dist/app.css --watch",
+                    "build:table":  "esbuild components/data-table.src.js --bundle --format=iife --global-name=DataTableLib --outfile=dist/data-table.js --minify",
+                    "build":  "npm run build:css \u0026\u0026 npm run build:table \u0026\u0026 npm run build:rail"
+                },
+    "devDependencies":  {
+                            "esbuild":  "^0.27.4",
+                            "exceljs":  "^4.4.0"
+                        },
+    "dependencies":  {
+                         "@tailwindcss/cli":  "^4.2.2",
+                         "@tanstack/table-core":  "^8.21.3",
+                         "better-sqlite3":  "^12.8.0",
+                         "cors":  "^2.8.6",
+                         "express":  "^5.2.1",
+                         "tailwindcss":  "^4.2.2",
+                         "uuid":  "^13.0.0"
+                     }
 }

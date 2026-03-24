@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>DataTable Test</title>
+<link rel="stylesheet" href="dist/app.css">
+<style>
+  body { font-family: sans-serif; padding: 20px; }
+  #log { white-space: pre; font-family: monospace; font-size: 12px; background: #f0f0f0; padding: 10px; margin: 10px 0; max-height: 300px; overflow: auto; border: 1px solid #ccc; }
+</style>
+</head>
+<body>
+<h2>DataTable Debug Test</h2>
+<div id="log">Loading...</div>
+<div id="testTable"></div>
+<script src="dist/data-table.js"></script>
+<script>
+  const log = document.getElementById('log');
+  const lines = [];
+  function out(msg) { lines.push(msg); log.textContent = lines.join('\n'); console.log(msg); }
+
+  // Override console.error to capture it
+  const origError = console.error;
+  console.error = (...args) => { out('ERROR: ' + args.join(' ')); origError(...args); };
+
+  window.onerror = (msg, src, line, col, err) => {
+    out('UNHANDLED: ' + msg + ' at ' + line + ':' + col);
+    return false;
+  };
+
+  out('DataTableLib: ' + typeof DataTableLib);
+  out('DataTable class: ' + typeof DataTableLib?.DataTable);
+
+  const columns = [
+    { accessorKey: 'name',   header: 'Name',   size: 200, cell: info => info.getValue() },
+    { accessorKey: 'status', header: 'Status', size: 120, cell: info => info.getValue() },
+  ];
+
+  const data = [
+    { name: 'Alice Smith', status: 'on-track' },
+    { name: 'Bob Jones',   status: 'at-risk'  },
+    { name: 'Carol White', status: 'complete' },
+  ];
+
+  try {
+    out('Creating DataTable with enableRowSelection + enableRowGrouping...');
+    const dt = new DataTableLib.DataTable({
+      el: document.getElementById('testTable'),
+      columns,
+      data,
+      options: {
+        enableMultiSort:        true,
+        enableColumnFilters:    true,
+        enableRowSelection:     true,
+        enableRowExpansion:     true,
+        enableRowGrouping:      true,
+        enableColumnVisibility: true,
+        enableColumnResizing:   true,
+        enableColumnOrdering:   true,
+        bulkActions: [{ label: 'Test', action: rows => out('Bulk: ' + rows.length) }],
+      },
+    });
+    out('SUCCESS: DataTable created');
+    out('innerHTML length: ' + document.getElementById('testTable').innerHTML.length);
+    out('Has .dt-table: ' + !!document.querySelector('.dt-table'));
+    out('Has thead: ' + !!document.querySelector('thead'));
+    out('Has dt-row: ' + !!document.querySelector('.dt-row'));
+    out('Has dt-toolbar: ' + !!document.querySelector('.dt-toolbar'));
+    out('Has dt-pagination: ' + !!document.querySelector('.dt-pagination'));
+  } catch (err) {
+    out('CONSTRUCTOR ERROR: ' + err.message);
+    out(err.stack || '');
+  }
+</script>
+</body>
+</html>

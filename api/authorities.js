@@ -11,7 +11,9 @@ router.get('/', (req, res) => {
     const params = [];
     if (req.query.sector) { sql += ' WHERE sector = ? OR sector = ?'; params.push(req.query.sector, 'both'); }
     sql += ' ORDER BY sector, authority_name';
-    res.json(db.prepare(sql).all(...params));
+    const rows = db.prepare(sql).all(...params);
+    rows.forEach(a => { try { a.ui_labels = a.ui_labels ? JSON.parse(a.ui_labels) : null; } catch(e) {} });
+    res.json(rows);
   } finally { db.close(); }
 });
 
@@ -21,6 +23,7 @@ router.get('/:id', (req, res) => {
   try {
     const auth = db.prepare('SELECT * FROM registration_authorities WHERE authority_id = ? OR authority_key = ?').get(req.params.id, req.params.id);
     if (!auth) return res.status(404).json({ error: 'Authority not found' });
+    try { auth.ui_labels = auth.ui_labels ? JSON.parse(auth.ui_labels) : null; } catch(e) {}
     auth.roles = db.prepare('SELECT * FROM professional_roles WHERE authority_id = ? ORDER BY tier, role_name').all(auth.authority_id);
     res.json(auth);
   } finally { db.close(); }

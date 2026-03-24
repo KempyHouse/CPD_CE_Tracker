@@ -8,31 +8,133 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="shared.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
+  <link rel="stylesheet" href="dist/app.css" />
+  <style>
+    /* ── Team-specific styles ── */
+    :root { --tm-gap: 18px; }
+
+    .tm-stats { display: grid; grid-template-columns: repeat(4,1fr); gap: var(--tm-gap); margin-bottom: var(--tm-gap); }
+    .tm-stat { background: var(--color-white); border-radius: var(--radius-card); box-shadow: var(--shadow-card); padding: 16px 18px; }
+    .tm-stat__label { font-size: 10.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--color-muted); margin-bottom: 8px; }
+    .tm-stat__val { font-size: 26px; font-weight: 700; color: var(--vs-navy); line-height: 1; letter-spacing: -0.5px; }
+    .tm-stat__sub { font-size: 11px; color: var(--color-muted); margin-top: 5px; }
+    .tm-stat--green .tm-stat__val { color: #2e7d52; }
+    .tm-stat--amber .tm-stat__val { color: #d97706; }
+    .tm-stat--red   .tm-stat__val { color: #b91c1c; }
+
+    .tm-filter-bar { display: flex; align-items: center; gap: 10px; margin-bottom: var(--tm-gap); flex-wrap: wrap; }
+    .tm-filter-pills { display: flex; gap: 5px; flex-wrap: wrap; }
+    .tm-pill { padding: 5px 13px; border-radius: 99px; border: 1.5px solid var(--color-border); background: var(--color-white); font-size: 12px; font-weight: 500; color: var(--color-muted); cursor: pointer; transition: all .15s; }
+    .tm-pill.active { border-color: var(--vs-purple); background: #f0ebff; color: var(--vs-purple); font-weight: 600; }
+    .tm-pill:hover:not(.active) { border-color: #c8c0e0; color: var(--vs-navy); }
+    .tm-search { margin-left: auto; position: relative; }
+    .tm-search input { padding: 6px 10px 6px 32px; border: 1.5px solid var(--color-border); border-radius: 7px; font-family: var(--font); font-size: 12.5px; width: 220px; outline: none; transition: border-color .15s; }
+    .tm-search input:focus { border-color: var(--vs-purple); }
+    .tm-search svg { position: absolute; left: 9px; top: 50%; transform: translateY(-50%); opacity: .4; }
+
+    .tm-card { background: var(--color-white); border-radius: var(--radius-card); box-shadow: var(--shadow-card); overflow: hidden; }
+    .tm-card-hdr { display: flex; align-items: center; justify-content: space-between; padding: 13px 18px; border-bottom: 1px solid var(--color-border); }
+    .tm-card-title { font-size: 11px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--vs-navy); }
+    .tm-card-count { font-size: 11px; color: var(--color-muted); }
+    .tm-export-btn { padding: 5px 13px; border: 1.5px solid var(--color-border); border-radius: 6px; background: var(--color-white); font-family: var(--font); font-size: 11.5px; font-weight: 500; color: var(--color-muted); cursor: pointer; transition: border-color .15s; }
+    .tm-export-btn:hover { border-color: var(--vs-purple); color: var(--vs-purple); }
+
+    .tm-table { width: 100%; border-collapse: collapse; }
+    .tm-table th { padding: 9px 14px; text-align: left; font-size: 10.5px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--color-muted); border-bottom: 1px solid var(--color-border); background: #fafbff; white-space: nowrap; }
+    .tm-table td { padding: 11px 14px; border-bottom: 1px solid var(--color-border); vertical-align: middle; }
+    .tm-table tr:last-child td { border-bottom: none; }
+    .tm-table tr:hover td { background: #fafbff; }
+
+    .tm-avatar { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; color: #fff; flex-shrink: 0; }
+    .tm-member { display: flex; align-items: center; gap: 10px; }
+    .tm-member-info { min-width: 0; }
+    .tm-member-name { font-size: 13px; font-weight: 500; color: var(--vs-navy); white-space: nowrap; }
+    .tm-member-role { font-size: 10.5px; color: var(--color-muted); margin-top: 1px; }
+    .tm-auth-badge { font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 4px; background: #eef2fb; color: var(--vs-teal); white-space: nowrap; }
+
+    .tm-progress-wrap { display: flex; align-items: center; gap: 8px; min-width: 120px; }
+    .tm-progress-track { flex: 1; height: 5px; background: #eef1f6; border-radius: 99px; overflow: hidden; min-width: 70px; }
+    .tm-progress-fill { height: 100%; border-radius: 99px; transition: width .5s; }
+    .tm-progress-fill.green  { background: #2e7d52; }
+    .tm-progress-fill.amber  { background: #d97706; }
+    .tm-progress-fill.red    { background: #b91c1c; }
+    .tm-progress-fill.grey   { background: #d1d5db; }
+    .tm-hrs { font-size: 11.5px; font-variant-numeric: tabular-nums; color: var(--vs-navy); white-space: nowrap; font-weight: 500; }
+    .tm-pct { font-size: 10.5px; color: var(--color-muted); white-space: nowrap; }
+
+    .tm-status { display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: 99px; font-size: 10px; font-weight: 700; white-space: nowrap; }
+    .tm-status-dot { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; }
+    .tm-status.on-track  { background: #d1fae5; color: #065f46; } .tm-status.on-track  .tm-status-dot { background: #2e7d52; }
+    .tm-status.at-risk   { background: #fef3c7; color: #92400e; } .tm-status.at-risk   .tm-status-dot { background: #d97706; }
+    .tm-status.overdue   { background: #fee2e2; color: #991b1b; } .tm-status.overdue   .tm-status-dot { background: #b91c1c; }
+    .tm-status.exempt    { background: #f3f4f6; color: #6b7280; } .tm-status.exempt    .tm-status-dot { background: #9ca3af; }
+    .tm-status.complete  { background: #ede9fe; color: #5b21b6; } .tm-status.complete  .tm-status-dot { background: #7c3aed; }
+
+    .tm-actions { display: flex; gap: 5px; }
+    .tm-action { padding: 4px 9px; border: 1.5px solid var(--color-border); border-radius: 5px; font-family: var(--font); font-size: 11px; font-weight: 500; color: var(--color-muted); cursor: pointer; background: none; transition: all .15s; white-space: nowrap; }
+    .tm-action:hover { border-color: var(--vs-purple); color: var(--vs-purple); }
+    .tm-action.remind { color: #d97706; border-color: #fcd34d; }
+    .tm-action.remind:hover { background: #fef3c7; }
+    .tm-row-hidden { display: none; }
+
+    .tm-deadline { font-size: 11px; color: var(--color-muted); white-space: nowrap; }
+    .tm-deadline.soon { color: #d97706; font-weight: 600; }
+  </style>
+  <link rel="stylesheet" href="icon-rail.css" />
 </head>
 <body>
 
-  <!-- ════ TOP NAV ════ -->
-  <nav class="top-nav" role="navigation" aria-label="Main navigation">
-    <div class="top-nav__inner">
-      <a href="index.html" class="logo" aria-label="Vetstream home">
-        <img src="images/vetstream-logo.png" alt="Vetstream" height="36" />
-      </a>
+  <!-- ════ NOTIFICATION BANNER ════ -->
+  <div class="notif-banner notif-banner--amber" id="notifBanner">
+    ⚠ 2 team members are at risk of missing their CPD deadline
+    <button class="notif-banner__dismiss" onclick="document.getElementById('notifBanner').classList.add('notif-banner--hidden')" aria-label="Dismiss">×</button>
+  </div>
 
-      <button class="btn-account" style="margin-left:auto;">My Account</button>
-    </div>
-  </nav>
-
-  <!-- ════ TAB NAV ════ -->
-  <nav class="tab-nav" aria-label="Dashboard tabs">
+  <!-- ════ NAV ════ -->
+  <nav class="tab-nav" role="navigation" aria-label="Main navigation">
     <div class="tab-nav__inner">
-      <a class="tab-nav__item"        href="vs-admin.html"        >Admin Portal</a>
-      <a class="tab-nav__item active" href="team-management.html" aria-current="page">Team Management</a>
-      <a class="tab-nav__item"        href="index.html"           >My Dashboard</a>
-      <a class="tab-nav__item"        href="#"                    >Course Library</a>
-      <a class="tab-nav__item"        href="#"                    >My Learning</a>
-      <a class="tab-nav__item"        href="#"                    >My Achievements</a>
-      <a class="tab-nav__item"        href="#"                    >My Account</a>
+      <a href="index.html" class="tab-nav__logo" aria-label="Vetstream home">
+        <img src="images/vetstream-logo.png" alt="Vetstream" height="50" />
+      </a>
+      <div class="tab-nav__tabs">
+        <div class="mega-menu">
+          <a class="tab-nav__item tab-nav__item--has-menu mega-menu__trigger" href="vs-admin.html">Admin Portal</a>
+          <div class="mega-menu__dropdown">
+            <div class="mega-menu__section">
+              <div class="mega-menu__section-title">Administration</div>
+              <a class="mega-menu__link" href="vs-admin.html"><span class="mega-menu__link-icon">📊</span><div><div class="mega-menu__link-text">Dashboard</div><div class="mega-menu__link-sub">Platform overview &amp; stats</div></div></a>
+              <a class="mega-menu__link mega-menu__link--dim" href="#"><span class="mega-menu__link-icon" style="background:#f3f4f6">👥</span><div><div class="mega-menu__link-text">Users</div><div class="mega-menu__link-sub">Manage practitioner accounts</div></div></a>
+              <a class="mega-menu__link mega-menu__link--dim" href="#"><span class="mega-menu__link-icon" style="background:#f3f4f6">🏢</span><div><div class="mega-menu__link-text">Organisations</div><div class="mega-menu__link-sub">Multi-site management</div></div></a>
+            </div>
+            <div class="mega-menu__section">
+              <div class="mega-menu__section-title">Rules &amp; Data</div>
+              <a class="mega-menu__link mega-menu__link--dim" href="#"><span class="mega-menu__link-icon" style="background:#f3f4f6">📜</span><div><div class="mega-menu__link-text">CE Rules</div><div class="mega-menu__link-sub">Jurisdiction-specific requirements</div></div></a>
+              <a class="mega-menu__link mega-menu__link--dim" href="#"><span class="mega-menu__link-icon" style="background:#f3f4f6">📋</span><div><div class="mega-menu__link-text">Authorities</div><div class="mega-menu__link-sub">Licensing bodies &amp; boards</div></div></a>
+            </div>
+          </div>
+        </div>
+        <div class="mega-menu">
+          <a class="tab-nav__item tab-nav__item--has-menu mega-menu__trigger active" href="team-management.html" aria-current="page">Team Management</a>
+          <div class="mega-menu__dropdown">
+            <div class="mega-menu__section">
+              <div class="mega-menu__section-title">Team</div>
+              <a class="mega-menu__link mega-menu__link--active" href="team-management.html"><span class="mega-menu__link-icon">📈</span><div><div class="mega-menu__link-text">CPD Overview</div><div class="mega-menu__link-sub">Compliance dashboard</div></div></a>
+              <a class="mega-menu__link" href="my-team.html"><span class="mega-menu__link-icon">👤</span><div><div class="mega-menu__link-text">My Team</div><div class="mega-menu__link-sub">View &amp; manage members</div></div></a>
+              <a class="mega-menu__link mega-menu__link--dim" href="#"><span class="mega-menu__link-icon" style="background:#f3f4f6">✉️</span><div><div class="mega-menu__link-text">Invite Members</div><div class="mega-menu__link-sub">Send onboarding invites</div></div></a>
+            </div>
+            <div class="mega-menu__section">
+              <div class="mega-menu__section-title">Settings &amp; Reports</div>
+              <a class="mega-menu__link mega-menu__link--dim" href="#"><span class="mega-menu__link-icon" style="background:#f3f4f6">🔒</span><div><div class="mega-menu__link-text">Roles &amp; Permissions</div><div class="mega-menu__link-sub">Access control</div></div></a>
+              <a class="mega-menu__link mega-menu__link--dim" href="#"><span class="mega-menu__link-icon" style="background:#f3f4f6">📄</span><div><div class="mega-menu__link-text">Team Reports</div><div class="mega-menu__link-sub">Export &amp; compliance reports</div></div></a>
+            </div>
+          </div>
+        </div>
+        <a class="tab-nav__item" href="index.html">My Dashboard</a>
+        <a class="tab-nav__item" href="#">Course Library</a>
+        <a class="tab-nav__item" href="#">My Learning</a>
+        <a class="tab-nav__item" href="#">My Achievements</a>
+      </div>
     </div>
   </nav>
 
@@ -42,45 +144,156 @@
     <nav class="breadcrumb" aria-label="Breadcrumb">
       <span class="bc-link">Team Management</span>
       <span class="breadcrumb__sep">›</span>
-      <span>Overview</span>
+      <span>CPD Compliance Overview</span>
     </nav>
 
-    <!-- Sidebar -->
-    <aside class="sidebar" aria-label="Team sidebar">
-      <div class="sidebar-card">
-        <p class="sidebar-card__heading">Team Management</p>
-        <ul class="sidebar-nav">
-          <li><span>My Team</span></li>
-          <li><span>Invite Members</span></li>
-          <li><span>Roles &amp; Permissions</span></li>
-          <li><span>Team Reports</span></li>
-          <li><span>Settings</span></li>
-        </ul>
-      </div>
-    </aside>
-
-    <!-- Main — blank content area -->
+    <!-- Main -->
     <main class="main" id="main-content">
-      <div class="widget-area" id="widget-area" aria-label="Content area">
-        <div class="widget-area__placeholder">
-          <svg class="widget-area__icon" viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <rect x="4"  y="4"  width="19" height="19" rx="3" stroke="#9aa8c4" stroke-width="2" stroke-dasharray="4 2"/>
-            <rect x="29" y="4"  width="19" height="19" rx="3" stroke="#9aa8c4" stroke-width="2" stroke-dasharray="4 2"/>
-            <rect x="4"  y="29" width="19" height="19" rx="3" stroke="#9aa8c4" stroke-width="2" stroke-dasharray="4 2"/>
-            <rect x="29" y="29" width="19" height="19" rx="3" stroke="#9aa8c4" stroke-width="2" stroke-dasharray="4 2"/>
-          </svg>
-          <p>Team Management</p>
-          <small>Content area — add widgets here</small>
+
+      <!-- Stats strip -->
+      <div class="tm-stats">
+        <div class="tm-stat tm-stat--green">
+          <div class="tm-stat__label">On track</div>
+          <div class="tm-stat__val" id="statOnTrack">5</div>
+          <div class="tm-stat__sub">of 8 team members</div>
+        </div>
+        <div class="tm-stat tm-stat--amber">
+          <div class="tm-stat__label">At risk</div>
+          <div class="tm-stat__val" id="statAtRisk">2</div>
+          <div class="tm-stat__sub">need to catch up</div>
+        </div>
+        <div class="tm-stat">
+          <div class="tm-stat__label">Team avg completion</div>
+          <div class="tm-stat__val" id="statAvg">62%</div>
+          <div class="tm-stat__sub">across active members</div>
+        </div>
+        <div class="tm-stat tm-stat--red">
+          <div class="tm-stat__label">Overdue / Lapsed</div>
+          <div class="tm-stat__val" id="statOverdue">1</div>
+          <div class="tm-stat__sub">require urgent action</div>
         </div>
       </div>
-    </main>
 
+      <!-- Filter bar -->
+      <div class="tm-filter-bar">
+        <div class="tm-filter-pills">
+          <button class="tm-pill active" data-filter="all">All <span id="count-all">(8)</span></button>
+          <button class="tm-pill" data-filter="on-track">✓ On track <span id="count-on-track">(5)</span></button>
+          <button class="tm-pill" data-filter="at-risk">⚠ At risk <span id="count-at-risk">(2)</span></button>
+          <button class="tm-pill" data-filter="overdue">✗ Overdue <span id="count-overdue">(1)</span></button>
+          <button class="tm-pill" data-filter="exempt">— Exempt <span id="count-exempt">(0)</span></button>
+        </div>
+        <div class="tm-search">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" id="tmSearch" placeholder="Search team members…">
+        </div>
+      </div>
+
+      <!-- Team table -->
+      <div class="tm-card">
+        <div class="tm-card-hdr">
+          <span class="tm-card-title">Team CPD Status — 2026 Cycle</span>
+          <div style="display:flex;align-items:center;gap:10px">
+            <span class="tm-card-count" id="tmCardCount">8 members</span>
+            <button class="tm-export-btn">⬇ Export CSV</button>
+          </div>
+        </div>
+        <table class="tm-table" id="tmTable">
+          <thead>
+            <tr>
+              <th style="min-width:200px">Member</th>
+              <th>Authority</th>
+              <th style="min-width:160px">Progress</th>
+              <th>Hours</th>
+              <th>Status</th>
+              <th>Deadline</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="tmBody">
+            <!-- Rendered by JS -->
+          </tbody>
+        </table>
+      </div>
+
+    </main>
   </div>
 
-  <script>
-    document.querySelectorAll('a[href="#"]').forEach(a => {
-      a.addEventListener('click', e => e.preventDefault());
-    });
-  </script>
+<script>
+const TEAM = [
+  { name:'Dr Sarah Chen',       role:'Vet Surgeon',         initials:'SC', colour:'#5c3fa3', authority:'RCVS', term:'CPD', done:28, req:45,  pct:62, status:'at-risk',  deadline:'1 Nov 2026', soon:true  },
+  { name:'RVN Emily Williams',  role:'Registered Vet Nurse',initials:'EW', colour:'#3c5a70', authority:'RCVS', term:'CPD', done:37, req:45,  pct:82, status:'on-track', deadline:'1 Nov 2026', soon:false },
+  { name:'Dr James O\'Brien',   role:'General Dental Pract.',initials:'JO',colour:'#b91c1c', authority:'GDC',  term:'CPD', done:5,  req:75,  pct:7,  status:'overdue',  deadline:'31 Dec 2026',soon:false },
+  { name:'Dr Maria Santos',     role:'Vet Surgeon (Specialist)',initials:'MS',colour:'#2e7d52',authority:'AHPRA',term:'CPD',done:40,req:45, pct:89, status:'on-track', deadline:'31 May 2026',soon:false },
+  { name:'VN Thomas Hill',      role:'Vet Nurse',            initials:'TH', colour:'#9ca3af', authority:'RCVS', term:'CPD', done:0,  req:0,   pct:0,  status:'exempt',   deadline:'—',           soon:false, exempt:true },
+  { name:'Dr Hannah Price',     role:'Vet Surgeon',          initials:'HP', colour:'#1a6fcc', authority:'VCNZ', term:'CPD', done:22, req:30,  pct:73, status:'on-track', deadline:'31 Dec 2026',soon:false },
+  { name:'RDN Lisa Park',       role:'Dental Hygienist',     initials:'LP', colour:'#8b5cf6', authority:'GDC',  term:'CPD', done:50, req:75,  pct:67, status:'on-track', deadline:'31 Dec 2026',soon:false },
+  { name:'Dr Arun Mehta',       role:'Vet Surgeon',          initials:'AM', colour:'#d97706', authority:'VCI',  term:'CPD', done:10, req:20,  pct:50, status:'at-risk',  deadline:'31 Dec 2026',soon:false },
+];
+
+function colourClass(m) {
+  if (m.exempt) return 'grey';
+  if (m.pct >= 100) return 'green';
+  if (m.status === 'overdue') return 'red';
+  if (m.pct >= 50) return 'green';
+  return 'amber';
+}
+
+function renderTable(filter, search) {
+  const body = document.getElementById('tmBody');
+  let visible = 0;
+  body.innerHTML = TEAM.map((m, i) => {
+    const statusMatch = filter === 'all' || m.status === filter;
+    const searchMatch = !search || m.name.toLowerCase().includes(search) || m.role.toLowerCase().includes(search) || m.authority.toLowerCase().includes(search);
+    if (!statusMatch || !searchMatch) return `<tr class="tm-row-hidden" data-i="${i}"><td colspan="7"></td></tr>`;
+    visible++;
+    const cc = colourClass(m);
+    const hrsStr = m.exempt ? '— Exempt' : `${m.done} / ${m.req} hrs`;
+    const pctStr = m.exempt ? '' : `${m.pct}%`;
+    const barW = m.exempt ? 0 : Math.min(100, m.pct);
+    const statusLabel = { 'on-track':'On track','at-risk':'At risk','overdue':'Overdue','exempt':'Exempt','complete':'Complete' }[m.status] || m.status;
+    const remindBtn = (m.status === 'at-risk' || m.status === 'overdue')
+      ? `<button class="tm-action remind" onclick="sendReminder('${m.name}')">📧 Remind</button>` : '';
+    return `<tr data-i="${i}" data-status="${m.status}">
+      <td><div class="tm-member">
+        <div class="tm-avatar" style="background:${m.colour}">${m.initials}</div>
+        <div class="tm-member-info"><div class="tm-member-name">${m.name}</div><div class="tm-member-role">${m.role}</div></div>
+      </div></td>
+      <td><span class="tm-auth-badge">${m.authority} · ${m.term}</span></td>
+      <td><div class="tm-progress-wrap">
+        <div class="tm-progress-track"><div class="tm-progress-fill ${cc}" style="width:${barW}%"></div></div>
+        <span class="tm-pct">${pctStr}</span>
+      </div></td>
+      <td><span class="tm-hrs">${hrsStr}</span></td>
+      <td><span class="tm-status ${m.status}"><span class="tm-status-dot"></span>${statusLabel}</span></td>
+      <td><span class="tm-deadline${m.soon?' soon':''}">${m.deadline}</span></td>
+      <td><div class="tm-actions">
+        <button class="tm-action" onclick="viewMember('${m.name}')">View</button>
+        ${remindBtn}
+      </div></td>
+    </tr>`;
+  }).join('');
+  document.getElementById('tmCardCount').textContent = `${visible} of ${TEAM.length} members`;
+}
+
+function sendReminder(name) { alert(`📧 Reminder sent to ${name}`); }
+function viewMember(name) { alert(`Opening CPD record for ${name}`); }
+
+let activeFilter = 'all';
+document.querySelectorAll('.tm-pill').forEach(pill => {
+  pill.addEventListener('click', () => {
+    document.querySelectorAll('.tm-pill').forEach(p => p.classList.remove('active'));
+    pill.classList.add('active');
+    activeFilter = pill.dataset.filter;
+    renderTable(activeFilter, document.getElementById('tmSearch').value.toLowerCase().trim());
+  });
+});
+document.getElementById('tmSearch').addEventListener('input', function() {
+  renderTable(activeFilter, this.value.toLowerCase().trim());
+});
+document.querySelectorAll('a[href="#"]').forEach(a => a.addEventListener('click', e => e.preventDefault()));
+renderTable('all', '');
+</script>
+<script src="dist/icon-rail.js"></script>
 </body>
 </html>

@@ -39,6 +39,8 @@ function initDb() {
       unit_label TEXT NOT NULL DEFAULT 'hours',
       units_per_hour REAL NOT NULL DEFAULT 1.0,
       split_label TEXT NULL,
+      split_bar_concept TEXT NOT NULL DEFAULT 'structured',
+      ui_labels TEXT NULL,
       mandatory_topics_enabled INTEGER NOT NULL DEFAULT 0,
       cpd_term TEXT NOT NULL DEFAULT 'CPD',
       cpd_term_full TEXT NOT NULL DEFAULT 'Continuing Professional Development',
@@ -88,10 +90,22 @@ function initDb() {
       new_graduate_months INTEGER NULL,
       new_graduate_reduced_units REAL NULL,
       mandatory_topics_enabled INTEGER NOT NULL DEFAULT 0,
+      reflection_required_for_compliance INTEGER NOT NULL DEFAULT 0,
       pro_rata_for_part_year INTEGER NOT NULL DEFAULT 0,
       non_practising_exempt INTEGER NOT NULL DEFAULT 0,
       postgrad_study_exempts INTEGER NOT NULL DEFAULT 0,
       deferral_allowed INTEGER NOT NULL DEFAULT 0,
+      max_units_per_day INTEGER NULL,
+      first_renewal_ce_exempt INTEGER NOT NULL DEFAULT 0,
+      max_management_units REAL NULL,
+      presenter_credit_cap REAL NULL,
+      bls_credit_cap REAL NULL,
+      first_renewal_prorata_units REAL NULL,
+      ce_window_months INTEGER NULL,
+      self_study_permitted INTEGER NOT NULL DEFAULT 1,
+      max_self_study_no_test REAL NULL,
+      max_self_study_with_test REAL NULL,
+      cpr_required_non_cpe INTEGER NOT NULL DEFAULT 0,
       notes TEXT NULL,
       created_at TEXT NOT NULL DEFAULT (datetime('now')),
       updated_at TEXT NOT NULL DEFAULT (datetime('now'))
@@ -206,6 +220,9 @@ function initDb() {
       evidence_document_url TEXT NULL,
       reflection_text TEXT NULL,
       reflection_date TEXT NULL,
+      what_learned TEXT NULL,
+      impact_on_practice TEXT NULL,
+      next_steps TEXT NULL,
       peer_discussed INTEGER NOT NULL DEFAULT 0,
       peer_name TEXT NULL,
       pdp_goal_linked TEXT NULL,
@@ -214,6 +231,8 @@ function initDb() {
       publication_doi TEXT NULL,
       postgrad_year INTEGER NULL,
       status TEXT NOT NULL DEFAULT 'draft',
+      stage TEXT NOT NULL DEFAULT 'recorded'
+        CHECK (stage IN ('planned','done_unrecorded','recorded','reflected')),
       created_at TEXT NOT NULL DEFAULT (datetime('now')),
       updated_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
@@ -249,8 +268,8 @@ function initDb() {
     INSERT INTO registration_authorities
     (authority_id, authority_key, authority_name, authority_abbreviation, country, sector,
      website_url, cpd_platform_url, uses_hours, uses_points, uses_ceus, uses_credits,
-     unit_label, units_per_hour, split_label, mandatory_topics_enabled, cpd_term, cpd_term_full)
-    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+     unit_label, units_per_hour, split_label, split_bar_concept, ui_labels, mandatory_topics_enabled, cpd_term, cpd_term_full)
+    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
   `);
   for (const a of seed.AUTHORITIES) {
     const id = uuidv4(); authIds[a.key] = id;
@@ -260,7 +279,9 @@ function initDb() {
       a.uses_hours ? 1 : 0, a.uses_points ? 1 : 0,
       a.uses_ceus ? 1 : 0, a.uses_credits ? 1 : 0,
       a.unit_label, a.units_per_hour,
-      a.split_label || null, a.mandatory_topics_enabled ? 1 : 0,
+      a.split_label || null, a.split_bar_concept || 'structured',
+      a.ui_labels ? JSON.stringify(a.ui_labels) : null,
+      a.mandatory_topics_enabled ? 1 : 0,
       a.cpd_term, a.cpd_term_full
     );
   }
@@ -287,8 +308,13 @@ function initDb() {
      min_structured_units, min_verifiable_units, max_non_clinical_units, max_non_clinical_percent,
      carry_over_allowed, carry_over_max_units, pause_allowed, pause_max_months, pause_reduced_units,
      new_graduate_exemption, new_graduate_months, new_graduate_reduced_units, mandatory_topics_enabled,
-     pro_rata_for_part_year, non_practising_exempt, postgrad_study_exempts, deferral_allowed, notes)
-    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+     reflection_required_for_compliance,
+     pro_rata_for_part_year, non_practising_exempt, postgrad_study_exempts, deferral_allowed,
+     max_units_per_day, first_renewal_ce_exempt, max_management_units,
+     presenter_credit_cap, bls_credit_cap, first_renewal_prorata_units,
+     ce_window_months, self_study_permitted,
+     max_self_study_no_test, max_self_study_with_test, cpr_required_non_cpe, notes)
+    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
   `);
   for (const r of seed.RULES) {
     const id = uuidv4();
@@ -306,8 +332,20 @@ function initDb() {
       r.pause_allowed ? 1 : 0, r.pause_max_months || null, r.pause_reduced_units || null,
       r.new_graduate_exemption ? 1 : 0, r.new_graduate_months || null, r.new_graduate_reduced_units || null,
       r.mandatory_topics_enabled ? 1 : 0,
+      r.reflection_required_for_compliance ? 1 : 0,
       r.pro_rata_for_part_year ? 1 : 0, r.non_practising_exempt ? 1 : 0,
       r.postgrad_study_exempts ? 1 : 0, r.deferral_allowed ? 1 : 0,
+      r.max_units_per_day || null,
+      r.first_renewal_ce_exempt ? 1 : 0,
+      r.max_management_units || null,
+      r.presenter_credit_cap || null,
+      r.bls_credit_cap || null,
+      r.first_renewal_prorata_units || null,
+      r.ce_window_months || null,
+      r.self_study_permitted !== false ? 1 : 0,
+      r.max_self_study_no_test || null,
+      r.max_self_study_with_test || null,
+      r.cpr_required_non_cpe ? 1 : 0,
       r.notes || null
     );
   }
