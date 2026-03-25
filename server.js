@@ -17,11 +17,13 @@ app.use(express.static(path.join(__dirname)));
 // ── API routes ─────────────────────────────────────────────────────────────
 app.use('/api/authorities',    require('./api/authorities'));
 app.use('/api/rules',          require('./api/rules'));
+app.use('/api/roles',          require('./api/roles'));
 app.use('/api/practitioners',  require('./api/practitioners'));
 app.use('/api/cycles',         require('./api/cycles'));
 app.use('/api/activities',     require('./api/activities'));
 app.use('/api/pdp-goals',      require('./api/pdp-goals'));
 app.use('/api/team-members',   require('./api/team-members'));
+
 
 // ── Admin stats endpoint ───────────────────────────────────────────────────
 app.get('/api/admin/stats', (req, res) => {

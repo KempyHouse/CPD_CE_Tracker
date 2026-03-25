@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin — CPD/CE Tracker</title>
+  <link rel="stylesheet" href="shared.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --teal: #00A8A8; --teal-d: #007c7c; --teal-bg: #e6f7f7;
+      --bg: #f4f6f9; --card: #fff; --border: #e2e8f0;
+      --text: #1e293b; --text-2: #64748b; --text-3: #94a3b8;
+      --red: #ef4444; --red-bg: #fee2e2; --green: #22c55e; --green-bg: #dcfce7;
+      --amber: #f59e0b; --amber-bg: #fef3c7;
+      --shadow: 0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.05);
+      --shadow-lg: 0 10px 25px rgba(0,0,0,.12);
+    }
+    body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+    /* ── Header ── */
+    .adm-header { background: var(--teal); color: #fff; padding: 0 2rem; display: flex; align-items: center; gap: 1rem; height: 56px; }
+    .adm-header h1 { font-size: .95rem; font-weight: 600; letter-spacing: .02em; }
+    .adm-header .back { color: rgba(255,255,255,.75); text-decoration: none; font-size: .8rem; display: flex; align-items: center; gap: .25rem; transition: color .15s; }
+    .adm-header .back:hover { color: #fff; }
+
+    /* ── Tab Nav ── */
+    .tab-nav { background: var(--card); border-bottom: 1px solid var(--border); display: flex; padding: 0 2rem; gap: 0; }
+    .tab-btn { padding: .9rem 1.2rem; border: none; background: none; cursor: pointer; font: inherit; font-size: .82rem; font-weight: 500; color: var(--text-2); border-bottom: 2.5px solid transparent; transition: all .15s; display: flex; align-items: center; gap: .4rem; }
+    .tab-btn:hover { color: var(--teal); }
+    .tab-btn.active { color: var(--teal); border-color: var(--teal); }
+    .tab-btn .ms { font-size: 16px; }
+
+    /* ── Tab content ── */
+    .tab-pane { display: none; padding: 2rem; }
+    .tab-pane.active { display: block; }
+
+    /* ── Toolbar ── */
+    .toolbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; }
+    .toolbar h2 { font-size: 1rem; font-weight: 600; }
+    .toolbar-right { display: flex; gap: .6rem; align-items: center; }
+    .search-box { display: flex; align-items: center; background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: .4rem .75rem; gap: .4rem; }
+    .search-box input { border: none; outline: none; font: inherit; font-size: .82rem; width: 220px; background: none; }
+
+    /* ── Buttons ── */
+    .btn { display: inline-flex; align-items: center; gap: .35rem; padding: .5rem 1rem; border-radius: 8px; border: none; cursor: pointer; font: inherit; font-size: .82rem; font-weight: 500; transition: all .15s; }
+    .btn-primary { background: var(--teal); color: #fff; }
+    .btn-primary:hover { background: var(--teal-d); }
+    .btn-ghost { background: transparent; color: var(--text-2); border: 1px solid var(--border); }
+    .btn-ghost:hover { background: var(--bg); color: var(--text); }
+    .btn-danger { background: var(--red-bg); color: var(--red); border: 1px solid #fca5a5; }
+    .btn-danger:hover { background: var(--red); color: #fff; }
+    .btn-sm { padding: .3rem .6rem; font-size: .75rem; }
+    .btn .ms { font-size: 16px; }
+
+    /* ── Table ── */
+    .data-table { background: var(--card); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; box-shadow: var(--shadow); }
+    .data-table table { width: 100%; border-collapse: collapse; }
+    .data-table th { font-size: .72rem; font-weight: 600; color: var(--text-3); text-transform: uppercase; letter-spacing: .05em; padding: .7rem 1rem; background: #f8fafc; border-bottom: 1px solid var(--border); text-align: left; }
+    .data-table td { padding: .7rem 1rem; border-bottom: 1px solid var(--border); font-size: .82rem; vertical-align: middle; }
+    .data-table tr:last-child td { border-bottom: none; }
+    .data-table tr:hover td { background: #f8fafc; }
+    .data-table .actions { display: flex; gap: .4rem; }
+    .badge { display: inline-flex; align-items: center; gap: .25rem; padding: .2rem .55rem; border-radius: 20px; font-size: .7rem; font-weight: 600; }
+    .badge-teal { background: var(--teal-bg); color: var(--teal-d); }
+    .badge-gray { background: var(--bg); color: var(--text-2); border: 1px solid var(--border); }
+    .badge-amber { background: var(--amber-bg); color: #92400e; }
+
+    /* ── Drawer ── */
+    .drawer-bg { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.35); z-index: 200; }
+    .drawer-bg.open { display: block; }
+    .drawer { position: fixed; top: 0; right: 0; height: 100vh; width: 480px; max-width: 95vw; background: var(--card); z-index: 201; box-shadow: var(--shadow-lg); transform: translateX(100%); transition: transform .25s cubic-bezier(.4,0,.2,1); display: flex; flex-direction: column; }
+    .drawer.open { transform: translateX(0); }
+    .drawer-head { padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+    .drawer-head h3 { font-size: .95rem; font-weight: 600; }
+    .drawer-body { flex: 1; overflow-y: auto; padding: 1.5rem; display: flex; flex-direction: column; gap: 1.1rem; }
+    .drawer-foot { padding: 1rem 1.5rem; border-top: 1px solid var(--border); display: flex; gap: .6rem; justify-content: flex-end; }
+
+    /* ── Form elements ── */
+    .form-group { display: flex; flex-direction: column; gap: .35rem; }
+    .form-group label { font-size: .75rem; font-weight: 600; color: var(--text-2); text-transform: uppercase; letter-spacing: .04em; }
+    .form-group input, .form-group select, .form-group textarea {
+      width: 100%; padding: .55rem .75rem; border: 1px solid var(--border); border-radius: 8px;
+      font: inherit; font-size: .85rem; background: var(--bg); color: var(--text); outline: none; transition: border-color .15s;
+    }
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: var(--teal); background: #fff; }
+    .form-group textarea { min-height: 80px; resize: vertical; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; }
+    .form-check { display: flex; align-items: center; gap: .5rem; cursor: pointer; font-size: .85rem; }
+    .form-check input[type=checkbox] { width: 16px; height: 16px; accent-color: var(--teal); cursor: pointer; }
+    .form-section { font-size: .75rem; font-weight: 700; color: var(--text-3); text-transform: uppercase; letter-spacing: .05em; padding-bottom: .4rem; border-bottom: 1px solid var(--border); }
+
+    /* ── Toast ── */
+    .toast { position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%) translateY(80px); background: #1e293b; color: #fff; padding: .65rem 1.25rem; border-radius: 10px; font-size: .83rem; font-weight: 500; z-index: 999; transition: transform .3s cubic-bezier(.4,0,.2,1); box-shadow: var(--shadow-lg); display: flex; align-items: center; gap: .5rem; }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+    .toast.ok { background: #15803d; }
+    .toast.err { background: var(--red); }
+
+    /* ── Select authority panel (Rules/Topics) ── */
+    .select-panel { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 1rem; }
+    .select-panel label { font-size: .78rem; font-weight: 600; color: var(--text-2); white-space: nowrap; }
+    .select-panel select { flex: 1; padding: .5rem .75rem; border: 1px solid var(--border); border-radius: 8px; font: inherit; font-size: .83rem; outline: none; }
+    .select-panel select:focus { border-color: var(--teal); }
+
+    /* ── Stats bar ── */
+    .stats-bar { display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+    .stat-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 1rem 1.25rem; display: flex; gap: .75rem; align-items: center; min-width: 150px; box-shadow: var(--shadow); }
+    .stat-card .ms { font-size: 22px; color: var(--teal); }
+    .stat-card .num { font-size: 1.5rem; font-weight: 700; line-height: 1; }
+    .stat-card .lbl { font-size: .72rem; color: var(--text-2); }
+
+    /* Empty state */
+    .empty { text-align: center; padding: 3rem 1rem; color: var(--text-3); }
+    .empty .ms { font-size: 40px; display: block; margin-bottom: .5rem; }
+  </style>
+</head>
+<body>
+
+<!-- Header -->
+<header class="adm-header">
+  <span class="material-symbols-outlined" style="font-size:20px">admin_panel_settings</span>
+  <h1>Admin — CPD/CE Tracker</h1>
+  <span style="flex:1"></span>
+  <a href="/" class="back"><span class="material-symbols-outlined" style="font-size:14px">arrow_back</span> Back to App</a>
+</header>
+
+<!-- Tab Nav -->
+<nav class="tab-nav">
+  <button class="tab-btn active" data-tab="authorities"><span class="material-symbols-outlined ms">language</span> Authorities</button>
+  <button class="tab-btn" data-tab="rules"><span class="material-symbols-outlined ms">rule</span> CE Rules</button>
+  <button class="tab-btn" data-tab="topics"><span class="material-symbols-outlined ms">topic</span> Mandatory Topics</button>
+  <button class="tab-btn" data-tab="roles"><span class="material-symbols-outlined ms">badge</span> Roles</button>
+</nav>
+
+<!-- ──────────────────── AUTHORITIES TAB ──────────────────── -->
+<div class="tab-pane active" id="tab-authorities">
+  <div class="stats-bar">
+    <div class="stat-card"><span class="material-symbols-outlined ms">language</span><div><div class="num" id="stat-auth">—</div><div class="lbl">Authorities</div></div></div>
+    <div class="stat-card"><span class="material-symbols-outlined ms">rule</span><div><div class="num" id="stat-rules">—</div><div class="lbl">CE Rules</div></div></div>
+    <div class="stat-card"><span class="material-symbols-outlined ms">topic</span><div><div class="num" id="stat-topics">—</div><div class="lbl">Mandatory Topics</div></div></div>
+    <div class="stat-card"><span class="material-symbols-outlined ms">badge</span><div><div class="num" id="stat-roles">—</div><div class="lbl">Roles</div></div></div>
+  </div>
+  <div class="toolbar">
+    <h2>Registration Authorities</h2>
+    <div class="toolbar-right">
+      <div class="search-box"><span class="material-symbols-outlined" style="font-size:16px;color:var(--text-3)">search</span><input id="auth-search" placeholder="Search authorities…"></div>
+      <button class="btn btn-primary" id="btn-new-auth"><span class="material-symbols-outlined ms">add</span> New Authority</button>
+    </div>
+  </div>
+  <div class="data-table">
+    <table>
+      <thead><tr>
+        <th>Key</th><th>Name</th><th>Country</th><th>Sector</th><th>Units</th><th>CPD Term</th><th>Actions</th>
+      </tr></thead>
+      <tbody id="auth-tbody"><tr><td colspan="7" class="empty"><span class="material-symbols-outlined">hourglass_empty</span>Loading…</td></tr></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ──────────────────── CE RULES TAB ──────────────────── -->
+<div class="tab-pane" id="tab-rules">
+  <div class="select-panel">
+    <label><span class="material-symbols-outlined" style="font-size:14px;vertical-align:middle">language</span> Authority</label>
+    <select id="rules-auth-select"><option value="">— Select authority —</option></select>
+    <label><span class="material-symbols-outlined" style="font-size:14px;vertical-align:middle">badge</span> Role</label>
+    <select id="rules-role-select" disabled><option value="">— Select role —</option></select>
+    <button class="btn btn-primary" id="btn-new-rule" disabled><span class="material-symbols-outlined ms">add</span> New Rule</button>
+  </div>
+  <div class="data-table">
+    <table>
+      <thead><tr>
+        <th>Cycle Type</th><th>Months</th><th>Total Required</th><th>Structured Min</th><th>Online Cap</th><th>Carry-over</th><th>New Grad</th><th>Actions</th>
+      </tr></thead>
+      <tbody id="rules-tbody"><tr><td colspan="8" class="empty"><span class="material-symbols-outlined">info</span>Select an authority and role above</td></tr></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ──────────────────── TOPICS TAB ──────────────────── -->
+<div class="tab-pane" id="tab-topics">
+  <div class="select-panel">
+    <label>Authority</label>
+    <select id="topics-auth-select"><option value="">— Select authority —</option></select>
+    <label>CE Rule</label>
+    <select id="topics-rule-select" disabled><option value="">— Select rule —</option></select>
+    <button class="btn btn-primary" id="btn-new-topic" disabled><span class="material-symbols-outlined ms">add</span> New Topic</button>
+  </div>
+  <div class="data-table">
+    <table>
+      <thead><tr>
+        <th>Topic Name</th><th>Category</th><th>Min/Cycle</th><th>Min/Year</th><th>Must be Live</th><th>DEA Trigger</th><th>Actions</th>
+      </tr></thead>
+      <tbody id="topics-tbody"><tr><td colspan="7" class="empty"><span class="material-symbols-outlined">info</span>Select an authority and rule above</td></tr></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ──────────────────── ROLES TAB ──────────────────── -->
+<div class="tab-pane" id="tab-roles">
+  <div class="toolbar">
+    <h2>Professional Roles</h2>
+    <div class="toolbar-right">
+      <div class="search-box"><span class="material-symbols-outlined" style="font-size:16px;color:var(--text-3)">search</span><input id="roles-search" placeholder="Search roles…"></div>
+      <button class="btn btn-primary" id="btn-new-role"><span class="material-symbols-outlined ms">add</span> New Role</button>
+    </div>
+  </div>
+  <div class="data-table">
+    <table>
+      <thead><tr>
+        <th>Role Name</th><th>Key</th><th>Authority</th><th>Sector</th><th>Tier</th><th>CE Rules</th><th>Actions</th>
+      </tr></thead>
+      <tbody id="roles-tbody"><tr><td colspan="7" class="empty"><span class="material-symbols-outlined">hourglass_empty</span>Loading…</td></tr></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ──────────────────── DRAWERS ──────────────────── -->
+
+<!-- Authority Drawer -->
+<div class="drawer-bg" id="auth-drawer-bg"></div>
+<div class="drawer" id="auth-drawer">
+  <div class="drawer-head">
+    <h3 id="auth-drawer-title">New Authority</h3>
+    <button class="btn btn-ghost btn-sm" id="auth-drawer-close"><span class="material-symbols-outlined" style="font-size:16px">close</span></button>
+  </div>
+  <div class="drawer-body">
+    <div class="form-section">Core Details</div>
+    <div class="form-row">
+      <div class="form-group"><label>Authority Key *</label><input id="af-key" placeholder="e.g. us_tx_bvme"></div>
+      <div class="form-group"><label>Abbreviation *</label><input id="af-abbr" placeholder="e.g. TX BVME"></div>
+    </div>
+    <div class="form-group"><label>Authority Name *</label><input id="af-name" placeholder="e.g. Texas Board of Veterinary Medical Examiners"></div>
+    <div class="form-row">
+      <div class="form-group"><label>Country *</label>
+        <select id="af-country"><option value="US">US</option><option value="GB">GB</option><option value="AU">AU</option><option value="CA">CA</option><option value="NZ">NZ</option><option value="ZA">ZA</option><option value="IE">IE</option><option value="IN">IN</option></select>
+      </div>
+      <div class="form-group"><label>Sector *</label>
+        <select id="af-sector"><option value="veterinary">Veterinary</option><option value="dental">Dental</option><option value="both">Both</option></select>
+      </div>
+    </div>
+    <div class="form-group"><label>Website URL</label><input id="af-url" placeholder="https://…" type="url"></div>
+    <div class="form-section">Units &amp; Labels</div>
+    <div class="form-row">
+      <div class="form-group"><label>CPD Term</label><input id="af-term" placeholder="CE" value="CE"></div>
+      <div class="form-group"><label>CPD Term Full</label><input id="af-term-full" placeholder="Continuing Education"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Unit Label</label><input id="af-unit" placeholder="hours"></div>
+      <div class="form-group"><label>Split Label</label><input id="af-split" placeholder="e.g. Structured / Non-structured"></div>
+    </div>
+    <div class="form-row">
+      <label class="form-check"><input type="checkbox" id="af-uses-hours" checked> Uses Hours</label>
+      <label class="form-check"><input type="checkbox" id="af-uses-points"> Uses Points</label>
+      <label class="form-check"><input type="checkbox" id="af-mandatory-topics"> Mandatory Topics</label>
+    </div>
+    <div class="form-group"><label>Notes / UI Labels (JSON)</label><textarea id="af-uilabels" placeholder='{"programme_label":"CE","unit_short":"hrs"}'></textarea></div>
+  </div>
+  <div class="drawer-foot">
+    <button class="btn btn-ghost" id="auth-drawer-cancel">Cancel</button>
+    <button class="btn btn-primary" id="auth-drawer-save"><span class="material-symbols-outlined ms">save</span> Save</button>
+  </div>
+</div>
+
+<!-- Rule Drawer -->
+<div class="drawer-bg" id="rule-drawer-bg"></div>
+<div class="drawer" id="rule-drawer">
+  <div class="drawer-head">
+    <h3 id="rule-drawer-title">New CE Rule</h3>
+    <button class="btn btn-ghost btn-sm" id="rule-drawer-close"><span class="material-symbols-outlined" style="font-size:16px">close</span></button>
+  </div>
+  <div class="drawer-body">
+    <div class="form-section">Cycle</div>
+    <div class="form-row">
+      <div class="form-group"><label>Cycle Type</label>
+        <select id="rf-cycle-type"><option>annual</option><option>biennial</option><option>triennial</option><option>5year</option><option>rolling3</option></select>
+      </div>
+      <div class="form-group"><label>Cycle Months</label><input id="rf-cycle-months" type="number" value="12" min="1" max="60"></div>
+    </div>
+    <div class="form-group"><label>Effective From</label><input id="rf-effective-from" type="date" value="2020-01-01"></div>
+    <div class="form-section">Requirements</div>
+    <div class="form-row">
+      <div class="form-group"><label>Total Units Required</label><input id="rf-total" type="number" min="0" step=".5" placeholder="e.g. 30"></div>
+      <div class="form-group"><label>Min Structured Units</label><input id="rf-struct" type="number" min="0" step=".5" placeholder="—"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Max Online Hours</label><input id="rf-online" type="number" min="0" step=".5" placeholder="—"></div>
+      <div class="form-group"><label>Max Non-clinical Units</label><input id="rf-nonclin" type="number" min="0" step=".5" placeholder="—"></div>
+    </div>
+    <div class="form-section">Exemptions &amp; Flags</div>
+    <div class="form-row">
+      <label class="form-check"><input type="checkbox" id="rf-carry"> Carry-over allowed</label>
+      <label class="form-check"><input type="checkbox" id="rf-pause"> Pause allowed</label>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Carry-over Max Units</label><input id="rf-carry-max" type="number" min="0" step=".5" placeholder="—"></div>
+      <div class="form-group"><label>Pause Max Months</label><input id="rf-pause-max" type="number" min="0" placeholder="—"></div>
+    </div>
+    <div class="form-row">
+      <label class="form-check"><input type="checkbox" id="rf-newgrad"> New grad exemption</label>
+      <label class="form-check"><input type="checkbox" id="rf-prorata"> Pro-rata for part year</label>
+      <label class="form-check"><input type="checkbox" id="rf-nonpro"> Non-practising exempt</label>
+      <label class="form-check"><input type="checkbox" id="rf-firstrenew"> First renewal exempt</label>
+      <label class="form-check"><input type="checkbox" id="rf-mandtopics"> Mandatory topics</label>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>New Grad Reduced Units</label><input id="rf-newgrad-units" type="number" min="0" step=".5" placeholder="—"></div>
+      <div class="form-group"><label>New Grad Months</label><input id="rf-newgrad-months" type="number" min="0" placeholder="—"></div>
+    </div>
+    <div class="form-group"><label>Notes</label><textarea id="rf-notes" placeholder="Source / regulation reference"></textarea></div>
+  </div>
+  <div class="drawer-foot">
+    <button class="btn btn-ghost" id="rule-drawer-cancel">Cancel</button>
+    <button class="btn btn-primary" id="rule-drawer-save"><span class="material-symbols-outlined ms">save</span> Save</button>
+  </div>
+</div>
+
+<!-- Topic Drawer -->
+<div class="drawer-bg" id="topic-drawer-bg"></div>
+<div class="drawer" id="topic-drawer">
+  <div class="drawer-head">
+    <h3 id="topic-drawer-title">New Mandatory Topic</h3>
+    <button class="btn btn-ghost btn-sm" id="topic-drawer-close"><span class="material-symbols-outlined" style="font-size:16px">close</span></button>
+  </div>
+  <div class="drawer-body">
+    <div class="form-group"><label>Topic Name *</label><input id="tf-name" placeholder="e.g. Controlled Substance Training"></div>
+    <div class="form-group"><label>Category</label>
+      <select id="tf-category"><option value="mandatory">mandatory</option><option value="structured">structured</option><option value="capped">capped</option></select>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Min Units / Cycle</label><input id="tf-min-cycle" type="number" min="0" step=".5" placeholder="—"></div>
+      <div class="form-group"><label>Min Units / Year</label><input id="tf-min-year" type="number" min="0" step=".5" placeholder="—"></div>
+    </div>
+    <div class="form-group"><label>Trigger Type</label>
+      <select id="tf-trigger"><option value="ALL_ACTIVE">ALL_ACTIVE (always)</option><option value="IF_DEA">IF_DEA (DEA licence only)</option><option value="IF_PRESCRIBER">IF_PRESCRIBER</option></select>
+    </div>
+    <div class="form-row">
+      <label class="form-check"><input type="checkbox" id="tf-live"> Must be live/in-person</label>
+      <label class="form-check"><input type="checkbox" id="tf-dea"> Only if holds DEA</label>
+    </div>
+  </div>
+  <div class="drawer-foot">
+    <button class="btn btn-ghost" id="topic-drawer-cancel">Cancel</button>
+    <button class="btn btn-primary" id="topic-drawer-save"><span class="material-symbols-outlined ms">save</span> Save</button>
+  </div>
+</div>
+
+<!-- Role Drawer -->
+<div class="drawer-bg" id="role-drawer-bg"></div>
+<div class="drawer" id="role-drawer">
+  <div class="drawer-head">
+    <h3 id="role-drawer-title">New Role</h3>
+    <button class="btn btn-ghost btn-sm" id="role-drawer-close"><span class="material-symbols-outlined" style="font-size:16px">close</span></button>
+  </div>
+  <div class="drawer-body">
+    <div class="form-group"><label>Authority</label>
+      <select id="rolef-auth"><option value="">— Select authority —</option></select>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Role Key *</label><input id="rolef-key" placeholder="e.g. us_tx_bvme_dvm"></div>
+      <div class="form-group"><label>Abbreviation</label><input id="rolef-abbr" placeholder="e.g. MRCVS"></div>
+    </div>
+    <div class="form-group"><label>Role Name *</label><input id="rolef-name" placeholder="e.g. Veterinarian (DVM/VMD)"></div>
+    <div class="form-row">
+      <div class="form-group"><label>Sector *</label>
+        <select id="rolef-sector"><option value="veterinary">Veterinary</option><option value="dental">Dental</option><option value="both">Both</option></select>
+      </div>
+      <div class="form-group"><label>Tier</label>
+        <select id="rolef-tier"><option value="generalist">generalist</option><option value="specialist">specialist</option><option value="technician">technician</option></select>
+      </div>
+    </div>
+    <label class="form-check"><input type="checkbox" id="rolef-statutory" checked> Statutorily registered</label>
+  </div>
+  <div class="drawer-foot">
+    <button class="btn btn-ghost" id="role-drawer-cancel">Cancel</button>
+    <button class="btn btn-primary" id="role-drawer-save"><span class="material-symbols-outlined ms">save</span> Save</button>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="adm-toast"></div>
+
+<script>
+// ── Helpers ────────────────────────────────────────────────────────────────
+const $ = id => document.getElementById(id);
+const API = path => fetch('/api/' + path).then(r => r.json());
+const POST = (path, body) => fetch('/api/' + path, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body) }).then(r => r.json());
+const PUT = (path, body) => fetch('/api/' + path, { method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body) }).then(r => r.json());
+const DEL = path => fetch('/api/' + path, { method: 'DELETE' }).then(r => r.json());
+
+function toast(msg, type='ok') {
+  const el = $('adm-toast');
+  el.className = 'toast ' + type;
+  el.innerHTML = `<span class="material-symbols-outlined" style="font-size:16px">${type==='ok'?'check_circle':'error'}</span> ${msg}`;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 3000);
+}
+
+function openDrawer(bg, drawer) {
+  $(bg).classList.add('open'); $(drawer).classList.add('open');
+}
+function closeDrawer(bg, drawer) {
+  $(bg).classList.remove('open'); $(drawer).classList.remove('open');
+}
+
+// Close on backdrop click
+['auth-drawer-bg','rule-drawer-bg','topic-drawer-bg','role-drawer-bg'].forEach((bgId, i) => {
+  const drawers = ['auth-drawer','rule-drawer','topic-drawer','role-drawer'];
+  $(bgId).addEventListener('click', () => closeDrawer(bgId, drawers[i]));
+});
+
+// ── Tab switching ──────────────────────────────────────────────────────────
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    $('tab-' + btn.dataset.tab).classList.add('active');
+  });
+});
+
+// ── Load stats ──────────────────────────────────────────────────────────────
+async function loadStats() {
+  try {
+    const s = await API('admin/stats');
+    $('stat-auth').textContent = s.registration_authorities || 0;
+    $('stat-rules').textContent = s.cpd_requirement_rules || 0;
+    $('stat-topics').textContent = s.mandatory_topic_rules || 0;
+    $('stat-roles').textContent = s.professional_roles || 0;
+  } catch(e) {}
+}
+
+// ─────────────────────────── AUTHORITIES ────────────────────────────────────
+let allAuths = [];
+
+async function loadAuths() {
+  const rows = await API('authorities');
+  allAuths = rows;
+  renderAuths(rows);
+  populateAuthSelects(rows);
+  loadStats();
+}
+
+function renderAuths(rows) {
+  const q = $('auth-search').value.toLowerCase();
+  const filtered = rows.filter(a => !q || a.authority_name.toLowerCase().includes(q) || a.authority_key.toLowerCase().includes(q));
+  const tbody = $('auth-tbody');
+  if (!filtered.length) { tbody.innerHTML = '<tr><td colspan="7" class="empty"><span class="material-symbols-outlined">search_off</span>No results</td></tr>'; return; }
+  tbody.innerHTML = filtered.map(a => `
+    <tr>
+      <td><code style="font-size:.75rem;background:var(--bg);padding:.15rem .4rem;border-radius:4px">${a.authority_key}</code></td>
+      <td><strong>${a.authority_name}</strong><br><span style="font-size:.72rem;color:var(--text-3)">${a.authority_abbreviation}</span></td>
+      <td>${a.country}</td>
+      <td><span class="badge badge-teal">${a.sector}</span></td>
+      <td>${a.unit_label || 'hours'}</td>
+      <td><span class="badge badge-gray">${a.cpd_term || 'CE'}</span></td>
+      <td class="actions">
+        <button class="btn btn-ghost btn-sm" onclick="editAuth('${a.authority_id}')"><span class="material-symbols-outlined" style="font-size:14px">edit</span></button>
+      </td>
+    </tr>`).join('');
+}
+
+$('auth-search').addEventListener('input', () => renderAuths(allAuths));
+
+// Auth drawer
+let editAuthId = null;
+$('btn-new-auth').addEventListener('click', () => {
+  editAuthId = null;
+  $('auth-drawer-title').textContent = 'New Authority';
+  ['af-key','af-abbr','af-name','af-url','af-uilabels'].forEach(id => $(id).value = '');
+  $('af-term').value = 'CE'; $('af-term-full').value = 'Continuing Education';
+  $('af-unit').value = 'hours'; $('af-split').value = '';
+  $('af-uses-hours').checked = true; $('af-uses-points').checked = false; $('af-mandatory-topics').checked = false;
+  $('af-country').value = 'US'; $('af-sector').value = 'veterinary';
+  openDrawer('auth-drawer-bg', 'auth-drawer');
+});
+async function editAuth(id) {
+  const auth = await API('authorities/' + id);
+  editAuthId = auth.authority_id;
+  $('auth-drawer-title').textContent = 'Edit Authority';
+  $('af-key').value = auth.authority_key; $('af-abbr').value = auth.authority_abbreviation;
+  $('af-name').value = auth.authority_name; $('af-url').value = auth.website_url || '';
+  $('af-country').value = auth.country; $('af-sector').value = auth.sector;
+  $('af-term').value = auth.cpd_term || 'CE'; $('af-term-full').value = auth.cpd_term_full || '';
+  $('af-unit').value = auth.unit_label || 'hours'; $('af-split').value = auth.split_label || '';
+  $('af-uses-hours').checked = !!auth.uses_hours; $('af-uses-points').checked = !!auth.uses_points;
+  $('af-mandatory-topics').checked = !!auth.mandatory_topics_enabled;
+  $('af-uilabels').value = auth.ui_labels ? JSON.stringify(auth.ui_labels, null, 2) : '';
+  openDrawer('auth-drawer-bg', 'auth-drawer');
+}
+['auth-drawer-close','auth-drawer-cancel'].forEach(id => $(id).addEventListener('click', () => closeDrawer('auth-drawer-bg','auth-drawer')));
+$('auth-drawer-save').addEventListener('click', async () => {
+  let uiLabels = null;
+  const uiRaw = $('af-uilabels').value.trim();
+  if (uiRaw) { try { uiLabels = JSON.parse(uiRaw); } catch(e) { toast('Invalid JSON in UI Labels', 'err'); return; } }
+  const body = {
+    authority_key: $('af-key').value.trim(), authority_name: $('af-name').value.trim(),
+    authority_abbreviation: $('af-abbr').value.trim(), country: $('af-country').value,
+    sector: $('af-sector').value, website_url: $('af-url').value.trim() || null,
+    cpd_term: $('af-term').value.trim(), cpd_term_full: $('af-term-full').value.trim(),
+    unit_label: $('af-unit').value.trim(), split_label: $('af-split').value.trim() || null,
+    uses_hours: $('af-uses-hours').checked ? 1 : 0, uses_points: $('af-uses-points').checked ? 1 : 0,
+    mandatory_topics_enabled: $('af-mandatory-topics').checked ? 1 : 0,
+    ui_labels: uiLabels
+  };
+  try {
+    if (editAuthId) { await PUT('authorities/' + editAuthId, body); toast('Authority updated'); }
+    else { await POST('authorities', body); toast('Authority created'); }
+    closeDrawer('auth-drawer-bg','auth-drawer'); loadAuths();
+  } catch(e) { toast('Save failed', 'err'); }
+});
+
+// ─────────────────────────── CE RULES ────────────────────────────────────────
+let currentRuleAuth = null, currentRuleRole = null;
+
+function populateAuthSelects(auths) {
+  const opts = '<option value="">— Select —</option>' + auths.map(a => `<option value="${a.authority_id}">${a.authority_abbreviation} — ${a.authority_name}</option>`).join('');
+  $('rules-auth-select').innerHTML = opts;
+  $('topics-auth-select').innerHTML = opts;
+  $('rolef-auth').innerHTML = opts;
+}
+
+$('rules-auth-select').addEventListener('change', async function() {
+  currentRuleAuth = this.value;
+  const roleSelect = $('rules-role-select');
+  roleSelect.innerHTML = '<option value="">— Select role —</option>'; roleSelect.disabled = true;
+  $('btn-new-rule').disabled = true;
+  $('rules-tbody').innerHTML = '<tr><td colspan="8" class="empty"><span class="material-symbols-outlined">info</span>Select a role</td></tr>';
+  if (!this.value) return;
+  const roles = await API('authorities/' + this.value + '/roles');
+  roleSelect.innerHTML = '<option value="">— Select role —</option>' + roles.map(r => `<option value="${r.role_id}">${r.role_name}</option>`).join('');
+  roleSelect.disabled = false;
+});
+
+$('rules-role-select').addEventListener('change', async function() {
+  currentRuleRole = this.value;
+  $('btn-new-rule').disabled = !this.value;
+  if (!this.value) { $('rules-tbody').innerHTML = '<tr><td colspan="8" class="empty"><span class="material-symbols-outlined">info</span>Select a role</td></tr>'; return; }
+  await loadRules();
+});
+
+async function loadRules() {
+  if (!currentRuleAuth || !currentRuleRole) return;
+  const rules = await API(`rules?authority_id=${currentRuleAuth}&_all=1`);
+  const filtered = Array.isArray(rules) ? rules.filter(r => r.role_id === currentRuleRole) : [rules];
+  renderRules(filtered);
+}
+
+function renderRules(rules) {
+  const tbody = $('rules-tbody');
+  if (!rules.length) { tbody.innerHTML = '<tr><td colspan="8" class="empty"><span class="material-symbols-outlined">rule</span>No CE rules — create one above</td></tr>'; return; }
+  tbody.innerHTML = rules.map(r => `
+    <tr>
+      <td><span class="badge badge-teal">${r.cycle_type}</span></td>
+      <td>${r.cycle_length_months} mo</td>
+      <td><strong>${r.total_units_required}</strong> ${r.unit_label||'hrs'}</td>
+      <td>${r.min_structured_units ?? '—'}</td>
+      <td>${r.max_online_hours ?? '—'}</td>
+      <td>${r.carry_over_allowed ? '✓' : '—'}</td>
+      <td>${r.new_graduate_exemption ? '✓' : '—'}</td>
+      <td class="actions">
+        <button class="btn btn-ghost btn-sm" onclick="editRule('${r.rule_id}')"><span class="material-symbols-outlined" style="font-size:14px">edit</span></button>
+        <button class="btn btn-danger btn-sm" onclick="deleteRule('${r.rule_id}')"><span class="material-symbols-outlined" style="font-size:14px">delete</span></button>
+      </td>
+    </tr>`).join('');
+}
+
+// Rule drawer
+let editRuleId = null;
+$('btn-new-rule').addEventListener('click', () => {
+  editRuleId = null;
+  $('rule-drawer-title').textContent = 'New CE Rule';
+  $('rf-cycle-type').value = 'annual'; $('rf-cycle-months').value = 12;
+  $('rf-effective-from').value = '2020-01-01';
+  ['rf-total','rf-struct','rf-online','rf-nonclin','rf-carry-max','rf-pause-max','rf-newgrad-units','rf-newgrad-months','rf-notes'].forEach(id => $(id).value = '');
+  ['rf-carry','rf-pause','rf-newgrad','rf-prorata','rf-nonpro','rf-firstrenew','rf-mandtopics'].forEach(id => $(id).checked = false);
+  openDrawer('rule-drawer-bg','rule-drawer');
+});
+async function editRule(id) {
+  const rule = await API('rules/' + id);
+  editRuleId = id;
+  $('rule-drawer-title').textContent = 'Edit CE Rule';
+  $('rf-cycle-type').value = rule.cycle_type;
+  $('rf-cycle-months').value = rule.cycle_length_months;
+  $('rf-effective-from').value = rule.effective_from;
+  $('rf-total').value = rule.total_units_required ?? '';
+  $('rf-struct').value = rule.min_structured_units ?? '';
+  $('rf-online').value = rule.max_online_hours ?? '';
+  $('rf-nonclin').value = rule.max_non_clinical_units ?? '';
+  $('rf-carry').checked = !!rule.carry_over_allowed; $('rf-carry-max').value = rule.carry_over_max_units ?? '';
+  $('rf-pause').checked = !!rule.pause_allowed; $('rf-pause-max').value = rule.pause_max_months ?? '';
+  $('rf-newgrad').checked = !!rule.new_graduate_exemption; $('rf-newgrad-units').value = rule.new_graduate_reduced_units ?? '';
+  $('rf-newgrad-months').value = rule.new_graduate_months ?? '';
+  $('rf-prorata').checked = !!rule.pro_rata_for_part_year; $('rf-nonpro').checked = !!rule.non_practising_exempt;
+  $('rf-firstrenew').checked = !!rule.first_renewal_ce_exempt; $('rf-mandtopics').checked = !!rule.mandatory_topics_enabled;
+  $('rf-notes').value = rule.notes || '';
+  openDrawer('rule-drawer-bg','rule-drawer');
+}
+['rule-drawer-close','rule-drawer-cancel'].forEach(id => $(id).addEventListener('click', () => closeDrawer('rule-drawer-bg','rule-drawer')));
+$('rule-drawer-save').addEventListener('click', async () => {
+  const num = id => { const v = $(id).value; return v === '' ? null : parseFloat(v); };
+  const int = id => { const v = $(id).value; return v === '' ? null : parseInt(v); };
+  const body = {
+    authority_id: currentRuleAuth, role_id: currentRuleRole,
+    effective_from: $('rf-effective-from').value, cycle_type: $('rf-cycle-type').value,
+    cycle_length_months: int('rf-cycle-months'), total_units_required: num('rf-total'),
+    min_structured_units: num('rf-struct'), max_online_hours: num('rf-online'), max_non_clinical_units: num('rf-nonclin'),
+    carry_over_allowed: $('rf-carry').checked?1:0, carry_over_max_units: num('rf-carry-max'),
+    pause_allowed: $('rf-pause').checked?1:0, pause_max_months: int('rf-pause-max'),
+    new_graduate_exemption: $('rf-newgrad').checked?1:0, new_graduate_reduced_units: num('rf-newgrad-units'), new_graduate_months: int('rf-newgrad-months'),
+    pro_rata_for_part_year: $('rf-prorata').checked?1:0, non_practising_exempt: $('rf-nonpro').checked?1:0,
+    first_renewal_ce_exempt: $('rf-firstrenew').checked?1:0, mandatory_topics_enabled: $('rf-mandtopics').checked?1:0,
+    notes: $('rf-notes').value.trim() || null
+  };
+  if (editRuleId) await PUT('rules/' + editRuleId, body);
+  else await POST('rules', body);
+  toast(editRuleId ? 'Rule updated' : 'Rule created');
+  closeDrawer('rule-drawer-bg','rule-drawer'); loadRules(); loadStats();
+});
+async function deleteRule(id) {
+  if (!confirm('Delete this CE rule and all its mandatory topics?')) return;
+  await DEL('rules/' + id); toast('Rule deleted'); loadRules(); loadStats();
+}
+
+// ─────────────────────────── TOPICS ──────────────────────────────────────────
+let currentTopicsAuth = null, currentTopicsRule = null;
+
+$('topics-auth-select').addEventListener('change', async function() {
+  currentTopicsAuth = this.value;
+  const ruleSelect = $('topics-rule-select');
+  ruleSelect.innerHTML = '<option value="">— Select rule —</option>'; ruleSelect.disabled = true;
+  $('btn-new-topic').disabled = true;
+  $('topics-tbody').innerHTML = '<tr><td colspan="7" class="empty"><span class="material-symbols-outlined">info</span>Select a CE rule</td></tr>';
+  if (!this.value) return;
+  const rules = await API('rules?authority_id=' + this.value);
+  const arr = Array.isArray(rules) ? rules : [rules];
+  ruleSelect.innerHTML = '<option value="">— Select rule —</option>' + arr.map(r => `<option value="${r.rule_id}">${r.cycle_type} · ${r.total_units_required} ${r.unit_label||'hrs'} · ${r.role_name}</option>`).join('');
+  ruleSelect.disabled = false;
+});
+
+$('topics-rule-select').addEventListener('change', function() {
+  currentTopicsRule = this.value;
+  $('btn-new-topic').disabled = !this.value;
+  if (this.value) loadTopics();
+});
+
+async function loadTopics() {
+  const topics = await API('rules/' + currentTopicsRule + '/topics');
+  renderTopics(topics);
+}
+
+function renderTopics(topics) {
+  const tbody = $('topics-tbody');
+  if (!topics.length) { tbody.innerHTML = '<tr><td colspan="7" class="empty"><span class="material-symbols-outlined">topic</span>No mandatory topics — create one above</td></tr>'; return; }
+  tbody.innerHTML = topics.map(t => `
+    <tr>
+      <td><strong>${t.topic_name}</strong></td>
+      <td><span class="badge badge-gray">${t.topic_category}</span></td>
+      <td>${t.min_units_per_cycle ?? '—'}</td>
+      <td>${t.min_units_per_year ?? '—'}</td>
+      <td>${t.must_be_live ? '<span class="badge badge-amber">Live</span>' : '—'}</td>
+      <td>${t.applies_if_holds_dea ? '<span class="badge badge-amber">DEA</span>' : '—'}</td>
+      <td class="actions">
+        <button class="btn btn-ghost btn-sm" onclick="editTopic('${t.topic_rule_id}', ${JSON.stringify(t).replace(/"/g,'&quot;')})"><span class="material-symbols-outlined" style="font-size:14px">edit</span></button>
+        <button class="btn btn-danger btn-sm" onclick="deleteTopic('${t.topic_rule_id}')"><span class="material-symbols-outlined" style="font-size:14px">delete</span></button>
+      </td>
+    </tr>`).join('');
+}
+
+let editTopicId = null;
+$('btn-new-topic').addEventListener('click', () => {
+  editTopicId = null;
+  $('topic-drawer-title').textContent = 'New Mandatory Topic';
+  ['tf-name'].forEach(id => $(id).value = '');
+  $('tf-category').value = 'mandatory'; $('tf-trigger').value = 'ALL_ACTIVE';
+  ['tf-min-cycle','tf-min-year'].forEach(id => $(id).value = '');
+  $('tf-live').checked = false; $('tf-dea').checked = false;
+  openDrawer('topic-drawer-bg','topic-drawer');
+});
+function editTopic(id, data) {
+  editTopicId = id;
+  $('topic-drawer-title').textContent = 'Edit Mandatory Topic';
+  $('tf-name').value = data.topic_name; $('tf-category').value = data.topic_category;
+  $('tf-min-cycle').value = data.min_units_per_cycle ?? ''; $('tf-min-year').value = data.min_units_per_year ?? '';
+  $('tf-trigger').value = data.trigger_type || 'ALL_ACTIVE';
+  $('tf-live').checked = !!data.must_be_live; $('tf-dea').checked = !!data.applies_if_holds_dea;
+  openDrawer('topic-drawer-bg','topic-drawer');
+}
+['topic-drawer-close','topic-drawer-cancel'].forEach(id => $(id).addEventListener('click', () => closeDrawer('topic-drawer-bg','topic-drawer')));
+$('topic-drawer-save').addEventListener('click', async () => {
+  const num = id => { const v = $(id).value; return v === '' ? null : parseFloat(v); };
+  const body = {
+    topic_name: $('tf-name').value.trim(), topic_category: $('tf-category').value,
+    min_units_per_cycle: num('tf-min-cycle'), min_units_per_year: num('tf-min-year'),
+    trigger_type: $('tf-trigger').value, must_be_live: $('tf-live').checked?1:0, applies_if_holds_dea: $('tf-dea').checked?1:0
+  };
+  if (!body.topic_name) { toast('Topic name required', 'err'); return; }
+  if (editTopicId) { await PUT('rules/topics/' + editTopicId, body); toast('Topic updated'); }
+  else { await POST('rules/' + currentTopicsRule + '/topics', body); toast('Topic created'); }
+  closeDrawer('topic-drawer-bg','topic-drawer'); loadTopics(); loadStats();
+});
+async function deleteTopic(id) {
+  if (!confirm('Delete this mandatory topic?')) return;
+  await DEL('rules/topics/' + id); toast('Topic deleted'); loadTopics(); loadStats();
+}
+
+// ─────────────────────────── ROLES ──────────────────────────────────────────
+let allRoles = [];
+
+async function loadRoles() {
+  const roles = await API('roles');
+  allRoles = roles;
+  renderRoles(roles);
+}
+
+function renderRoles(roles) {
+  const q = $('roles-search').value.toLowerCase();
+  const filtered = roles.filter(r => !q || r.role_name.toLowerCase().includes(q) || r.authority_name.toLowerCase().includes(q));
+  const tbody = $('roles-tbody');
+  if (!filtered.length) { tbody.innerHTML = '<tr><td colspan="7" class="empty"><span class="material-symbols-outlined">badge</span>No roles found</td></tr>'; return; }
+  tbody.innerHTML = filtered.map(r => `
+    <tr>
+      <td><strong>${r.role_name}</strong>${r.role_abbreviation ? ` <span style="color:var(--text-3);font-size:.75rem">(${r.role_abbreviation})</span>` : ''}</td>
+      <td><code style="font-size:.72rem;background:var(--bg);padding:.1rem .35rem;border-radius:4px">${r.role_key}</code></td>
+      <td>${r.authority_abbreviation}</td>
+      <td><span class="badge badge-teal">${r.sector}</span></td>
+      <td><span class="badge badge-gray">${r.tier||'generalist'}</span></td>
+      <td>${r.rule_count || 0}</td>
+      <td class="actions">
+        <button class="btn btn-ghost btn-sm" onclick="editRole('${r.role_id}')"><span class="material-symbols-outlined" style="font-size:14px">edit</span></button>
+        ${r.rule_count == 0 ? `<button class="btn btn-danger btn-sm" onclick="deleteRole('${r.role_id}')"><span class="material-symbols-outlined" style="font-size:14px">delete</span></button>` : ''}
+      </td>
+    </tr>`).join('');
+}
+
+$('roles-search').addEventListener('input', () => renderRoles(allRoles));
+
+let editRoleId = null;
+$('btn-new-role').addEventListener('click', () => {
+  editRoleId = null;
+  $('role-drawer-title').textContent = 'New Role';
+  ['rolef-key','rolef-abbr','rolef-name'].forEach(id => $(id).value = '');
+  $('rolef-sector').value = 'veterinary'; $('rolef-tier').value = 'generalist';
+  $('rolef-statutory').checked = true; $('rolef-auth').value = '';
+  openDrawer('role-drawer-bg','role-drawer');
+});
+async function editRole(id) {
+  const role = await API('roles/' + id);
+  editRoleId = id;
+  $('role-drawer-title').textContent = 'Edit Role';
+  $('rolef-auth').value = role.authority_id; $('rolef-key').value = role.role_key;
+  $('rolef-abbr').value = role.role_abbreviation || ''; $('rolef-name').value = role.role_name;
+  $('rolef-sector').value = role.sector; $('rolef-tier').value = role.tier || 'generalist';
+  $('rolef-statutory').checked = !!role.is_statutorily_registered;
+  openDrawer('role-drawer-bg','role-drawer');
+}
+['role-drawer-close','role-drawer-cancel'].forEach(id => $(id).addEventListener('click', () => closeDrawer('role-drawer-bg','role-drawer')));
+$('role-drawer-save').addEventListener('click', async () => {
+  const body = {
+    authority_id: $('rolef-auth').value, role_key: $('rolef-key').value.trim(),
+    role_name: $('rolef-name').value.trim(), role_abbreviation: $('rolef-abbr').value.trim()||null,
+    sector: $('rolef-sector').value, tier: $('rolef-tier').value,
+    is_statutorily_registered: $('rolef-statutory').checked?1:0
+  };
+  const res = editRoleId ? await PUT('roles/' + editRoleId, body) : await POST('roles', body);
+  if (res.error) { toast(res.error, 'err'); return; }
+  toast(editRoleId ? 'Role updated' : 'Role created');
+  closeDrawer('role-drawer-bg','role-drawer'); loadRoles(); loadStats();
+});
+async function deleteRole(id) {
+  if (!confirm('Delete this role?')) return;
+  const res = await DEL('roles/' + id);
+  if (res.error) { toast(res.error, 'err'); return; }
+  toast('Role deleted'); loadRoles(); loadStats();
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+loadAuths();
+loadRoles();
+loadStats();
+</script>
+</body>
+</html>
