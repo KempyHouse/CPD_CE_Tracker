@@ -1,6 +1,6 @@
 /**
  * icon-rail.css — Icon Rail + Sub-sidemenu (Vetstream colour scheme)
- * Colours: vs-navy #2d3c4e | vs-teal #3c5a70 | vs-purple #5c3fa3 | vs-blue #1a6fcc
+ * Colours: vs-navy #081C2C | vs-teal #143149 | vs-purple #00A8A8 | vs-blue #143149
  */
 
 /* ── Keyframes ─────────────────────────────────────────────── */
@@ -13,8 +13,8 @@
   to   { opacity: 1; transform: translateY(0)   scale(1); }
 }
 @keyframes ir-fab-pulse {
-  0%, 100% { box-shadow: 0 4px 20px rgba(92,63,163,0.3); }
-  50%       { box-shadow: 0 6px 32px rgba(92,63,163,0.55); }
+  0%, 100% { box-shadow: 0 4px 20px rgba(0,168,168,0.3); }
+  50%       { box-shadow: 0 6px 32px rgba(0,168,168,0.55); }
 }
 
 /* ── Rail shell ────────────────────────────────────────────── */
@@ -22,7 +22,7 @@
   position: fixed;
   left: 0; top: 0; bottom: 0;
   width: 68px;
-  background: linear-gradient(180deg, #1e2c3b 0%, #2d3c4e 100%);
+  background: linear-gradient(180deg, #081C2C 0%, #081C2C 100%);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -48,7 +48,7 @@ body.ir-mode .tab-nav { display: none !important; }
 .ir-logo-monogram {
   width: 38px; height: 38px;
   border-radius: 10px;
-  background: linear-gradient(135deg, #5c3fa3 0%, #4a6fa5 100%);
+  background: linear-gradient(135deg, #00A8A8 0%, #00A8A8 100%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -57,7 +57,7 @@ body.ir-mode .tab-nav { display: none !important; }
   color: #fff;
   letter-spacing: -0.5px;
   font-family: 'Inter', system-ui, sans-serif;
-  box-shadow: 0 4px 14px rgba(92,63,163,0.5), inset 0 1px 0 rgba(255,255,255,0.15);
+  box-shadow: 0 4px 14px rgba(0,168,168,0.5), inset 0 1px 0 rgba(255,255,255,0.15);
 }
 
 /* ── Nav ───────────────────────────────────────────────────── */
@@ -91,21 +91,32 @@ body.ir-mode .tab-nav { display: none !important; }
   transition: background 0.18s, color 0.18s, transform 0.14s, box-shadow 0.18s;
 }
 .ir-item:hover {
-  background: rgba(255,255,255,0.08);
   color: #e8f0f7;
-  transform: translateX(2px);
 }
 .ir-item.ir-item--active {
-  background: rgba(92,63,163,0.22);
-  color: #c4b0f0;
-  box-shadow: inset 3px 0 0 #5c3fa3;
-  border-radius: 0 12px 12px 0;
+  color: #5ae0e0;
+  border-radius: 10px;
 }
 .ir-item.ir-item--active:hover { transform: none; }
 
-.ir-item-icon { line-height: 1; transition: transform 0.18s; }
+.ir-item-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s, transform 0.18s;
+}
 .ir-item-icon .material-symbols-outlined { font-size: 22px !important; }
-.ir-item:hover .ir-item-icon { transform: scale(1.1); }
+.ir-item:hover .ir-item-icon {
+  background: rgba(255,255,255,0.14);
+  transform: scale(1.05);
+}
+.ir-item.ir-item--active .ir-item-icon {
+  background: rgba(0,168,168,0.28);
+}
 
 .ir-item-label {
   font-size: 9px;
@@ -127,7 +138,7 @@ body.ir-mode .tab-nav { display: none !important; }
   left: calc(100% + 10px); top: 50%;
   transform: translateY(-50%) translateX(-4px);
   transform-origin: left center;
-  background: #2d3c4e;
+  background: #081C2C;
   color: #e8f0f7;
   font-size: 11.5px;
   font-weight: 600;
@@ -168,7 +179,7 @@ body.ir-mode .tab-nav { display: none !important; }
 .ir-avatar {
   width: 34px; height: 34px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #3c5a70 0%, #2d3c4e 100%);
+  background: linear-gradient(135deg, #143149 0%, #081C2C 100%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -181,7 +192,7 @@ body.ir-mode .tab-nav { display: none !important; }
   box-shadow: 0 0 0 2px rgba(255,255,255,0.08);
 }
 .ir-avatar:hover {
-  box-shadow: 0 0 0 3px rgba(92,63,163,0.65);
+  box-shadow: 0 0 0 3px rgba(0,168,168,0.65);
   transform: scale(1.06);
 }
 
@@ -198,64 +209,40 @@ body.ir-mode .tab-nav { display: none !important; }
   overflow: hidden;
   /* Closed */
   opacity: 0;
-  transform: translateX(-16px);
+  transform: translateX(-8px);
   visibility: hidden;
   transition:
-    transform  0.2s  cubic-bezier(0.32, 0, 0.67, 0),
+    transform  0.22s cubic-bezier(0.32, 0, 0.67, 0),
     opacity    0.16s ease,
-    visibility 0s    linear 0.2s;
+    visibility 0s    linear 0.22s;
   box-shadow: none;
 }
 .ir-panel.ir-panel--open {
   opacity: 1;
   transform: translateX(0);
   visibility: visible;
-  /* Spring open */
+  /* Smooth open — no overshoot so panel never gaps right of rail */
   transition:
-    transform  0.44s cubic-bezier(0.34, 1.4, 0.64, 1),
-    opacity    0.28s ease,
+    transform  0.34s cubic-bezier(0.25, 1, 0.5, 1),
+    opacity    0.22s ease,
     visibility 0s    linear 0s;
   box-shadow: 6px 0 28px rgba(0, 0, 0, 0.1);
 }
 
-/* Panel header — Vetstream navy → teal gradient */
+/* Panel header — soft white with teal accent border */
 .ir-panel-header {
-  padding: 22px 20px 18px;
-  border-bottom: 1px solid rgba(255,255,255,0.08);
-  background: linear-gradient(145deg, #1e2c3b 0%, #2d3c4e 45%, #3c5a70 100%);
+  padding: 16px 20px 14px;
+  border-bottom: 2px solid #00A8A8;
+  background: #ffffff;
   flex-shrink: 0;
   position: relative;
-  overflow: hidden;
-}
-/* Subtle radial accent using vs-purple */
-.ir-panel-header::before {
-  content: '';
-  position: absolute;
-  top: -20px; right: -20px;
-  width: 130px; height: 130px;
-  background: radial-gradient(circle, rgba(92,63,163,0.3) 0%, transparent 65%);
-  pointer-events: none;
-}
-.ir-panel-header::after {
-  content: '';
-  position: absolute;
-  bottom: -10px; left: 10px;
-  width: 90px; height: 90px;
-  background: radial-gradient(circle, rgba(26,111,204,0.18) 0%, transparent 70%);
-  pointer-events: none;
 }
 
-.ir-panel-section-icon .material-symbols-outlined {
-  font-size: 30px !important;
-  color: rgba(196,181,253,0.9);
-  display: block;
-  margin-bottom: 10px;
-}
 .ir-panel-title {
-  font-size: 17px;
+  font-size: 14px;
   font-weight: 700;
-  color: #fff;
-  letter-spacing: -0.4px;
+  color: #081C2C;
+  letter-spacing: -0.2px;
   font-family: 'Inter', system-ui, sans-serif;
 }
 .ir-panel-sub {
@@ -265,21 +252,21 @@ body.ir-mode .tab-nav { display: none !important; }
   font-family: 'Inter', system-ui, sans-serif;
 }
 .ir-panel-close {
-  position: absolute; top: 14px; right: 14px;
+  position: absolute; top: 12px; right: 12px;
   width: 26px; height: 26px;
-  background: rgba(255,255,255,0.08);
-  border: 1px solid rgba(255,255,255,0.12);
+  background: #f5f5f5;
+  border: 1px solid #e0e2e7;
   border-radius: 6px;
-  color: rgba(255,255,255,0.65);
+  color: #4A4A4A;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   line-height: 1;
-  transition: background 0.15s, color 0.15s;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
   z-index: 1;
 }
-.ir-panel-close:hover { background: rgba(255,255,255,0.18); color: #fff; }
+.ir-panel-close:hover { background: #e6f9f9; color: #00A8A8; border-color: #00A8A8; }
 .ir-panel-close .material-symbols-outlined { font-size: 16px !important; }
 
 /* Stagger animations */
@@ -318,25 +305,24 @@ body.ir-mode .tab-nav { display: none !important; }
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 10px 18px;
+  padding: 9px 12px;
+  margin: 2px 8px;
+  border-radius: 8px;
   text-decoration: none;
-  color: #2d3c4e;
+  color: #081C2C;
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
-  border-left: 3px solid transparent;
-  transition: background 0.13s, color 0.13s, border-color 0.13s;
+  transition: background 0.13s, color 0.13s;
   font-family: 'Inter', system-ui, sans-serif;
 }
 .ir-panel-link:hover {
-  background: #f0ebff;
-  color: #5c3fa3;
-  border-left-color: #5c3fa3;
+  background: #e6f9f9;
+  color: #00A8A8;
 }
 .ir-panel-link.ir-panel-link--active {
-  background: #ede9fe;
-  color: #5c3fa3;
-  border-left-color: #5c3fa3;
+  background: #d0f2f2;
+  color: #00A8A8;
   font-weight: 600;
 }
 .ir-panel-link[aria-disabled="true"] {
@@ -349,21 +335,21 @@ body.ir-mode .tab-nav { display: none !important; }
 .ir-panel-link-icon {
   width: 30px; height: 30px;
   border-radius: 8px;
-  background: #eef2fb;
+  background: #e8f8f8;
   flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: background 0.13s;
 }
-.ir-panel-link-icon .material-symbols-outlined { font-size: 16px !important; color: #4a6fa5; }
+.ir-panel-link-icon .material-symbols-outlined { font-size: 16px !important; color: #00A8A8; }
 .ir-panel-link:hover .ir-panel-link-icon,
 .ir-panel-link.ir-panel-link--active .ir-panel-link-icon {
-  background: #ede9fe;
+  background: #d0f2f2;
 }
 .ir-panel-link:hover .ir-panel-link-icon .material-symbols-outlined,
 .ir-panel-link.ir-panel-link--active .ir-panel-link-icon .material-symbols-outlined {
-  color: #5c3fa3;
+  color: #00A8A8;
 }
 
 .ir-panel-link-body { flex: 1; min-width: 0; }
@@ -409,9 +395,9 @@ body.ir-mode.ir-panel-open .page {
   z-index: 1100;
   display: flex;
   align-items: center;
-  background: #2d3c4e;
+  background: #081C2C;
   border-radius: 50px;
-  box-shadow: 0 4px 20px rgba(45,60,78,0.35), inset 0 1px 0 rgba(255,255,255,0.06);
+  box-shadow: 0 4px 20px rgba(8,28,44,0.35), inset 0 1px 0 rgba(255,255,255,0.06);
   border: none;
   cursor: pointer;
   overflow: hidden;
@@ -421,14 +407,14 @@ body.ir-mode.ir-panel-open .page {
 }
 .nav-toggle-fab:hover {
   transform: translateY(-3px);
-  box-shadow: 0 10px 32px rgba(45,60,78,0.45);
+  box-shadow: 0 10px 32px rgba(8,28,44,0.45);
   animation: none;
 }
 .nav-toggle-fab:active { transform: translateY(0); }
 
 .nav-toggle-fab__icon {
   width: 44px; height: 44px;
-  background: #5c3fa3;
+  background: #00A8A8;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -437,7 +423,7 @@ body.ir-mode.ir-panel-open .page {
   transition: background 0.25s;
 }
 /* When in rail mode — switch icon to vs-teal */
-body.ir-mode .nav-toggle-fab__icon { background: #3c5a70; }
+body.ir-mode .nav-toggle-fab__icon { background: #143149; }
 .nav-toggle-fab__icon .material-symbols-outlined { font-size: 20px !important; color: #fff; }
 
 .nav-toggle-fab__label {
@@ -452,3 +438,4 @@ body.ir-mode .nav-toggle-fab__icon { background: #3c5a70; }
 body:has(.demo-drawer--open) .nav-toggle-fab {
   right: 344px;
 }
+.ir-logo-img{width:36px;height:36px;object-fit:contain;border-radius:6px;display:block}

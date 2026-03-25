@@ -75,7 +75,7 @@ class IconRail {
     rail.setAttribute('aria-label', 'Icon rail navigation');
 
     // Logo
-    rail.innerHTML = `<div class="ir-logo"><div class="ir-logo-monogram">VS</div></div>`;
+    rail.innerHTML = `<div class="ir-logo"><img src="images/vetstream-favicon.png" class="ir-logo-img" alt="Vetstream" /></div>`;
 
     // Nav
     const nav = document.createElement('nav');

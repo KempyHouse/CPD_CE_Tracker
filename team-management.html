@@ -26,7 +26,7 @@
     .tm-filter-bar { display: flex; align-items: center; gap: 10px; margin-bottom: var(--tm-gap); flex-wrap: wrap; }
     .tm-filter-pills { display: flex; gap: 5px; flex-wrap: wrap; }
     .tm-pill { padding: 5px 13px; border-radius: 99px; border: 1.5px solid var(--color-border); background: var(--color-white); font-size: 12px; font-weight: 500; color: var(--color-muted); cursor: pointer; transition: all .15s; }
-    .tm-pill.active { border-color: var(--vs-purple); background: #f0ebff; color: var(--vs-purple); font-weight: 600; }
+    .tm-pill.active { border-color: var(--vs-purple); background: #e6f9f9; color: var(--vs-purple); font-weight: 600; }
     .tm-pill:hover:not(.active) { border-color: #c8c0e0; color: var(--vs-navy); }
     .tm-search { margin-left: auto; position: relative; }
     .tm-search input { padding: 6px 10px 6px 32px; border: 1.5px solid var(--color-border); border-radius: 7px; font-family: var(--font); font-size: 12.5px; width: 220px; outline: none; transition: border-color .15s; }
@@ -69,7 +69,7 @@
     .tm-status.at-risk   { background: #fef3c7; color: #92400e; } .tm-status.at-risk   .tm-status-dot { background: #d97706; }
     .tm-status.overdue   { background: #fee2e2; color: #991b1b; } .tm-status.overdue   .tm-status-dot { background: #b91c1c; }
     .tm-status.exempt    { background: #f3f4f6; color: #6b7280; } .tm-status.exempt    .tm-status-dot { background: #9ca3af; }
-    .tm-status.complete  { background: #ede9fe; color: #5b21b6; } .tm-status.complete  .tm-status-dot { background: #7c3aed; }
+    .tm-status.complete  { background: #d0f2f2; color: #007a7a; } .tm-status.complete  .tm-status-dot { background: #00A8A8; }
 
     .tm-actions { display: flex; gap: 5px; }
     .tm-action { padding: 4px 9px; border: 1.5px solid var(--color-border); border-radius: 5px; font-family: var(--font); font-size: 11px; font-weight: 500; color: var(--color-muted); cursor: pointer; background: none; transition: all .15s; white-space: nowrap; }
@@ -221,12 +221,12 @@
 
 <script>
 const TEAM = [
-  { name:'Dr Sarah Chen',       role:'Vet Surgeon',         initials:'SC', colour:'#5c3fa3', authority:'RCVS', term:'CPD', done:28, req:45,  pct:62, status:'at-risk',  deadline:'1 Nov 2026', soon:true  },
-  { name:'RVN Emily Williams',  role:'Registered Vet Nurse',initials:'EW', colour:'#3c5a70', authority:'RCVS', term:'CPD', done:37, req:45,  pct:82, status:'on-track', deadline:'1 Nov 2026', soon:false },
+  { name:'Dr Sarah Chen',       role:'Vet Surgeon',         initials:'SC', colour:'#00A8A8', authority:'RCVS', term:'CPD', done:28, req:45,  pct:62, status:'at-risk',  deadline:'1 Nov 2026', soon:true  },
+  { name:'RVN Emily Williams',  role:'Registered Vet Nurse',initials:'EW', colour:'#143149', authority:'RCVS', term:'CPD', done:37, req:45,  pct:82, status:'on-track', deadline:'1 Nov 2026', soon:false },
   { name:'Dr James O\'Brien',   role:'General Dental Pract.',initials:'JO',colour:'#b91c1c', authority:'GDC',  term:'CPD', done:5,  req:75,  pct:7,  status:'overdue',  deadline:'31 Dec 2026',soon:false },
   { name:'Dr Maria Santos',     role:'Vet Surgeon (Specialist)',initials:'MS',colour:'#2e7d52',authority:'AHPRA',term:'CPD',done:40,req:45, pct:89, status:'on-track', deadline:'31 May 2026',soon:false },
   { name:'VN Thomas Hill',      role:'Vet Nurse',            initials:'TH', colour:'#9ca3af', authority:'RCVS', term:'CPD', done:0,  req:0,   pct:0,  status:'exempt',   deadline:'—',           soon:false, exempt:true },
-  { name:'Dr Hannah Price',     role:'Vet Surgeon',          initials:'HP', colour:'#1a6fcc', authority:'VCNZ', term:'CPD', done:22, req:30,  pct:73, status:'on-track', deadline:'31 Dec 2026',soon:false },
+  { name:'Dr Hannah Price',     role:'Vet Surgeon',          initials:'HP', colour:'#143149', authority:'VCNZ', term:'CPD', done:22, req:30,  pct:73, status:'on-track', deadline:'31 Dec 2026',soon:false },
   { name:'RDN Lisa Park',       role:'Dental Hygienist',     initials:'LP', colour:'#8b5cf6', authority:'GDC',  term:'CPD', done:50, req:75,  pct:67, status:'on-track', deadline:'31 Dec 2026',soon:false },
   { name:'Dr Arun Mehta',       role:'Vet Surgeon',          initials:'AM', colour:'#d97706', authority:'VCI',  term:'CPD', done:10, req:20,  pct:50, status:'at-risk',  deadline:'31 Dec 2026',soon:false },
 ];

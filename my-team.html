@@ -10,6 +10,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
   <link rel="stylesheet" href="dist/app.css" />
+  <link rel="stylesheet" href="shared.css" />
   <link rel="stylesheet" href="icon-rail.css" />
 </head>
 <body>
@@ -103,9 +104,33 @@
         <a class="tab-nav__item" href="#">Course Library</a>
         <a class="tab-nav__item" href="#">My Learning</a>
         <a class="tab-nav__item" href="#">My Achievements</a>
-      </div>
-    </div>
+      </div><!-- /tab-nav__tabs -->
+    </div><!-- /tab-nav__inner -->
   </nav>
+
+  <!-- ════ MEMBER DETAIL DRAWER (outside nav so position:fixed is viewport-relative) ════ -->
+  <aside class="team-drawer" id="memberDrawer" aria-label="Member detail" hidden>
+    <div class="team-drawer__bg" id="memberDrawerBg"></div>
+    <div class="team-drawer__panel">
+      <button class="team-drawer__close" id="memberDrawerClose" aria-label="Close">✕</button>
+      <div id="memberDrawerBody"><div style="padding:40px;text-align:center;color:var(--color-muted)">Loading…</div></div>
+    </div>
+  </aside>
+
+  <!-- ════ REMIND CONFIRM MODAL ════ -->
+  <div class="team-modal-bg" id="remindModalBg" hidden></div>
+  <div class="team-modal" id="remindModal" hidden>
+    <div class="team-modal__icon">📧</div>
+    <h3 class="team-modal__title" id="remindModalTitle">Send CPD reminder?</h3>
+    <p class="team-modal__body" id="remindModalBody">This will send a CPD reminder email to the member.</p>
+    <div class="team-modal__actions">
+      <button class="team-modal__btn team-modal__btn--ghost" id="remindModalCancel">Cancel</button>
+      <button class="team-modal__btn team-modal__btn--primary" id="remindModalConfirm">Send reminder</button>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="team-toast" id="teamToast" hidden></div>
 
   <!-- ════ PAGE ════ -->
   <div class="page">
@@ -129,9 +154,10 @@
 
   </div>
 
+
   <script src="dist/data-table.js"></script>
   <script>
-    const COLOURS = ['#5b6ee1','#2e7d52','#d97706','#7c3aed','#0891b2','#be185d','#15803d','#b45309'];
+    const COLOURS = ['#5b6ee1','#2e7d52','#d97706','#00A8A8','#0891b2','#be185d','#15803d','#b45309'];
 
     function initials(name) {
       return (name || '').split(' ').map(p => p[0]).join('').toUpperCase().slice(0, 2);
@@ -259,11 +285,107 @@
       }
     }
 
-    function viewMember(id, name)   { alert(`View: ${name} (${id})`); }
-    function remindMember(id, name) { alert(`Remind: ${name} (${id})`); }
+    // ── Member detail drawer ─────────────────────────────────────────────────
+    const STATUS_COLOUR = {
+      'on-track':'#2e7d52','at-risk':'#d97706','overdue':'#b91c1c',
+      'complete':'#7c3aed','exempt':'#6b7280','inactive':'#9ca3af'
+    };
+    function fmtDate(d) { return d ? new Date(d).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}) : '—'; }
+
+    async function viewMember(id, name) {
+      const drawer = document.getElementById('memberDrawer');
+      const body   = document.getElementById('memberDrawerBody');
+      drawer.removeAttribute('hidden');
+      document.body.style.overflow = 'hidden';
+      body.innerHTML = '<div style="padding:40px;text-align:center;color:var(--color-muted)">Loading…</div>';
+      try {
+        const res  = await fetch(`/api/team-members/${id}`);
+        const m    = await res.json();
+        const pct  = m.ce_required > 0 ? Math.min(100, Math.round(m.ce_done / m.ce_required * 100)) : 0;
+        const pc   = pct >= 100 ? '#2e7d52' : pct >= 60 ? '#d97706' : '#b91c1c';
+        const [, statusLabel] = STATUS_MAP[m.status] || ['grey', m.status];
+        const ic   = initials(m.name);
+        const av   = m.avatar_colour || COLOURS[0];
+        body.innerHTML = `
+          <div class="mdr-header">
+            <div class="dt-avatar dt-avatar--lg" style="background:${av};width:52px;height:52px;font-size:18px">${ic}</div>
+            <div>
+              <div class="mdr-name">${m.name}</div>
+              <div class="mdr-sub">${m.role_key} &nbsp;·&nbsp; ${m.authority_key}</div>
+            </div>
+          </div>
+          <div class="mdr-section">
+            <div class="mdr-lbl">CE Progress</div>
+            <div style="margin-top:8px">
+              <div style="height:8px;background:#eef1f6;border-radius:99px;overflow:hidden;width:100%">
+                <div style="height:100%;width:${pct}%;background:${pc};border-radius:99px;transition:width .4s"></div>
+              </div>
+              <div style="margin-top:6px;font-size:13px;font-weight:600;color:var(--vs-navy)">${m.ce_done} / ${m.ce_required} hrs &nbsp;<span style="color:var(--color-muted);font-weight:400">(${pct}%)</span></div>
+            </div>
+          </div>
+          <div class="mdr-row">
+            <div><div class="mdr-lbl">Status</div><div>${statusBadge(m.status)}</div></div>
+            <div><div class="mdr-lbl">Renewal deadline</div><div class="mdr-val">${fmtDate(m.renewal_deadline)}</div></div>
+          </div>
+          <div class="mdr-row">
+            <div><div class="mdr-lbl">Registration date</div><div class="mdr-val">${fmtDate(m.registration_date)}</div></div>
+            <div><div class="mdr-lbl">Email</div><div class="mdr-val">${m.email}</div></div>
+          </div>
+          ${m.notes ? `<div class="mdr-section"><div class="mdr-lbl">Notes</div><div class="mdr-notes">${m.notes}</div></div>` : ''}
+          <div style="margin-top:20px">
+            <button class="team-modal__btn team-modal__btn--ghost" style="width:100%" onclick="remindMember('${id}','${m.name}')">Send CPD reminder</button>
+          </div>`;
+      } catch(e) {
+        body.innerHTML = `<p style="padding:24px;color:#b91c1c">Failed to load member: ${e.message}</p>`;
+      }
+    }
+    function closeMemberDrawer() {
+      document.getElementById('memberDrawer').setAttribute('hidden','');
+      document.body.style.overflow = '';
+    }
+    document.getElementById('memberDrawerClose').addEventListener('click', closeMemberDrawer);
+    document.getElementById('memberDrawerBg').addEventListener('click', closeMemberDrawer);
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeMemberDrawer(); });
+
+    // ── Remind modal ─────────────────────────────────────────────────────────
+    let _remindId = null, _remindName = '';
+    function remindMember(id, name) {
+      _remindId = id; _remindName = name;
+      document.getElementById('remindModalTitle').textContent = `Remind ${name}?`;
+      document.getElementById('remindModalBody').textContent = `A CPD reminder email will be sent to ${name}. They’ll be prompted to log any outstanding CPD activities.`;
+      document.getElementById('remindModalBg').removeAttribute('hidden');
+      document.getElementById('remindModal').removeAttribute('hidden');
+    }
+    function closeRemindModal() {
+      document.getElementById('remindModalBg').setAttribute('hidden','');
+      document.getElementById('remindModal').setAttribute('hidden','');
+    }
+    document.getElementById('remindModalCancel').addEventListener('click', closeRemindModal);
+    document.getElementById('remindModalBg').addEventListener('click', closeRemindModal);
+    document.getElementById('remindModalConfirm').addEventListener('click', async () => {
+      const btn = document.getElementById('remindModalConfirm');
+      btn.disabled = true; btn.textContent = 'Sending…';
+      // Simulate send (API endpoint for email reminders not yet implemented)
+      await new Promise(r => setTimeout(r, 700));
+      closeRemindModal();
+      closeMemberDrawer();
+      showTeamToast(`✔ Reminder sent to ${_remindName}`);
+      btn.disabled = false; btn.textContent = 'Send reminder';
+    });
+
+    // ── Toast helper ─────────────────────────────────────────────────────────
+    let _toastTimer;
+    function showTeamToast(msg, isErr = false) {
+      const t = document.getElementById('teamToast');
+      t.textContent = msg;
+      t.style.background = isErr ? '#b91c1c' : '#2e7d52';
+      t.removeAttribute('hidden');
+      clearTimeout(_toastTimer);
+      _toastTimer = setTimeout(() => t.setAttribute('hidden',''), 3500);
+    }
 
     document.getElementById('btnInvite').addEventListener('click', () => alert('Invite member — coming soon'));
-    document.getElementById('teamTable').addEventListener('dt:rowclick', e => console.log('Row clicked:', e.detail.row));
+    document.getElementById('teamTable').addEventListener('dt:rowclick', e => viewMember(e.detail.row.member_id, e.detail.row.name));
 
     loadTeam();
   </script>

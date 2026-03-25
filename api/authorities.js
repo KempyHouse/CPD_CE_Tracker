@@ -7,9 +7,10 @@ const { getDb } = require('../database/init');
 router.get('/', (req, res) => {
   const db = getDb();
   try {
-    let sql = 'SELECT * FROM registration_authorities';
+    // authority_key prefixed with '_' marks soft-deleted duplicates — exclude from list
+    let sql = "SELECT * FROM registration_authorities WHERE authority_key NOT LIKE '!_%' ESCAPE '!'";
     const params = [];
-    if (req.query.sector) { sql += ' WHERE sector = ? OR sector = ?'; params.push(req.query.sector, 'both'); }
+    if (req.query.sector) { sql += ' AND (sector = ? OR sector = ?)'; params.push(req.query.sector, 'both'); }
     sql += ' ORDER BY sector, authority_name';
     const rows = db.prepare(sql).all(...params);
     rows.forEach(a => { try { a.ui_labels = a.ui_labels ? JSON.parse(a.ui_labels) : null; } catch(e) {} });

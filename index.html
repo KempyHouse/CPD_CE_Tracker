@@ -169,7 +169,7 @@
 
       <!-- Carry-over -->
       <div class="w-carry hidden" id="wCarry">
-        <span class="material-symbols-outlined" style="font-size:13px;vertical-align:middle;color:#5b21b6">arrow_circle_right</span>
+        <span class="material-symbols-outlined" style="font-size:13px;vertical-align:middle;color:#007a7a">arrow_circle_right</span>
         <span style="color:var(--color-muted)">Carry-over available from previous cycle:</span>
         <span class="carry-chip" id="carryAmt">—</span>
       </div>
@@ -421,41 +421,88 @@
         <svg class="demo-acc__chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
       </button>
       <div class="demo-acc__body" hidden>
+        <!-- Units completed -->
         <div class="f-row">
           <div class="f-lbl" title="Simulate units logged so far this cycle">Units completed so far</div>
-          <div class="rng-row">
-            <input type="range" id="numCompleted" min="0" max="200" value="20" step="0.5">
-            <span class="rng-val" id="numCompletedVal">20</span>
+          <div class="rng-row rng-row--enhanced">
+            <div class="preset-row" data-slider="numCompleted" data-base="required">
+              <button class="preset-btn" data-pct="0">0%</button>
+              <button class="preset-btn" data-pct="25">25%</button>
+              <button class="preset-btn" data-pct="50">50%</button>
+              <button class="preset-btn" data-pct="75">75%</button>
+              <button class="preset-btn" data-pct="100">100%</button>
+              <button class="preset-btn preset-btn--over" data-pct="120">120%</button>
+            </div>
+            <div class="slider-num-wrap">
+              <input type="range" id="numCompleted" min="0" max="75" value="20" step="1">
+              <input type="number" class="rng-num-input" id="numCompletedNum" min="0" max="75" value="20">
+            </div>
           </div>
         </div>
+        <!-- Structured / verifiable done -->
         <div class="f-row">
           <div class="f-lbl" title="How many of those units are structured / verifiable">Structured / verifiable done</div>
-          <div class="rng-row">
-            <input type="range" id="numStructDone" min="0" max="200" value="12" step="0.5">
-            <span class="rng-val" id="numStructDoneVal">12</span>
+          <div class="rng-row rng-row--enhanced">
+            <div class="preset-row" data-slider="numStructDone" data-base="structured">
+              <button class="preset-btn" data-pct="0">0%</button>
+              <button class="preset-btn" data-pct="25">25%</button>
+              <button class="preset-btn" data-pct="50">50%</button>
+              <button class="preset-btn" data-pct="75">75%</button>
+              <button class="preset-btn" data-pct="100">100%</button>
+            </div>
+            <div class="slider-num-wrap">
+              <input type="range" id="numStructDone" min="0" max="75" value="12" step="1">
+              <input type="number" class="rng-num-input" id="numStructDoneNum" min="0" max="75" value="12">
+            </div>
           </div>
         </div>
+        <!-- Non-clinical done -->
         <div class="f-row">
           <div class="f-lbl" title="Non-clinical units — triggers the non-clinical cap check">Non-clinical units done <span class="f-note">cap check</span></div>
-          <div class="rng-row">
-            <input type="range" id="numNonClin" min="0" max="60" value="0" step="0.5">
-            <span class="rng-val" id="numNonClinVal">0</span>
+          <div class="rng-row rng-row--enhanced">
+            <div class="preset-row" data-slider="numNonClin" data-base="nonclin">
+              <button class="preset-btn" data-pct="0">0%</button>
+              <button class="preset-btn" data-pct="50">50%</button>
+              <button class="preset-btn" data-pct="100">100%</button>
+              <button class="preset-btn preset-btn--over" data-pct="150">150%</button>
+            </div>
+            <div class="slider-num-wrap">
+              <input type="range" id="numNonClin" min="0" max="20" value="0" step="1">
+              <input type="number" class="rng-num-input" id="numNonClinNum" min="0" max="20" value="0">
+            </div>
           </div>
         </div>
+        <!-- Previous cycle completed -->
         <div class="f-row" id="prevCompletedRow">
           <div class="f-lbl" title="Units completed in the previous cycle — used to calculate carry-over allowance">Previous cycle completed <span class="f-note">carry-over check</span></div>
-          <div class="rng-row">
-            <input type="range" id="numPrevCompleted" min="0" max="200" value="0" step="0.5">
-            <span class="rng-val" id="numPrevCompletedVal">0</span>
+          <div class="rng-row rng-row--enhanced">
+            <div class="preset-row" data-slider="numPrevCompleted" data-base="required">
+              <button class="preset-btn" data-pct="0">0%</button>
+              <button class="preset-btn" data-pct="100">100%</button>
+              <button class="preset-btn preset-btn--over" data-pct="130">130%</button>
+            </div>
+            <div class="slider-num-wrap">
+              <input type="range" id="numPrevCompleted" min="0" max="75" value="0" step="1">
+              <input type="number" class="rng-num-input" id="numPrevCompletedNum" min="0" max="75" value="0">
+            </div>
           </div>
         </div>
+        <!-- Reflected done -->
         <div class="f-row" id="reflectedDoneRow">
           <div class="f-lbl" title="Hours where reflection has been completed — gates compliance for RCVS/GDC practitioners">Reflected (Plan→Reflect done) <span class="f-note">RCVS / GDC</span></div>
-          <div class="rng-row">
-            <input type="range" id="numReflectedDone" min="0" max="100" value="0" step="0.5">
-            <span class="rng-val" id="numReflectedDoneVal">0</span>
+          <div class="rng-row rng-row--enhanced">
+            <div class="preset-row" data-slider="numReflectedDone" data-base="required">
+              <button class="preset-btn" data-pct="0">0%</button>
+              <button class="preset-btn" data-pct="50">50%</button>
+              <button class="preset-btn" data-pct="100">100%</button>
+            </div>
+            <div class="slider-num-wrap">
+              <input type="range" id="numReflectedDone" min="0" max="75" value="0" step="1">
+              <input type="number" class="rng-num-input" id="numReflectedDoneNum" min="0" max="75" value="0">
+            </div>
           </div>
         </div>
+
       </div><!-- /demo-acc__body -->
     </div><!-- /demo-acc sliders -->
 
@@ -764,8 +811,11 @@
     } catch(e) { count.textContent = 'Error loading'; }
   }
 
+  // Expose openDrawer BEFORE event wiring so that any later crash does not prevent it being set
+  window.openActDrawer = openDrawer;
+
   // Wire events
-  document.querySelector('.w-action').addEventListener('click', e=>{e.preventDefault();openDrawer();});
+  document.querySelector('.w-action')?.addEventListener('click', e=>{e.preventDefault();openDrawer();});
   document.getElementById('actClose').addEventListener('click', closeDrawer);
   document.getElementById('afCancel').addEventListener('click', closeDrawer);
   document.getElementById('afSave').addEventListener('click', saveActivity);

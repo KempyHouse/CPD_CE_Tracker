@@ -127,7 +127,7 @@ router.delete('/:id', (req, res) => {
 });
 
 // ── Helpers ────────────────────────────────────────────────────────────────
-const COLOURS = ['#5b6ee1','#2e7d52','#d97706','#7c3aed','#0891b2','#be185d','#15803d','#b45309'];
+const COLOURS = ['#5b6ee1','#2e7d52','#d97706','#00A8A8','#0891b2','#be185d','#15803d','#b45309'];
 
 function pickColour(seed) {
   let h = 0;

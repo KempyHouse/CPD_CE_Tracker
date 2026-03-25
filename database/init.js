@@ -10,10 +10,57 @@ function getDb() {
   return new Database(DB_PATH);
 }
 
+function applyMigrations(db) {
+  const cols = tbl => db.prepare(`PRAGMA table_info(${tbl})`).all().map(c => c.name);
+
+  const ruleCols = cols('cpd_requirement_rules');
+  if (!ruleCols.includes('regime_type'))
+    db.exec(`ALTER TABLE cpd_requirement_rules ADD COLUMN regime_type TEXT NOT NULL DEFAULT 'US_HOURS_BASED'`);
+  if (!ruleCols.includes('approval_standard'))
+    db.exec(`ALTER TABLE cpd_requirement_rules ADD COLUMN approval_standard TEXT NOT NULL DEFAULT 'RACE_OR_BOARD'`);
+  if (!ruleCols.includes('max_online_hours'))
+    db.exec(`ALTER TABLE cpd_requirement_rules ADD COLUMN max_online_hours REAL NULL`);
+  if (!ruleCols.includes('max_online_percent'))
+    db.exec(`ALTER TABLE cpd_requirement_rules ADD COLUMN max_online_percent REAL NULL`);
+  if (!ruleCols.includes('renewal_even_year_only'))
+    db.exec(`ALTER TABLE cpd_requirement_rules ADD COLUMN renewal_even_year_only INTEGER NOT NULL DEFAULT 0`);
+  if (!ruleCols.includes('birth_month_renewal'))
+    db.exec(`ALTER TABLE cpd_requirement_rules ADD COLUMN birth_month_renewal INTEGER NOT NULL DEFAULT 0`);
+
+  const topicCols = cols('mandatory_topic_rules');
+  if (!topicCols.includes('trigger_type'))
+    db.exec(`ALTER TABLE mandatory_topic_rules ADD COLUMN trigger_type TEXT NOT NULL DEFAULT 'ALL_ACTIVE'`);
+  if (!topicCols.includes('trigger_attribute_key'))
+    db.exec(`ALTER TABLE mandatory_topic_rules ADD COLUMN trigger_attribute_key TEXT NULL`);
+  if (!topicCols.includes('trigger_attribute_value'))
+    db.exec(`ALTER TABLE mandatory_topic_rules ADD COLUMN trigger_attribute_value TEXT NULL`);
+  if (!topicCols.includes('effective_from_year'))
+    db.exec(`ALTER TABLE mandatory_topic_rules ADD COLUMN effective_from_year INTEGER NULL`);
+
+  const actCols = cols('cpd_activities');
+  if (!actCols.includes('is_online'))
+    db.exec(`ALTER TABLE cpd_activities ADD COLUMN is_online INTEGER NOT NULL DEFAULT 0`);
+  if (!actCols.includes('is_medical_scientific'))
+    db.exec(`ALTER TABLE cpd_activities ADD COLUMN is_medical_scientific INTEGER NOT NULL DEFAULT 1`);
+
+  const cycleCols = cols('cpd_cycles');
+  if (!cycleCols.includes('online_completed'))
+    db.exec(`ALTER TABLE cpd_cycles ADD COLUMN online_completed REAL NOT NULL DEFAULT 0`);
+  if (!cycleCols.includes('max_online_allowed'))
+    db.exec(`ALTER TABLE cpd_cycles ADD COLUMN max_online_allowed REAL NULL`);
+  if (!cycleCols.includes('non_medical_completed'))
+    db.exec(`ALTER TABLE cpd_cycles ADD COLUMN non_medical_completed REAL NOT NULL DEFAULT 0`);
+  if (!cycleCols.includes('max_non_medical_allowed'))
+    db.exec(`ALTER TABLE cpd_cycles ADD COLUMN max_non_medical_allowed REAL NULL`);
+}
+
 function initDb() {
   const db = new Database(DB_PATH);
   db.pragma('journal_mode = WAL');
   db.pragma('foreign_keys = ON');
+
+  // ── Apply schema migrations (safe for existing DBs) ──────────────────────────
+  applyMigrations(db);
 
   // ── Create tables ──────────────────────────────────────────────────────────
   db.exec(`
@@ -106,6 +153,12 @@ function initDb() {
       max_self_study_no_test REAL NULL,
       max_self_study_with_test REAL NULL,
       cpr_required_non_cpe INTEGER NOT NULL DEFAULT 0,
+      regime_type TEXT NOT NULL DEFAULT 'US_HOURS_BASED',
+      approval_standard TEXT NOT NULL DEFAULT 'RACE_OR_BOARD',
+      max_online_hours REAL NULL,
+      max_online_percent REAL NULL,
+      renewal_even_year_only INTEGER NOT NULL DEFAULT 0,
+      birth_month_renewal INTEGER NOT NULL DEFAULT 0,
       notes TEXT NULL,
       created_at TEXT NOT NULL DEFAULT (datetime('now')),
       updated_at TEXT NOT NULL DEFAULT (datetime('now'))
@@ -126,6 +179,10 @@ function initDb() {
       applies_if_holds_dea INTEGER NOT NULL DEFAULT 0,
       applies_if_prescriber INTEGER NOT NULL DEFAULT 0,
       applies_if_does_radiography INTEGER NOT NULL DEFAULT 0,
+      trigger_type TEXT NOT NULL DEFAULT 'ALL_ACTIVE',
+      trigger_attribute_key TEXT NULL,
+      trigger_attribute_value TEXT NULL,
+      effective_from_year INTEGER NULL,
       notes TEXT NULL,
       created_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
@@ -183,6 +240,10 @@ function initDb() {
       structured_completed REAL NOT NULL DEFAULT 0,
       verifiable_completed REAL NOT NULL DEFAULT 0,
       non_clinical_completed REAL NOT NULL DEFAULT 0,
+      online_completed REAL NOT NULL DEFAULT 0,
+      max_online_allowed REAL NULL,
+      non_medical_completed REAL NOT NULL DEFAULT 0,
+      max_non_medical_allowed REAL NULL,
       mandatory_topics_met INTEGER NOT NULL DEFAULT 0,
       spread_rule_met INTEGER NULL,
       status TEXT NOT NULL DEFAULT 'in_progress',
@@ -230,6 +291,8 @@ function initDb() {
       is_author INTEGER NOT NULL DEFAULT 0,
       publication_doi TEXT NULL,
       postgrad_year INTEGER NULL,
+      is_online INTEGER NOT NULL DEFAULT 0,
+      is_medical_scientific INTEGER NOT NULL DEFAULT 1,
       status TEXT NOT NULL DEFAULT 'draft',
       stage TEXT NOT NULL DEFAULT 'recorded'
         CHECK (stage IN ('planned','done_unrecorded','recorded','reflected')),
@@ -313,8 +376,10 @@ function initDb() {
      max_units_per_day, first_renewal_ce_exempt, max_management_units,
      presenter_credit_cap, bls_credit_cap, first_renewal_prorata_units,
      ce_window_months, self_study_permitted,
-     max_self_study_no_test, max_self_study_with_test, cpr_required_non_cpe, notes)
-    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+     max_self_study_no_test, max_self_study_with_test, cpr_required_non_cpe,
+     regime_type, approval_standard, max_online_hours, max_online_percent,
+     renewal_even_year_only, birth_month_renewal, notes)
+    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
   `);
   for (const r of seed.RULES) {
     const id = uuidv4();
@@ -346,6 +411,12 @@ function initDb() {
       r.max_self_study_no_test || null,
       r.max_self_study_with_test || null,
       r.cpr_required_non_cpe ? 1 : 0,
+      r.regime_type || 'US_HOURS_BASED',
+      r.approval_standard || 'RACE_OR_BOARD',
+      r.max_online_hours || null,
+      r.max_online_percent || null,
+      r.renewal_even_year_only ? 1 : 0,
+      r.birth_month_renewal ? 1 : 0,
       r.notes || null
     );
   }
@@ -355,8 +426,9 @@ function initDb() {
     INSERT INTO mandatory_topic_rules
     (topic_rule_id, rule_id, topic_name, topic_category,
      min_units_per_cycle, min_units_per_year, max_units_per_cycle, max_percent_of_total,
-     must_be_live, must_be_in_person, applies_if_holds_dea, applies_if_prescriber, applies_if_does_radiography)
-    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)
+     must_be_live, must_be_in_person, applies_if_holds_dea, applies_if_prescriber, applies_if_does_radiography,
+     trigger_type, trigger_attribute_key, trigger_attribute_value, effective_from_year)
+    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
   `);
   for (const t of seed.TOPIC_RULES) {
     const ruleId = ruleIds[`${t.authority_key}:${t.role_key}`];
@@ -367,7 +439,11 @@ function initDb() {
       t.max_units_per_cycle || null, t.max_percent_of_total || null,
       t.must_be_live ? 1 : 0, t.must_be_in_person ? 1 : 0,
       t.applies_if_holds_dea ? 1 : 0, t.applies_if_prescriber ? 1 : 0,
-      t.applies_if_does_radiography ? 1 : 0
+      t.applies_if_does_radiography ? 1 : 0,
+      t.trigger_type || 'ALL_ACTIVE',
+      t.trigger_attribute_key || null,
+      t.trigger_attribute_value || null,
+      t.effective_from_year || null
     );
   }
 
@@ -410,4 +486,4 @@ function initDb() {
   console.log('[DB] Seed complete — authorities, roles, rules and demo data loaded.');
 }
 
-module.exports = { initDb, getDb, DB_PATH };
+module.exports = { initDb, getDb, DB_PATH, applyMigrations };
