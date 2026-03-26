@@ -102,4 +102,31 @@ router.put('/:id', async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+// DELETE /api/authorities/:id — cascade delete roles, rules, topics
+router.delete('/:id', async (req, res) => {
+  try {
+    const auth = await db.queryOne(
+      'SELECT authority_id, authority_name FROM registration_authorities WHERE authority_id=? OR authority_key=?',
+      [req.params.id, req.params.id]);
+    if (!auth) return res.status(404).json({ error: 'Not found' });
+    // Safety: block if practitioners are registered under this authority
+    const prac = await db.queryOne(
+      'SELECT COUNT(*) as c FROM registrations WHERE authority_id=?', [auth.authority_id]);
+    if (prac?.c > 0) return res.status(409).json({
+      error: `Cannot delete — ${prac.c} practitioner registration(s) reference this authority. Remove registrations first.`
+    });
+    // Cascade: topic_rules → requirement_rules → roles → authority
+    const rules = await db.query(
+      'SELECT rule_id FROM cpd_requirement_rules WHERE authority_id=?', [auth.authority_id]);
+    for (const r of rules) {
+      await db.run('DELETE FROM mandatory_topic_rules WHERE rule_id=?', [r.rule_id]);
+    }
+    await db.run('DELETE FROM cpd_requirement_rules WHERE authority_id=?', [auth.authority_id]);
+    await db.run('DELETE FROM professional_roles WHERE authority_id=?', [auth.authority_id]);
+    await db.run('DELETE FROM registration_authorities WHERE authority_id=?', [auth.authority_id]);
+    res.json({ ok: true, deleted: auth.authority_name });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 module.exports = router;
+

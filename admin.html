@@ -162,6 +162,11 @@
 
 <!-- ──────────────────── CE RULES TAB ──────────────────── -->
 <div class="tab-pane" id="tab-rules">
+  <div id="rules-zero-banner" style="display:none;background:var(--amber-bg);border:1px solid var(--amber);border-radius:10px;padding:.75rem 1rem;margin-bottom:1rem;align-items:center;gap:.75rem;color:#78350f;font-size:.83rem;font-weight:500">
+    <span class="material-symbols-outlined" style="font-size:18px;color:var(--amber)">warning</span>
+    <span id="rules-zero-text"></span>
+    <a href="#" id="rules-zero-link" style="margin-left:.5rem;color:#92400e;font-weight:600;text-decoration:underline">Filter to empty roles →</a>
+  </div>
   <div class="select-panel">
     <label><span class="material-symbols-outlined" style="font-size:14px;vertical-align:middle">language</span> Authority</label>
     <select id="rules-auth-select"><option value="">— Select authority —</option></select>
@@ -172,7 +177,7 @@
   <div class="data-table">
     <table>
       <thead><tr>
-        <th>Cycle Type</th><th>Months</th><th>Total Required</th><th>Structured Min</th><th>Online Cap</th><th>Carry-over</th><th>New Grad</th><th>Actions</th>
+        <th>Cycle Type</th><th>Months</th><th>Total Required</th><th>Structured Min</th><th>Online Cap</th><th>Tier</th><th>Reflection</th><th>Actions</th>
       </tr></thead>
       <tbody id="rules-tbody"><tr><td colspan="8" class="empty"><span class="material-symbols-outlined">info</span>Select an authority and role above</td></tr></tbody>
     </table>
@@ -184,9 +189,13 @@
   <div class="select-panel">
     <label>Authority</label>
     <select id="topics-auth-select"><option value="">— Select authority —</option></select>
-    <label>CE Rule</label>
+    <label>Role / Rule</label>
     <select id="topics-rule-select" disabled><option value="">— Select rule —</option></select>
     <button class="btn btn-primary" id="btn-new-topic" disabled><span class="material-symbols-outlined ms">add</span> New Topic</button>
+  </div>
+  <div class="toolbar" style="margin-bottom:.75rem;margin-top:.75rem">
+    <div></div>
+    <div class="search-box"><span class="material-symbols-outlined" style="font-size:16px;color:var(--text-3)">search</span><input id="topics-search" placeholder="Filter topics…"></div>
   </div>
   <div class="data-table">
     <table>
@@ -259,6 +268,7 @@
     <div class="form-group"><label>Notes / UI Labels (JSON)</label><textarea id="af-uilabels" placeholder='{"programme_label":"CE","unit_short":"hrs"}'></textarea></div>
   </div>
   <div class="drawer-foot">
+    <button class="btn btn-danger" id="auth-drawer-delete" style="display:none;margin-right:auto"><span class="material-symbols-outlined ms">delete</span> Delete</button>
     <button class="btn btn-ghost" id="auth-drawer-cancel">Cancel</button>
     <button class="btn btn-primary" id="auth-drawer-save"><span class="material-symbols-outlined ms">save</span> Save</button>
   </div>
@@ -309,6 +319,8 @@
       <div class="form-group"><label>New Grad Reduced Units</label><input id="rf-newgrad-units" type="number" min="0" step=".5" placeholder="—"></div>
       <div class="form-group"><label>New Grad Months</label><input id="rf-newgrad-months" type="number" min="0" placeholder="—"></div>
     </div>
+    <div class="form-section">Reflection (BUG-053)</div>
+    <label class="form-check"><input type="checkbox" id="rf-reflection"> Reflection required for compliance</label>
     <div class="form-group"><label>Notes</label><textarea id="rf-notes" placeholder="Source / regulation reference"></textarea></div>
   </div>
   <div class="drawer-foot">
@@ -327,7 +339,7 @@
   <div class="drawer-body">
     <div class="form-group"><label>Topic Name *</label><input id="tf-name" placeholder="e.g. Controlled Substance Training"></div>
     <div class="form-group"><label>Category</label>
-      <select id="tf-category"><option value="mandatory">mandatory</option><option value="structured">structured</option><option value="capped">capped</option></select>
+      <select id="tf-category"><option value="mandatory">mandatory</option><option value="structured">structured</option><option value="capped">capped</option><option value="recommended">recommended</option></select>
     </div>
     <div class="form-row">
       <div class="form-group"><label>Min Units / Cycle</label><input id="tf-min-cycle" type="number" min="0" step=".5" placeholder="—"></div>
@@ -411,13 +423,23 @@ function closeDrawer(bg, drawer) {
   $(bgId).addEventListener('click', () => closeDrawer(bgId, drawers[i]));
 });
 
-// ── Tab switching ──────────────────────────────────────────────────────────
+// ── Tab switching (UX-D: persist authority filter) ──────────────────────────
+let sharedAuthId = null;
 document.querySelectorAll('.tab-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
     document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
     btn.classList.add('active');
     $('tab-' + btn.dataset.tab).classList.add('active');
+    // Restore shared authority when switching to Rules or Topics
+    if (btn.dataset.tab === 'rules' && sharedAuthId && !$('rules-auth-select').value) {
+      $('rules-auth-select').value = sharedAuthId;
+      $('rules-auth-select').dispatchEvent(new Event('change'));
+    }
+    if (btn.dataset.tab === 'topics' && sharedAuthId && !$('topics-auth-select').value) {
+      $('topics-auth-select').value = sharedAuthId;
+      $('topics-auth-select').dispatchEvent(new Event('change'));
+    }
   });
 });
 
@@ -474,6 +496,7 @@ $('btn-new-auth').addEventListener('click', () => {
   $('af-unit').value = 'hours'; $('af-split').value = '';
   $('af-uses-hours').checked = true; $('af-uses-points').checked = false; $('af-mandatory-topics').checked = false;
   $('af-country').value = 'US'; $('af-sector').value = 'veterinary';
+  $('auth-drawer-delete').style.display = 'none';
   openDrawer('auth-drawer-bg', 'auth-drawer');
 });
 async function editAuth(id) {
@@ -488,9 +511,21 @@ async function editAuth(id) {
   $('af-uses-hours').checked = !!auth.uses_hours; $('af-uses-points').checked = !!auth.uses_points;
   $('af-mandatory-topics').checked = !!auth.mandatory_topics_enabled;
   $('af-uilabels').value = auth.ui_labels ? JSON.stringify(auth.ui_labels, null, 2) : '';
+  $('auth-drawer-delete').style.display = 'inline-flex';
   openDrawer('auth-drawer-bg', 'auth-drawer');
 }
 ['auth-drawer-close','auth-drawer-cancel'].forEach(id => $(id).addEventListener('click', () => closeDrawer('auth-drawer-bg','auth-drawer')));
+
+// BUG-052: Auth delete
+$('auth-drawer-delete').addEventListener('click', async () => {
+  if (!editAuthId) return;
+  const auth = allAuths.find(a => a.authority_id === editAuthId);
+  if (!confirm(`Delete "${auth?.authority_name}" and ALL linked roles and CE rules? This cannot be undone.`)) return;
+  const res = await DEL('authorities/' + editAuthId);
+  if (res && res.error) { toast(res.error, 'err'); return; }
+  toast('Authority deleted'); closeDrawer('auth-drawer-bg','auth-drawer');
+  editAuthId = null; loadAuths();
+});
 $('auth-drawer-save').addEventListener('click', async () => {
   let uiLabels = null;
   const uiRaw = $('af-uilabels').value.trim();
@@ -522,8 +557,10 @@ function populateAuthSelects(auths) {
   $('rolef-auth').innerHTML = opts;
 }
 
+// Persist authority when changed
 $('rules-auth-select').addEventListener('change', async function() {
   currentRuleAuth = this.value;
+  if (this.value) sharedAuthId = this.value;
   const roleSelect = $('rules-role-select');
   roleSelect.innerHTML = '<option value="">— Select role —</option>'; roleSelect.disabled = true;
   $('btn-new-rule').disabled = true;
@@ -558,8 +595,8 @@ function renderRules(rules) {
       <td><strong>${r.total_units_required}</strong> ${r.unit_label||'hrs'}</td>
       <td>${r.min_structured_units ?? '—'}</td>
       <td>${r.max_online_hours ?? '—'}</td>
-      <td>${r.carry_over_allowed ? '✓' : '—'}</td>
-      <td>${r.new_graduate_exemption ? '✓' : '—'}</td>
+      <td><span class="badge badge-gray">${r.tier||'generalist'}</span></td>
+      <td>${r.reflection_required_for_compliance ? '<span class="badge badge-amber">✓ Reflection</span>' : '—'}</td>
       <td class="actions">
         <button class="btn btn-ghost btn-sm" onclick="editRule('${r.rule_id}')"><span class="material-symbols-outlined" style="font-size:14px">edit</span></button>
         <button class="btn btn-danger btn-sm" onclick="deleteRule('${r.rule_id}')"><span class="material-symbols-outlined" style="font-size:14px">delete</span></button>
@@ -595,6 +632,7 @@ async function editRule(id) {
   $('rf-newgrad-months').value = rule.new_graduate_months ?? '';
   $('rf-prorata').checked = !!rule.pro_rata_for_part_year; $('rf-nonpro').checked = !!rule.non_practising_exempt;
   $('rf-firstrenew').checked = !!rule.first_renewal_ce_exempt; $('rf-mandtopics').checked = !!rule.mandatory_topics_enabled;
+  $('rf-reflection').checked = !!rule.reflection_required_for_compliance;
   $('rf-notes').value = rule.notes || '';
   openDrawer('rule-drawer-bg','rule-drawer');
 }
@@ -612,6 +650,7 @@ $('rule-drawer-save').addEventListener('click', async () => {
     new_graduate_exemption: $('rf-newgrad').checked?1:0, new_graduate_reduced_units: num('rf-newgrad-units'), new_graduate_months: int('rf-newgrad-months'),
     pro_rata_for_part_year: $('rf-prorata').checked?1:0, non_practising_exempt: $('rf-nonpro').checked?1:0,
     first_renewal_ce_exempt: $('rf-firstrenew').checked?1:0, mandatory_topics_enabled: $('rf-mandtopics').checked?1:0,
+    reflection_required_for_compliance: $('rf-reflection').checked?1:0,
     notes: $('rf-notes').value.trim() || null
   };
   if (editRuleId) await PUT('rules/' + editRuleId, body);
@@ -629,6 +668,7 @@ let currentTopicsAuth = null, currentTopicsRule = null;
 
 $('topics-auth-select').addEventListener('change', async function() {
   currentTopicsAuth = this.value;
+  if (this.value) sharedAuthId = this.value;
   const ruleSelect = $('topics-rule-select');
   ruleSelect.innerHTML = '<option value="">— Select rule —</option>'; ruleSelect.disabled = true;
   $('btn-new-topic').disabled = true;
@@ -646,15 +686,20 @@ $('topics-rule-select').addEventListener('change', function() {
   if (this.value) loadTopics();
 });
 
+// UX-L: topics search
+if ($('topics-search')) $('topics-search').addEventListener('input', () => { if (currentTopicsRule) loadTopics(); });
+
 async function loadTopics() {
   const topics = await API('rules/' + currentTopicsRule + '/topics');
   renderTopics(topics);
 }
 
 function renderTopics(topics) {
+  const q = $('topics-search') ? $('topics-search').value.toLowerCase() : '';
   const tbody = $('topics-tbody');
-  if (!topics.length) { tbody.innerHTML = '<tr><td colspan="7" class="empty"><span class="material-symbols-outlined">topic</span>No mandatory topics — create one above</td></tr>'; return; }
-  tbody.innerHTML = topics.map(t => `
+  const filtered = q ? topics.filter(t => t.topic_name.toLowerCase().includes(q) || t.topic_category.toLowerCase().includes(q)) : topics;
+  if (!filtered.length) { tbody.innerHTML = '<tr><td colspan="7" class="empty"><span class="material-symbols-outlined">topic</span>No mandatory topics — create one above</td></tr>'; return; }
+  tbody.innerHTML = filtered.map(t => `
     <tr>
       <td><strong>${t.topic_name}</strong></td>
       <td><span class="badge badge-gray">${t.topic_category}</span></td>
@@ -713,6 +758,22 @@ async function loadRoles() {
   const roles = await API('roles');
   allRoles = roles;
   renderRoles(roles);
+  // UX-A: warn about roles with 0 CE rules
+  const emptyCount = roles.filter(r => r.rule_count === 0).length;
+  const banner = $('rules-zero-banner');
+  if (emptyCount > 0) {
+    $('rules-zero-text').textContent = `${emptyCount} role${emptyCount>1?'s':''} have no CE rules — the widget cannot show requirements for them.`;
+    banner.style.display = 'flex';
+    $('rules-zero-link').addEventListener('click', e => {
+      e.preventDefault();
+      // Switch to Roles tab and filter
+      document.querySelector('[data-tab="roles"]').click();
+      $('roles-search').value = '';
+      renderRoles(allRoles.filter(r => r.rule_count === 0));
+    });
+  } else {
+    banner.style.display = 'none';
+  }
 }
 
 function renderRoles(roles) {
