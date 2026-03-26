@@ -1,0 +1,19 @@
+[build]
+  publish = "."
+  command = ""
+
+[build.environment]
+  NODE_ENV = "production"
+
+# Route all /api/* requests to the single Express serverless function
+[[redirects]]
+  from   = "/api/*"
+  to     = "/.netlify/functions/api"
+  status = 200
+  force  = true
+
+# SPA-style fallback: serve index.html for all other non-static paths
+[[redirects]]
+  from   = "/*"
+  to     = "/index.html"
+  status = 200

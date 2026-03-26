@@ -1,13 +1,12 @@
 'use strict';
 const express = require('express');
-const router = express.Router();
-const { getDb } = require('../database/init');
+const router  = express.Router();
+const db      = require('../database/db');
 
-// GET /api/cycles/current — active cycle for the demo practitioner
-router.get('/current', (req, res) => {
-  const db = getDb();
+// GET /api/cycles/current
+router.get('/current', async (req, res) => {
   try {
-    const cycle = db.prepare(`
+    const cycle = await db.queryOne(`
       SELECT c.*, r.registration_status, r.is_new_graduate, r.holds_dea_registration,
              r.holds_prescribing_rights, r.practice_type, r.fte_percentage,
              a.authority_key, a.authority_abbreviation, a.unit_label, a.cpd_term, a.cpd_term_full,
@@ -21,50 +20,47 @@ router.get('/current', (req, res) => {
              rul.spread_rule_units, rul.spread_rule_months, rul.deferral_allowed,
              rul.reflection_required_for_compliance
       FROM cpd_cycles c
-      JOIN registrations r ON c.registration_id = r.registration_id
+      JOIN registrations r   ON c.registration_id = r.registration_id
       JOIN registration_authorities a ON r.authority_id = a.authority_id
-      JOIN professional_roles ro ON r.role_id = ro.role_id
-      JOIN cpd_requirement_rules rul ON c.rule_id = rul.rule_id
-      JOIN practitioners p ON r.practitioner_id = p.practitioner_id
+      JOIN professional_roles ro      ON r.role_id = ro.role_id
+      JOIN cpd_requirement_rules rul  ON c.rule_id  = rul.rule_id
+      JOIN practitioners p   ON r.practitioner_id = p.practitioner_id
       WHERE c.status = 'in_progress'
-      ORDER BY c.created_at DESC LIMIT 1`).get();
-
+      ORDER BY c.created_at DESC LIMIT 1`);
     if (!cycle) return res.status(404).json({ error: 'No active cycle found' });
 
-    // Attach topic rules
-    cycle.topics = db.prepare('SELECT * FROM mandatory_topic_rules WHERE rule_id = ? ORDER BY topic_category').all(cycle.rule_id);
+    cycle.topics = await db.query(
+      'SELECT * FROM mandatory_topic_rules WHERE rule_id = ? ORDER BY topic_category',
+      [cycle.rule_id]);
 
-    // Compute reflected_completed = sum of units for activities at stage='reflected'
-    const reflected = db.prepare(`
+    const reflected = await db.queryOne(`
       SELECT COALESCE(SUM(units_claimed), 0) as total
       FROM cpd_activities
-      WHERE cycle_id = ? AND stage = 'reflected' AND status != 'rejected'
-    `).get(cycle.cycle_id);
+      WHERE cycle_id = ? AND stage = 'reflected' AND status != 'rejected'`,
+      [cycle.cycle_id]);
     cycle.reflected_completed = reflected ? reflected.total : 0;
 
     res.json(cycle);
-  } finally { db.close(); }
+  } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// GET /api/cycles — cycle history
-router.get('/', (req, res) => {
-  const db = getDb();
+// GET /api/cycles
+router.get('/', async (req, res) => {
   try {
-    const cycles = db.prepare(`
+    const cycles = await db.query(`
       SELECT c.*, a.authority_abbreviation, a.cpd_term, ro.role_name
       FROM cpd_cycles c
       JOIN registrations r ON c.registration_id = r.registration_id
       JOIN registration_authorities a ON r.authority_id = a.authority_id
       JOIN professional_roles ro ON r.role_id = ro.role_id
       JOIN practitioners p ON r.practitioner_id = p.practitioner_id
-      ORDER BY c.cycle_start_date DESC`).all();
+      ORDER BY c.cycle_start_date DESC`);
     res.json(cycles);
-  } finally { db.close(); }
+  } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// PUT /api/cycles/:id — update cycle progress (units_completed etc.)
-router.put('/:id', (req, res) => {
-  const db = getDb();
+// PUT /api/cycles/:id
+router.put('/:id', async (req, res) => {
   try {
     const allowed = ['units_completed','structured_completed','verifiable_completed',
       'non_clinical_completed','mandatory_topics_met','spread_rule_met',
@@ -75,9 +71,9 @@ router.put('/:id', (req, res) => {
     }
     if (!updates.length) return res.status(400).json({ error: 'No valid fields' });
     vals.push(new Date().toISOString(), req.params.id);
-    db.prepare(`UPDATE cpd_cycles SET ${updates.join(',')}, updated_at=? WHERE cycle_id=?`).run(...vals);
+    await db.run(`UPDATE cpd_cycles SET ${updates.join(',')}, updated_at=? WHERE cycle_id=?`, vals);
     res.json({ ok: true });
-  } finally { db.close(); }
+  } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 module.exports = router;
