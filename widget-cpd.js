@@ -8,59 +8,11 @@ const API_CACHE = {
   practitioner: null,     // from GET /api/practitioners/me
   cycle: null,            // from GET /api/cycles/current
 };
-// State overrides — US/CA regional variations (to be seeded to DB as rule rows in next sprint)
-const STATE_OVERRIDES={ca:{required:75,cycle:'biennial'},tx:{required:16,cycle:'annual'},ny:{required:24,cycle:'biennial'},fl:{required:30,cycle:'biennial'},on:{required:40,cycle:'annual'}};
-const STATE_OPTIONS={
-  us_avma:[{v:'',l:'— No state override —'},{v:'ca',l:'California (75 hrs / 2yr)'},{v:'tx',l:'Texas (16 hrs / yr)'},{v:'ny',l:'New York (24 hrs / 2yr)'},{v:'fl',l:'Florida (30 hrs / 2yr)'}],
-  us_nbdhe:[{v:'',l:'— No state override —'},{v:'ca',l:'California (75 hrs / 2yr)'},{v:'tx',l:'Texas (16 hrs / yr)'},{v:'ny',l:'New York (24 hrs / 2yr)'},{v:'fl',l:'Florida (30 hrs / 2yr)'}],
-  ca_cvma:[{v:'',l:'— No province override —'},{v:'on',l:'Ontario (40 hrs / yr)'}],
-};
+// State overrides and deriveJurisdictionRules() REMOVED — all rules now DB-driven via configBuilder().
 
-// ── UK/RCVS Jurisdiction Auto-determination ────────────────────────────────
-// Returns null if we can't auto-determine (non-UK or non-RCVS authority),
-// or an object with the auto-derived rule values.
-function deriveJurisdictionRules(sector, country, role, status) {
-  // Only apply UK RCVS auto-rules
-  if (country !== 'uk_rcvs') return null;
+// deriveJurisdictionRules() REMOVED — RCVS and all authorities now fully seeded in DB.
+// isJurisdictionAutoLocked() REMOVED — no longer needed.
 
-  const nonPractising = ['non_practising', 'removed', 'suspended', 'not_on_register'].includes(status);
-  const practising    = ['active', 'full', 'practising'].includes(status);
-
-  if (nonPractising) {
-    return {
-      cycle: 'annual',            // cycle still tracked but hours = 0
-      requiredHours: 0,
-      carryOver: false,
-      source: 'RCVS — Non-practising / removed (voluntary CPD only)',
-      locked: true,
-    };
-  }
-
-  if (practising) {
-    const hoursMap = {
-      vet_surgeon:        35,
-      rvn:                15,
-      student_rvn:         0,    // not yet required
-      advanced_practitioner: 35, // same annual cycle; 5-yr designation tracked separately
-    };
-    const required = hoursMap[role] ?? null;  // null = role not in map, fall through to DB
-    if (required === null) return null;        // unknown role → let DB rule decide
-    return {
-      cycle: 'annual',
-      requiredHours: required,
-      carryOver: false,  // RCVS: no carry-over
-      source: `RCVS — Auto-determined: ${required} hrs/yr, Annual (1 Jan–31 Dec), no carry-over`,
-      locked: true,
-    };
-  }
-
-  return null; // unrecognised status → DB rule wins
-}
-
-// Returns true if the cycle type and required hours are auto-locked by jurisdiction rules
-function isJurisdictionAutoLocked() {
-  return !!deriveJurisdictionRules(S.sector, S.country, S.role, S.registrationStatus);
-}
 // ── State — authoritative widget data store ────────────────────────────────
 const S={
   sector:'vet',country:'uk_rcvs',state:'',role:'vet_surgeon',
@@ -266,15 +218,11 @@ function updateCountryDropdown(){
   if(!valid&&opts.length){S.country=opts[0].authority_key;dd.value=S.country}
 }
 function updateStateDropdown(){
+  // State sub-dropdown hidden — all jurisdiction overrides now DB-driven as separate authorities
   const dd=el('selState');if(!dd)return;
-  const opts=STATE_OPTIONS[S.country];
-  const disabled=!opts;
-  dd.disabled=disabled;dd.style.opacity=disabled?'0.4':'1';dd.style.cursor=disabled?'not-allowed':'auto';
-  if(disabled){dd.innerHTML='<option value="">— Not applicable for this jurisdiction —</option>';S.state='';}
-  else{
-    dd.innerHTML=opts.map(o=>`<option value="${o.v}">${o.l}</option>`).join('');
-    const valid=opts.some(o=>o.v===S.state);if(!valid){S.state='';dd.value='';}
-  }
+  dd.disabled=true;dd.style.opacity='0.4';dd.style.cursor='not-allowed';
+  dd.innerHTML='<option value="">— Not applicable: select the specific state authority —</option>';
+  S.state='';
 }
 function updateRoleDropdown(){
   const dd=el('selRole');if(!dd)return;
@@ -354,18 +302,7 @@ function fmtDate(d){return d.toLocaleDateString('en-GB',{day:'numeric',month:'sh
 // Priority hierarchy → effective required
 function effectiveRequired(){
   const status=S.registrationStatus;
-  // Priority 0: jurisdiction auto-determination (overrides everything for locked authorities)
-  const derived=deriveJurisdictionRules(S.sector,S.country,S.role,status);
-  if(derived){
-    let req=derived.requiredHours;
-    // Still honour new-grad reduction within auto-determined cycle
-    if(isNewGrad()&&S.newGradRequired>0&&req>0)req=S.newGradRequired;
-    // Pro-rata still applies even for auto-determined authorities
-    if(S.proRata&&S.regMonthsAgo>0){const total=cycleMonths();const rem=Math.max(0,total-S.regMonthsAgo);req=Math.round(req*rem/total)}
-    if(status==='paused'&&S.pauseAllowed){const total=cycleMonths();const active=Math.max(0,total-S.pauseMonths);req=Math.round(req*active/total)}
-    return Math.max(0,req);
-  }
-  // Legacy/non-auto path
+  // All jurisdiction logic comes from DB via configBuilder() / S state
   if(status==='non_practising'||status==='student')return 0;
   // First-renewal: full exempt (e.g. CA first renewal, CO ≤12 months)
   if(status==='first_renewal_exempt'||S.firstRenewalExempt)return 0;
@@ -374,8 +311,6 @@ function effectiveRequired(){
   // Inactive — CE waived
   if(status==='inactive')return 0;
   let req=S.baseRequired;
-  const so=STATE_OVERRIDES[S.state];
-  if(so&&so.required)req=so.required;
   // New-grad year-2 exempt: between newGradMonths and 2×newGradMonths (e.g. GA 12–24 months = 0 hrs)
   if(S.newGradExemption&&S.newGradMonths>0&&S.regMonthsAgo>S.newGradMonths&&S.regMonthsAgo<=S.newGradMonths*2)return 0;
   if(isNewGrad()&&S.newGradRequired>0)req=S.newGradRequired;
