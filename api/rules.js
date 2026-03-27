@@ -85,6 +85,7 @@ router.put('/:id', async (req, res) => {
       'pro_rata_for_part_year','non_practising_exempt','first_renewal_ce_exempt',
       'mandatory_topics_enabled','reflection_required_for_compliance',
       'renewal_even_year_only','birth_month_renewal','cycle_start_anchor',
+      'practitioner_status',
       'renewal_year_parity','birth_month_offset','renewal_day',
       'regime_type','approval_standard','notes'
     ];
@@ -114,6 +115,7 @@ router.post('/', async (req, res) => {
       'pro_rata_for_part_year','non_practising_exempt','first_renewal_ce_exempt',
       'mandatory_topics_enabled','reflection_required_for_compliance',
       'renewal_even_year_only','birth_month_renewal','cycle_start_anchor',
+      'practitioner_status',
       'regime_type','approval_standard','notes'];
     const n = v => (v === '' || v === undefined) ? null : v;
     const vals = [id, b.authority_id, b.role_id,
@@ -129,6 +131,7 @@ router.post('/', async (req, res) => {
       b.pro_rata_for_part_year||0, b.non_practising_exempt||0, b.first_renewal_ce_exempt||0,
       b.mandatory_topics_enabled||0, b.reflection_required_for_compliance||0,
       b.renewal_even_year_only||0, b.birth_month_renewal||0, n(b.cycle_start_anchor),
+      b.practitioner_status||'all',
       b.regime_type||'US_HOURS_BASED', b.approval_standard||'RACE_OR_BOARD',
       n(b.notes)];
     await db.run(

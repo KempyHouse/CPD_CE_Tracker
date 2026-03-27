@@ -483,6 +483,16 @@
       <div class="form-group"><label title="How many months the new grad exemption lasts from date of first licensure. Only meaningful when New grad exemption is checked.">New Grad Months</label><input id="rf-newgrad-months" type="number" min="0" placeholder="—" title="Duration (months) of the new grad exemption from first licensure date."></div>
     </div>
     <div class="form-section">Reflection &amp; Compliance</div>
+    <div class="form-group" title="BUG-056: Create separate rules per status to give different CE totals. 'All statuses' applies to everyone (default). 'Active' applies only to active/full practitioners. 'Non-practising' applies when a user's registration status is non_practising. 'Student' = zero-requirement rule for enrolled students.">
+      <label>Applies to Registration Status <span style="color:var(--teal);font-size:.7rem">BUG-056</span></label>
+      <select id="rf-pract-status" title="Create a separate rule per status to configure different CE totals per registration category.">
+        <option value="all">All statuses (default)</option>
+        <option value="active">Active / Full practitioners only</option>
+        <option value="non_practising">Non-practising registrants only</option>
+        <option value="student">Students only</option>
+        <option value="suspended">Suspended / Lapsed</option>
+      </select>
+    </div>
     <label class="form-check" title="Check if the authority requires documented reflection as part of CPD compliance (e.g. RCVS Plan→Do→Record→Reflect, GDC Enhanced CPD). Widget shows a Reflection badge and prompts reflective notes."><input type="checkbox" id="rf-reflection" title="Check if the authority requires documented reflection for compliance."> Reflection required for compliance (e.g. RCVS)</label>
     <div class="form-group"><label title="Free-text field for the regulation source, admin notes, or links to the official statute. Not displayed in the widget — internal reference only.">Notes / Source Reference</label><textarea id="rf-notes" placeholder="Source / regulation reference" title="Regulation source or admin notes. Internal only — not shown in the widget."></textarea></div>
   </div>
@@ -945,6 +955,7 @@ async function editRule(id) {
   $('rf-prorata').checked = !!rule.pro_rata_for_part_year; $('rf-nonpro').checked = !!rule.non_practising_exempt;
   $('rf-firstrenew').checked = !!rule.first_renewal_ce_exempt; $('rf-mandtopics').checked = !!rule.mandatory_topics_enabled;
   $('rf-reflection').checked = !!rule.reflection_required_for_compliance;
+  $('rf-pract-status').value = rule.practitioner_status || 'all';
   $('rf-notes').value = rule.notes || '';
   applyRuleConditions();
   openDrawer('rule-drawer-bg','rule-drawer');
@@ -977,6 +988,7 @@ $('rule-drawer-save').addEventListener('click', async () => {
     pro_rata_for_part_year: $('rf-prorata').checked?1:0, non_practising_exempt: $('rf-nonpro').checked?1:0,
     first_renewal_ce_exempt: $('rf-firstrenew').checked?1:0, mandatory_topics_enabled: $('rf-mandtopics').checked?1:0,
     reflection_required_for_compliance: $('rf-reflection').checked?1:0,
+    practitioner_status: $('rf-pract-status').value || 'all',
     notes: $('rf-notes').value.trim() || null
   };
   if (editRuleId) await PUT('rules/' + editRuleId, body);

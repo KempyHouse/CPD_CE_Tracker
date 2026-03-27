@@ -138,7 +138,16 @@ async function loadFromAPI(){
     API_CACHE.practitioner=practitioner;
     API_CACHE.cycle=cycle;
     // Build rules + roles cache from flat rules list
+    API_CACHE.npRules = {}; // BUG-056: keyed authority_key:role_key -> {rule}
     for(const rule of allRules){
+      const ps = rule.practitioner_status || 'all';
+      if(ps === 'non_practising' || ps === 'student'){
+        // Status-specific rule — store separately for effectiveRequired() lookup
+        const baseKey = `${rule.authority_key}:${rule.role_key}`;
+        if(!API_CACHE.npRules[baseKey]) API_CACHE.npRules[baseKey] = {};
+        API_CACHE.npRules[baseKey][ps] = rule;
+      }
+      if(ps !== 'all' && ps !== 'active') continue; // skip status-only rules from main cache
       const key=`${rule.authority_key}:${rule.role_key}`;
       API_CACHE.rules[key]=rule; // topics attached after next call if needed
       if(!API_CACHE.roles[rule.authority_key])API_CACHE.roles[rule.authority_key]=[];
@@ -303,7 +312,13 @@ function fmtDate(d){return d.toLocaleDateString('en-GB',{day:'numeric',month:'sh
 function effectiveRequired(){
   const status=S.registrationStatus;
   // All jurisdiction logic comes from DB via configBuilder() / S state
-  if(status==='non_practising'||status==='student')return 0;
+  // BUG-056: check DB-driven status-specific rule before hardcoding 0
+  const npRule = (API_CACHE.npRules||{})[`${S.country}:${S.role}`];
+  if(status==='non_practising'||status==='student'){
+    const sRule = npRule && npRule[status];
+    if(sRule) return sRule.total_units_required||0; // e.g. RCVS NP = 15hrs/5yr
+    return 0; // default: fully exempt if no specific rule defined
+  }
   // First-renewal: full exempt (e.g. CA first renewal, CO ≤12 months)
   if(status==='first_renewal_exempt'||S.firstRenewalExempt)return 0;
   // First-renewal pro-rata (e.g. CO >12 months → 15 dental / 16 vet)
