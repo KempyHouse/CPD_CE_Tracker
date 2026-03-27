@@ -12,3 +12,9 @@ Thumbs.db
 
 # Logs
 *.log
+
+# SQLite local DB (live DB is Turso — local file is dev-only, not needed in VCS)
+database/*.db
+database/*.db-shm
+database/*.db-wal
+

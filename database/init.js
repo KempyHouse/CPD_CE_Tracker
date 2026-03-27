@@ -26,6 +26,12 @@ function applyMigrations(db) {
     db.exec(`ALTER TABLE cpd_requirement_rules ADD COLUMN renewal_even_year_only INTEGER NOT NULL DEFAULT 0`);
   if (!ruleCols.includes('birth_month_renewal'))
     db.exec(`ALTER TABLE cpd_requirement_rules ADD COLUMN birth_month_renewal INTEGER NOT NULL DEFAULT 0`);
+  if (!ruleCols.includes('renewal_year_parity'))
+    db.exec(`ALTER TABLE cpd_requirement_rules ADD COLUMN renewal_year_parity TEXT NOT NULL DEFAULT 'any'`);
+  if (!ruleCols.includes('birth_month_offset'))
+    db.exec(`ALTER TABLE cpd_requirement_rules ADD COLUMN birth_month_offset INTEGER NOT NULL DEFAULT 0`);
+  if (!ruleCols.includes('renewal_day'))
+    db.exec(`ALTER TABLE cpd_requirement_rules ADD COLUMN renewal_day INTEGER NULL`);
 
   const topicCols = cols('mandatory_topic_rules');
   if (!topicCols.includes('trigger_type'))
@@ -159,6 +165,9 @@ function initDb() {
       max_online_percent REAL NULL,
       renewal_even_year_only INTEGER NOT NULL DEFAULT 0,
       birth_month_renewal INTEGER NOT NULL DEFAULT 0,
+      renewal_year_parity TEXT NOT NULL DEFAULT 'any',   -- 'any' | 'even' | 'odd'
+      birth_month_offset INTEGER NOT NULL DEFAULT 0,   -- 0=expires end of birth month, 1=expires end of month after
+      renewal_day INTEGER NULL,                          -- NULL = last day of month; e.g. 15 for Indiana
       notes TEXT NULL,
       created_at TEXT NOT NULL DEFAULT (datetime('now')),
       updated_at TEXT NOT NULL DEFAULT (datetime('now'))
@@ -341,7 +350,7 @@ function initDb() {
       a.website_url || null, a.cpd_platform_url || null,
       a.uses_hours ? 1 : 0, a.uses_points ? 1 : 0,
       a.uses_ceus ? 1 : 0, a.uses_credits ? 1 : 0,
-      a.unit_label, a.units_per_hour,
+      a.unit_label || 'hours', a.units_per_hour ?? 1,
       a.split_label || null, a.split_bar_concept || 'structured',
       a.ui_labels ? JSON.stringify(a.ui_labels) : null,
       a.mandatory_topics_enabled ? 1 : 0,
@@ -378,8 +387,9 @@ function initDb() {
      ce_window_months, self_study_permitted,
      max_self_study_no_test, max_self_study_with_test, cpr_required_non_cpe,
      regime_type, approval_standard, max_online_hours, max_online_percent,
-     renewal_even_year_only, birth_month_renewal, notes)
-    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+     renewal_even_year_only, birth_month_renewal,
+     renewal_year_parity, birth_month_offset, renewal_day, notes)
+    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
   `);
   for (const r of seed.RULES) {
     const id = uuidv4();
@@ -417,6 +427,9 @@ function initDb() {
       r.max_online_percent || null,
       r.renewal_even_year_only ? 1 : 0,
       r.birth_month_renewal ? 1 : 0,
+      r.renewal_year_parity || 'any',
+      r.birth_month_offset || 0,
+      r.renewal_day || null,
       r.notes || null
     );
   }

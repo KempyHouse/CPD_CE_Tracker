@@ -212,6 +212,9 @@ CREATE TABLE cpd_requirement_rules (
     cycle_start_month           INTEGER             NULL CHECK (cycle_start_month BETWEEN 1 AND 12),
     cycle_start_day             INTEGER             NULL CHECK (cycle_start_day BETWEEN 1 AND 31),
     cycle_start_anchor          cycle_anchor_enum   NOT NULL DEFAULT 'calendar',
+    renewal_year_parity         TEXT                NOT NULL DEFAULT 'any' CHECK (renewal_year_parity IN ('any','even','odd')),
+    birth_month_offset          INTEGER             NOT NULL DEFAULT 0,   -- 0=expires end of birth month, 1=end of month after (TX pattern)
+    renewal_day                 INTEGER             NULL,   -- NULL=last day of month; e.g. 15 for Indiana Oct 15
 
     -- Core unit requirements
     total_units_required        DECIMAL(8,2)        NOT NULL,
@@ -277,6 +280,9 @@ CREATE TABLE mandatory_topic_rules (
     max_units_per_cycle         DECIMAL(8,2)        NULL,   -- e.g. VCI max 6 hrs independent study
     max_units_per_year          DECIMAL(8,2)        NULL,
     max_percent_of_total        DECIMAL(5,2)        NULL,   -- e.g. VCI 25% management skills
+
+    -- Topic-level cycle override
+    topic_cycle_months          INTEGER             NULL,   -- If set, overrides the parent rule's cycle for this topic (e.g. 24 for a biennial topic inside an annual rule)
 
     -- Delivery constraints
     must_be_live                BOOLEAN             NOT NULL DEFAULT FALSE,  -- e.g. Georgia 1 hr live professionalism
